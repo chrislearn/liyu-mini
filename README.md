@@ -1,35 +1,21 @@
-# LIYU-DEMO
+# LIYU-MINI
 
-An OctoScript/Splash demonstration of LiYu's request-to-card experience. It contains 13 illustrative products, three sample contacts plus manual contact entry, structured wishlists, and simulated gifts with question, passphrase, or direct reveal. The product artwork and icon come from the local LiYu source tree.
+LIYU-MINI is a contained OctoScript/Splash demonstration of the native [LIYU](https://github.com/chrislearn/OctoSense/tree/liyu/apps/liyu) gift experience. It ships LIYU's 33 sample catalog items plus two clearly marked iPhone model placeholders. People can search and filter products, type a limited Chinese gift or wishlist request, review a draft card, edit sample contacts, build multi-item local wishlists, set a reveal question or passphrase, and open and accept a simulated gift. No action buys or sends anything.
 
-This is a contained App-Hub script app, not a replacement for native Rust LiYu. Enter “给我创建一个心愿单，买一个 iphone” or “送阿宁一个 iphone” to see a **local rule-based** temporary card, choose a model and recipient, and confirm a local record. It is not connected to the system AppCard or AI. There is no account, contact import, payment, order, voucher, delivery, or actual gift sending. Prices and gifts are simulated. Personal text is stored only in the app's local storage jail; users can remove demo contacts, gifts, and wishes.
+The app runs offline for its core flows. `images` fetches eight large product pictures from the public LIYU source repository over HTTPS, keeping the bundle below the Hub's 8 MB limit. With `net` restricted to `raw.githubusercontent.com`, the user may manually synchronize the public demo catalog in this repository; the bundled 35-item catalog remains available if the request fails. It sends no contact, wishlist or gift data to the network. See [PRIVACY.md](PRIVACY.md).
 
-The app can load public HTTPS images with the `images` capability. The catalog has one optional online illustration from GitHub; all images needed for the main flow are bundled. This bundle does not request `net`, so it cannot call arbitrary business APIs. See [INTEGRATION.md](INTEGRATION.md) for the proposed AppCard bridge and [BRIEF.md](BRIEF.md) for the demo scope.
+The current OctoSense shell does not connect a published Splash app's data and actions to the system AppCard, and has no LIYU account host service. LIYU's server also defaults to a local HTTP address, which the sandbox cannot access. The app therefore uses local rule matching and local sample data. See [CAPABILITY-GAP.md](CAPABILITY-GAP.md) for the exact feature boundary.
 
-The submission candidate is `bundle/`. `BRIEF.md` documents the scope, and `build/` holds local review artifacts excluded from Git. The listing uses experimental publisher details. Its privacy-policy URL is a **planned** URL: the `chrislearn/liyu-demo` repository does not exist yet, so the link is not live and the bundle must not be submitted as-is.
+Only `bundle/` is submitted to App Hub. The remaining files are source and documentation. The bundle uses the app ID `liyu-mini`; it has a separate storage jail from the former `liyu-demo`. Old demo data is not migrated automatically.
 
-To validate on macOS with [OctoScript-App-Design-Flow](https://github.com/OctoSense-org/OctoScript-App-Design-Flow):
+## Validate locally
 
 ```sh
-OCTOSENSE_APP_HUB=/path/to/OctoSense-App-Hub tools/octo doctor
-OCTOSENSE_APP_HUB=/path/to/OctoSense-App-Hub tools/octo run /path/to/liyu-demo/bundle --port 8141 --hidden --detach
-OCTOSENSE_APP_HUB=/path/to/OctoSense-App-Hub tools/octo check /path/to/liyu-demo/bundle
+OCTO_HUB=/path/to/hub OCTO_CARD_HOST=/path/to/card-host \
+  ../OctoScript-App-Design-Flow/tools/octo run bundle --port 8141 --hidden --detach
+OCTO_HUB=/path/to/hub OCTO_CARD_HOST=/path/to/card-host \
+  ../OctoScript-App-Design-Flow/tools/octo check bundle
 curl -s 127.0.0.1:8141/quit
 ```
 
-The code and copied LiYu assets follow the source repository's Apache-2.0 license; see `LICENSE`.
-
-## Run inside local OctoSense
-
-The sibling `OctoSense-Demo-Runner` checkout is a separate build of OctoSense `main` with the App Hub and opt-in AppCard features. The signed experimental catalog in `build/desktop-mirror/` contains this demo; its trust anchor and installed-app state are local to `build/`. Build and launch it with:
-
-```sh
-cd ../OctoSense-Demo-Runner
-cargo build --release --locked -p octosense --no-default-features --features app-hub,app-appcard
-cd ../liyu-demo
-./run-octosense-local.sh
-```
-
-The script enables AppCard and points the shell to the `octos` executable found on `PATH`, with an isolated kernel profile under `build/octos-core/`. Open **Applications → AppCard** in the desktop launcher. On a fresh checkout, configure a model in **AI providers** before generating a card: AppCard requires `build/octos-core/.octos/profiles/_main.json`, and an empty core directory causes `profile '_main' is not configured`. This machine's local, Git-ignored `_main` profile was initialized from its existing `octos` model selection and credentials, with file mode `0600`; the original profile was not changed. A prompt for a Beijing weather card then generated and rendered successfully.
-
-Open **App Hub → LIYU-DEMO → Open** as a separate window to see the contained demo. AppCard does not yet route to LIYU-DEMO's local command parser or its data. The local install persists under `build/desktop-apps/`. This is a test catalog, not the public App Hub. The script defaults to the remote-control port `8399`; set `MAKEPAD_REMOTE` to another port if it is occupied.
+The reference host is built from [OctoSense-App-Hub](https://github.com/OctoSense-org/OctoSense-App-Hub). `run-octosense-local.sh` starts the optional local OctoSense shell and AppCard module using the ignored `build/desktop-mirror/` catalog; regenerate that mirror for this bundle before using the launcher. The original LIYU assets are Apache-2.0 licensed; see [LICENSE](LICENSE).

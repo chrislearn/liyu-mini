@@ -11,7 +11,7 @@ if [[ ! -x "$runner/target/release/octosense" ]]; then
     exit 1
 fi
 if [[ ! -f "$mirror/catalog.json" ]]; then
-    echo "Local LIYU-DEMO catalog missing: $mirror/catalog.json" >&2
+    echo "Local LIYU-MINI catalog missing: $mirror/catalog.json" >&2
     exit 1
 fi
 if [[ -z "${OCTOS_APP_CORE_BIN:-}" ]]; then

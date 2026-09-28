@@ -1,18 +1,33 @@
 {
   "schema": 1,
-  "subtitle": "从一句话生成心愿与送礼演示卡片",
-  "description": "LIYU-DEMO 演示用一句话创建待确认的心愿或送礼卡片，选择 13 件示例商品中的型号、核对本机样例联系人、设置题目或暗号，再保存本机心愿或模拟礼物。指令由本地规则识别，尚未接入系统 AppCard 或 AI。商品及价格不是实时销售数据；没有账号、付款、订单、券码、配送或发送功能。商品目录提供一张可选的公开 HTTPS 在线图片。",
+  "subtitle": "从一句话到心愿单与神秘礼卡的本机演示",
+  "description": "LIYU-MINI 以 LIYU 的 33 件示例商品和 2 个 iPhone 型号占位，演示商品搜索、分类、待确认心愿/送礼卡片、联系人编辑、多商品心愿单、谜题或暗号及礼盒揭晓和模拟收下。可手动同步公开 HTTPS 演示目录；部分大图在线加载。商品价格仅为示意。指令由本地规则识别，记录保存在本机。尚未接入系统 AppCard、账户、多人协作、真实支付、订单、券码或配送。",
   "category": "lifestyle",
-  "keywords": ["礼物", "礼卡", "心愿", "指令演示"],
-  "screenshots": ["screenshots/01-command.png", "screenshots/02-draft-card.png", "screenshots/03-wishes.png", "screenshots/04-catalog.png"],
+  "keywords": [
+    "礼物",
+    "礼卡",
+    "心愿单",
+    "商品目录",
+    "指令演示"
+  ],
+  "screenshots": [
+    "screenshots/01-command.png",
+    "screenshots/02-draft-card.png",
+    "screenshots/03-wishes.png",
+    "screenshots/04-catalog.png",
+    "screenshots/05-gift.png",
+    "screenshots/06-contacts.png"
+  ],
   "icon": "assets/icon.svg",
-  "platforms": ["macos"],
+  "platforms": [
+    "macos"
+  ],
   "publisher": {
-    "name": "chrislearn · LIYU-DEMO experiment",
-    "support": "https://github.com/chrislearn",
-    "privacy_policy_url": "https://github.com/chrislearn/liyu-demo/blob/main/PRIVACY.md"
+    "name": "chrislearn",
+    "support": "https://github.com/chrislearn/liyu-mini/issues",
+    "privacy_policy_url": "https://github.com/chrislearn/liyu-mini/blob/main/PRIVACY.md"
   },
-  "release_notes": "扩充为 13 件演示商品、样例联系人和指令到待确认卡片流程；支持型号选择、心愿单、谜题或暗号、本机礼盒及可选在线图片。",
+  "release_notes": "LIYU-MINI 首个发布版：扩展至 LIYU 的 33 件商品及 2 个 iPhone 演示型号，加入目录搜索与筛选、HTTPS 目录同步、多商品心愿单、联系人编辑和礼盒收下演示。",
   "age_rating": "all",
   "license": "Apache-2.0"
 }

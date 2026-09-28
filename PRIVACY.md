@@ -1,9 +1,7 @@
-# LIYU-DEMO privacy policy (experimental draft)
+# LIYU-MINI privacy policy
 
-LIYU-DEMO is a local simulation. It asks for no account password, payment details, verification code, or system contact permission. The three initial contacts are fictional examples. A user can manually add a contact label, relationship and note.
+LIYU-MINI is an experimental local gift-flow demonstration. It does not ask for an account password, verification code, payment details or system contact permission. Its initial contact names are fictional. You may enter contact labels, relationships and notes; wishlist names and notes; and simulated gift recipients, messages, questions, answers and reveal status. The app stores these records in its own on-device storage area (`mini-v1.json`). You can remove individual contacts, wishlist items, wishlists and gifts in the app, or delete the app's data to remove all records.
 
-The app stores local contacts, wishlist titles and notes, simulated gift recipient labels and messages, reveal questions and answers, and reveal state in its own on-device storage area. The game answer is ordinary demo content, not an authentication secret. The interface can remove individual contacts, wishes and gifts; deleting the app data removes all records. Version 0.2 uses `demo-v2.json`; an earlier `demo.json` may remain in the app's storage area until the app data is cleared.
+The app bundles its essential catalog data and most product images. Eight larger product images may load on demand from `raw.githubusercontent.com` over HTTPS. If you choose **同步公开演示目录**, the app requests `catalog/products.json` from the same host and displays that public demonstration data. GitHub may receive ordinary request metadata such as IP address and user agent. LIYU-MINI does not upload your contacts, wishes, messages, reveal answers or local records, and it has no analytics.
 
-The catalog screen requests one optional public illustration from `raw.githubusercontent.com` over HTTPS. The image host may receive the device's network metadata as part of that request. The app does not send contacts, wishes, messages, or answers to that host. All essential product pictures are included locally, so the main demonstration also works offline. There is no other app-initiated HTTP API request or analytics in this version.
-
-This policy is a draft until the publisher reviews and publishes it at the listing URL. For questions, use the publisher profile linked in the listing.
+The prices and product descriptions are examples, not current offers. The app does not place an order, process payment, send a gift, redeem a voucher or arrange delivery. For questions, use the [LIYU-MINI issue tracker](https://github.com/chrislearn/liyu-mini/issues).
