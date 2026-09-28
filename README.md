@@ -21,10 +21,15 @@ The code and copied LiYu assets follow the source repository's Apache-2.0 licens
 
 ## Run inside local OctoSense
 
-The sibling `OctoSense-Demo-Runner` checkout is a separate build of OctoSense `main` with the App Hub feature. The signed experimental catalog in `build/desktop-mirror/` contains this demo; its trust anchor and installed-app state are local to `build/`. After building the runner once, launch it with:
+The sibling `OctoSense-Demo-Runner` checkout is a separate build of OctoSense `main` with the App Hub and opt-in AppCard features. The signed experimental catalog in `build/desktop-mirror/` contains this demo; its trust anchor and installed-app state are local to `build/`. Build and launch it with:
 
 ```sh
+cd ../OctoSense-Demo-Runner
+cargo build --release --locked -p octosense --no-default-features --features app-hub,app-appcard
+cd ../liyu-demo
 ./run-octosense-local.sh
 ```
 
-Open **App Hub → LIYU-DEMO → Open** if the app window is not already open. The local install persists under `build/desktop-apps/`. This is a test catalog, not the public App Hub. The script defaults to the remote-control port `8399`; set `MAKEPAD_REMOTE` to another port if it is occupied.
+The script enables AppCard and points the shell to the `octos` executable found on `PATH`, with an isolated kernel profile under `build/octos-core/`. Open **Applications → AppCard** in the desktop launcher. On a fresh checkout, configure a model in **AI providers** before generating a card: AppCard requires `build/octos-core/.octos/profiles/_main.json`, and an empty core directory causes `profile '_main' is not configured`. This machine's local, Git-ignored `_main` profile was initialized from its existing `octos` model selection and credentials, with file mode `0600`; the original profile was not changed. A prompt for a Beijing weather card then generated and rendered successfully.
+
+Open **App Hub → LIYU-DEMO → Open** as a separate window to see the contained demo. AppCard does not yet route to LIYU-DEMO's local command parser or its data. The local install persists under `build/desktop-apps/`. This is a test catalog, not the public App Hub. The script defaults to the remote-control port `8399`; set `MAKEPAD_REMOTE` to another port if it is occupied.
