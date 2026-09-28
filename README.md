@@ -16,3 +16,13 @@ curl -s 127.0.0.1:8141/quit
 ```
 
 The code and copied LiYu assets follow the source repository's Apache-2.0 license; see `LICENSE`.
+
+## Run inside local OctoSense
+
+The sibling `OctoSense-Demo-Runner` checkout is a separate build of OctoSense `main` with the App Hub feature. The signed experimental catalog in `build/desktop-mirror/` contains this demo; its trust anchor and installed-app state are local to `build/`. After building the runner once, launch it with:
+
+```sh
+./run-octosense-local.sh
+```
+
+Open **App Hub → LIYU-DEMO → Open** if the app window is not already open. The local install persists under `build/desktop-apps/`. This is a test catalog, not the public App Hub. The script defaults to the remote-control port `8399`; set `MAKEPAD_REMOTE` to another port if it is occupied.
