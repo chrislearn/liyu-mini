@@ -1,8 +1,10 @@
 # LIYU-DEMO
 
-An offline OctoScript/Splash demonstration of a small part of [LiYu](https://github.com/OctoSense-org/OctoSense/tree/liyu/apps/liyu). It contains a five-item catalog, simulated gift cards, a simple reveal puzzle, and a local wishlist. The product artwork and icon come from the LiYu source tree.
+An OctoScript/Splash demonstration of LiYu's request-to-card experience. It contains 13 illustrative products, three sample contacts plus manual contact entry, structured wishlists, and simulated gifts with question, passphrase, or direct reveal. The product artwork and icon come from the local LiYu source tree.
 
-This is a contained App-Hub script app, not a replacement for the native Rust LiYu. It has no account, contact import, payment, order, voucher, delivery, AI, or network feature. Prices and gift delivery are simulated. Personal text is stored only in the app's local storage jail; users can remove their demo gifts and wishes.
+This is a contained App-Hub script app, not a replacement for native Rust LiYu. Enter “给我创建一个心愿单，买一个 iphone” or “送阿宁一个 iphone” to see a **local rule-based** temporary card, choose a model and recipient, and confirm a local record. It is not connected to the system AppCard or AI. There is no account, contact import, payment, order, voucher, delivery, or actual gift sending. Prices and gifts are simulated. Personal text is stored only in the app's local storage jail; users can remove demo contacts, gifts, and wishes.
+
+The app can load public HTTPS images with the `images` capability. The catalog has one optional online illustration from GitHub; all images needed for the main flow are bundled. This bundle does not request `net`, so it cannot call arbitrary business APIs. See [INTEGRATION.md](INTEGRATION.md) for the proposed AppCard bridge and [BRIEF.md](BRIEF.md) for the demo scope.
 
 The submission candidate is `bundle/`. `BRIEF.md` documents the scope, and `build/` holds local review artifacts excluded from Git. The listing uses experimental publisher details. Its privacy-policy URL is a **planned** URL: the `chrislearn/liyu-demo` repository does not exist yet, so the link is not live and the bundle must not be submitted as-is.
 

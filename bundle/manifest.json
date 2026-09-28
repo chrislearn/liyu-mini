@@ -1,12 +1,13 @@
 {
   "capabilities": [
-    "storage"
+    "storage",
+    "images"
   ],
   "id": "liyu-demo",
   "integrity": {
-    "bundle_blake3": "0addeab4bb73192cf5fa5800ef094fc9a09cf29e9fc503b9b7c1bc7861b8b5ec"
+    "bundle_blake3": "1034adb84120e35cfd97a6c8c1a82f9233c549f68225cb98b14a6d28220d32de"
   },
   "name": "LIYU-DEMO",
   "schema": 1,
-  "version": "0.1.0"
+  "version": "0.2.0"
 }

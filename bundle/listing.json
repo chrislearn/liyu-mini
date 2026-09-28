@@ -1,10 +1,10 @@
 {
   "schema": 1,
-  "subtitle": "离线体验挑礼、礼卡和惊喜揭晓",
-  "description": "LIYU-DEMO 是一个离线互动样例。浏览五件示例礼物，写一张仅存于本机的模拟礼卡，解开小谜题查看礼物，或记录心愿。示例价格不代表实际销售；没有账号、付款、真实商品、券码、配送或发送功能。",
+  "subtitle": "从一句话生成心愿与送礼演示卡片",
+  "description": "LIYU-DEMO 演示用一句话创建待确认的心愿或送礼卡片，选择 13 件示例商品中的型号、核对本机样例联系人、设置题目或暗号，再保存本机心愿或模拟礼物。指令由本地规则识别，尚未接入系统 AppCard 或 AI。商品及价格不是实时销售数据；没有账号、付款、订单、券码、配送或发送功能。商品目录提供一张可选的公开 HTTPS 在线图片。",
   "category": "lifestyle",
-  "keywords": ["礼物", "礼卡", "心愿", "离线演示"],
-  "screenshots": ["screenshots/01-discover.png", "screenshots/02-gift-box.png", "screenshots/03-wishes.png"],
+  "keywords": ["礼物", "礼卡", "心愿", "指令演示"],
+  "screenshots": ["screenshots/01-command.png", "screenshots/02-draft-card.png", "screenshots/03-wishes.png", "screenshots/04-catalog.png"],
   "icon": "assets/icon.svg",
   "platforms": ["macos"],
   "publisher": {
@@ -12,7 +12,7 @@
     "support": "https://github.com/chrislearn",
     "privacy_policy_url": "https://github.com/chrislearn/liyu-demo/blob/main/PRIVACY.md"
   },
-  "release_notes": "首次离线演示版：商品浏览、模拟礼卡、礼盒揭晓和本机心愿单。",
+  "release_notes": "扩充为 13 件演示商品、样例联系人和指令到待确认卡片流程；支持型号选择、心愿单、谜题或暗号、本机礼盒及可选在线图片。",
   "age_rating": "all",
   "license": "Apache-2.0"
 }
