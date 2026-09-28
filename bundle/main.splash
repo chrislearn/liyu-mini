@@ -93,7 +93,7 @@ let Entry = TextInput{width: Fill height: 44
 
 SolidView{width: Fill height: Fill flow: Down draw_bg.color: #xf4f8f7
     RoundedView{width: Fill height: Fit flow: Down padding: 17 spacing: 5 draw_bg.color: #x16304a
-        Label{text: "礼遇  LiYu Demo" draw_text.color: #xffffff draw_text.text_style: theme.font_bold{font_size: 25}}
+        Label{text: "LIYU-DEMO" draw_text.color: #xffffff draw_text.text_style: theme.font_bold{font_size: 25}}
         Label{text: "把一份心意藏进礼物里" draw_text.color: #xc9e1e3 draw_text.text_style.font_size: 14}
     }
     RoundedView{width: Fill height: Fit padding: 10 margin: Inset{left: 12 right: 12 top: 10 bottom: 0} draw_bg.color: #xfff0d8

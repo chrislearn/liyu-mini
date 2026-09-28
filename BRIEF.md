@@ -1,4 +1,4 @@
-# LiYu Demo brief
+# LIYU-DEMO brief
 
 An offline interactive preview of LiYu's anonymous-gifting idea. No account, payment, contact, delivery, voucher, network request, or AI runs in this version.
 

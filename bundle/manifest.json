@@ -4,9 +4,9 @@
   ],
   "id": "liyu-demo",
   "integrity": {
-    "bundle_blake3": "15b44c0ff4f21a71b43f1e9b427dc36d8cfa5b78cd5fbe6013d6d16231d6a859"
+    "bundle_blake3": "0addeab4bb73192cf5fa5800ef094fc9a09cf29e9fc503b9b7c1bc7861b8b5ec"
   },
-  "name": "礼遇 Demo",
+  "name": "LIYU-DEMO",
   "schema": 1,
   "version": "0.1.0"
 }

@@ -1,4 +1,4 @@
-# 礼遇 Demo
+# LIYU-DEMO
 
 An offline OctoScript/Splash demonstration of a small part of [LiYu](https://github.com/OctoSense-org/OctoSense/tree/liyu/apps/liyu). It contains a five-item catalog, simulated gift cards, a simple reveal puzzle, and a local wishlist. The product artwork and icon come from the LiYu source tree.
 
