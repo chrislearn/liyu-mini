@@ -1,0 +1,12 @@
+{
+  "capabilities": [
+    "storage"
+  ],
+  "id": "liyu-demo",
+  "integrity": {
+    "bundle_blake3": "15b44c0ff4f21a71b43f1e9b427dc36d8cfa5b78cd5fbe6013d6d16231d6a859"
+  },
+  "name": "礼遇 Demo",
+  "schema": 1,
+  "version": "0.1.0"
+}
