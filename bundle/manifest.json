@@ -1,19 +1,19 @@
 {
   "capabilities": [
-    "storage",
     "images",
+    "liyu",
     "net"
   ],
   "id": "liyu-mini",
   "integrity": {
-    "bundle_blake3": "f534da289b34aba340b2044bb4f033ddbbcd726cba59290ec7eaf6af7a30a944"
+    "bundle_blake3": "81d1ec984aa581af7905ac67c8ad0483391f76d4b1fe84f99766febfe51c876d"
   },
   "name": "LIYU-MINI",
   "network": {
     "hosts": [
-      "raw.githubusercontent.com"
+      "liyu.localhost"
     ]
   },
   "schema": 1,
-  "version": "1.0.0"
+  "version": "1.0.19"
 }

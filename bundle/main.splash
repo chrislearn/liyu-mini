@@ -1,441 +1,1506 @@
-// LIYU-MINI: local intent-to-card simulation, never an order or message.
+// LIYU-MINI: account credentials and bearer sessions belong to the host.
+// Every business request is mediated by its LIYU host service.
 let assets = "{{assets}}"
-let products = [
-    {name: "iPhone · 演示标准款", kind: "手机 · 256GB", category: "数码", price: "型号占位", image: "", remote: false, desc: "型号选择演示；不代表真实在售 SKU。"},
-    {name: "iPhone · 演示 Pro 款", kind: "手机 · 512GB", category: "数码", price: "型号占位", image: "", remote: false, desc: "规格选择演示；未连接价格或库存。"},
-    {name: "三顿半精品咖啡礼盒", kind: "咖啡 · 24 颗装 · 包邮", category: "咖啡茶饮", price: "¥109 演示价", image: "p00.png", remote: true, desc: "超即溶的精品咖啡，冷水牛奶都能三秒化开。24 颗 6 种风味，一个月的早晨都有着落。"},
-    {name: "星巴克中杯拿铁电子券", kind: "咖啡 · 全国门店通用 · 30 天有效", category: "咖啡茶饮", price: "¥35 演示价", image: "p01.png", remote: false, desc: "一杯中杯拿铁，想喝的时候去门店出示券码就行。"},
-    {name: "喜茶多肉葡萄兑换券", kind: "奶茶 · 全国门店通用 · 30 天有效", category: "咖啡茶饮", price: "¥29 演示价", image: "p02.png", remote: false, desc: "招牌多肉葡萄，一整杯的果肉。门店或小程序都能兑。"},
-    {name: "电影通兑票", kind: "电影票 · 2D 场次通兑 · 60 天有效", category: "电影", price: "¥49 演示价", image: "p03.png", remote: false, desc: "全国大部分影院 2D 场次通兑，挑一部想看的片子就好。"},
-    {name: "电影双人套票", kind: "电影票 · 两张通兑票 + 爆米花套餐", category: "电影", price: "¥98 演示价", image: "p04.png", remote: true, desc: "两张票加一份爆米花套餐 —— 送了这个，下次见面就有了理由。"},
-    {name: "帆布托特包", kind: "包 · 米白 · 加厚帆布 · 包邮", category: "潮流生活", price: "¥79 演示价", image: "p05.png", remote: true, desc: "16 安加厚帆布，装得下电脑和一天的零碎。越用越软。"},
-    {name: "香薰蜡烛", kind: "香薰 · 无花果香 · 200g · 包邮", category: "潮流生活", price: "¥88 演示价", image: "p06.png", remote: false, desc: "无花果叶和一点木质调，点燃 40 小时。睡前点一会儿，房间是暖的。"},
-    {name: "拍立得相纸", kind: "相纸 · mini 白边 · 40 张 · 包邮", category: "潮流生活", price: "¥59 演示价", image: "p07.png", remote: false, desc: "mini 规格白边相纸 40 张，适配常见的拍立得相机。"},
-    {name: "潮玩盲盒", kind: "盲盒 · 随机一款 · 有隐藏款 · 包邮", category: "惊喜盲盒", price: "¥69 演示价", image: "p08.png", remote: true, desc: "12 款常规加 1 款隐藏，拆之前谁也不知道是哪一只。"},
-    {name: "文具盲盒", kind: "盲盒 · 6 件随机 · 包邮", category: "惊喜盲盒", price: "¥39 演示价", image: "p09.png", remote: false, desc: "胶带、便签、印章、钢笔…… 随机 6 件，做手帐的人会喜欢。"},
-    {name: "小蛋糕兑换券", kind: "蛋糕 · 6 寸 · 指定门店自提", category: "甜点鲜花", price: "¥128 演示价", image: "p10.png", remote: false, desc: "6 寸鲜奶蛋糕，提前一天在小程序预约，门店自提。"},
-    {name: "向日葵花束", kind: "鲜花 · 3 枝装 · 同城配送", category: "甜点鲜花", price: "¥99 演示价", image: "p11.png", remote: true, desc: "三枝向日葵配尤加利叶，同城当天配送。"},
-    {name: "澄光 Q5 55 英寸 4K 电视", kind: "电视 · 55 英寸 · 4K · 包邮包安装", category: "数码影音", price: "¥2699 演示价", image: "p12.png", remote: true, desc: "55 英寸 4K 屏，低蓝光护眼模式。开机无广告，老人小孩都会用。"},
-    {name: "澄光 Q7 65 英寸 4K 电视", kind: "电视 · 65 英寸 · 4K 120Hz · 包邮包安装", category: "数码影音", price: "¥3999 演示价", image: "p13.png", remote: false, desc: "65 英寸 4K 120Hz 高刷，接游戏机不拖影。客厅一面墙刚刚好。"},
-    {name: "声屿 Mini 43 英寸电视", kind: "电视 · 43 英寸 · 全高清 · 包邮", category: "数码影音", price: "¥1299 演示价", image: "p14.png", remote: false, desc: "43 英寸全高清，放卧室或出租屋正合适。自带音箱不闷。"},
-    {name: "澄光 Q9 75 英寸 Mini LED 电视", kind: "电视 · 75 英寸 · Mini LED · 包邮包安装", category: "数码影音", price: "¥6999 演示价", image: "p15.png", remote: false, desc: "75 英寸 Mini LED，暗场景也看得清。给新家客厅的一份大礼。"},
-    {name: "声屿 Pebble 蓝牙音箱", kind: "音箱 · 蓝牙 5.3 · IP67 防水 · 包邮", category: "数码影音", price: "¥399 演示价", image: "p16.png", remote: false, desc: "鹅卵石大小，扔进包里就走。防水，浴室和野餐都能放。"},
-    {name: "声屿 Air 降噪耳机", kind: "耳机 · 头戴式 · 主动降噪 · 包邮", category: "数码影音", price: "¥899 演示价", image: "p17.png", remote: false, desc: "主动降噪，地铁上也能听清轻音乐。一次充电用 40 小时。"},
-    {name: "光语 便携投影仪", kind: "投影仪 · 1080P · 自动对焦 · 包邮", category: "数码影音", price: "¥1999 演示价", image: "p18.png", remote: false, desc: "往白墙一照就是 100 寸。自动对焦，躺在床上看电影。"},
-    {name: "暖物 可视空气炸锅 5L", kind: "空气炸锅 · 5L · 可视窗 · 包邮", category: "家居家电", price: "¥329 演示价", image: "p19.png", remote: false, desc: "透明可视窗，炸到几分熟一眼就知道。5L 够三四个人吃。"},
-    {name: "暖物 保温电热水壶", kind: "水壶 · 1.7L · 恒温 · 包邮", category: "家居家电", price: "¥159 演示价", image: "p20.png", remote: false, desc: "五档恒温，泡茶冲奶都合适。304 不锈钢内胆。"},
-    {name: "栖木 全棉四件套", kind: "床品 · 1.8m 床 · 60 支全棉 · 包邮", category: "家居家电", price: "¥459 演示价", image: "p21.png", remote: false, desc: "60 支长绒棉，奶油色，越洗越软。搬新家换一套新床品。"},
-    {name: "栖木 陶瓷餐具礼盒", kind: "餐具 · 8 件套 · 可进洗碗机 · 包邮", category: "家居家电", price: "¥269 演示价", image: "p22.png", remote: true, desc: "两人份的碗盘杯 8 件，哑光釉面，可进洗碗机和微波炉。"},
-    {name: "栖木 氛围落地灯", kind: "灯 · 暖光 · 三档调光 · 包邮", category: "家居家电", price: "¥239 演示价", image: "p23.png", remote: false, desc: "暖白两色、三档亮度。沙发边放一盏，晚上就不想开大灯了。"},
-    {name: "琴叶榕盆栽", kind: "绿植 · 80cm 高 · 含盆 · 同城配送", category: "家居家电", price: "¥139 演示价", image: "p24.png", remote: false, desc: "80 厘米的琴叶榕，叶子大、好养活。放新家客厅一角。"},
-    {name: "多肉组合盆栽", kind: "绿植 · 6 株 · 陶盆 · 包邮", category: "家居家电", price: "¥59 演示价", image: "p25.png", remote: false, desc: "六株多肉拼在一个陶盆里，两周浇一次水就行。"},
-    {name: "小橡 轻便婴儿推车", kind: "推车 · 可登机 · 5.8kg · 包邮", category: "母婴", price: "¥1299 演示价", image: "p26.png", remote: false, desc: "一只手就能收起来，5.8 公斤，能带上飞机。"},
-    {name: "小橡 新生儿礼盒", kind: "母婴礼盒 · 0–6 个月 · 纯棉 9 件 · 包邮", category: "母婴", price: "¥369 演示价", image: "p27.png", remote: true, desc: "纯棉和尚服、口水巾、小袜子 9 件，满月礼刚刚好。"},
-    {name: "木作益智积木", kind: "玩具 · 100 块 · 3 岁以上 · 包邮", category: "母婴", price: "¥199 演示价", image: "p28.png", remote: false, desc: "100 块榉木积木，水性漆，棱角都磨圆了。"},
-    {name: "随行保温杯", kind: "杯子 · 480ml · 12 小时保温 · 包邮", category: "潮流生活", price: "¥129 演示价", image: "p29.png", remote: false, desc: "一只手能开盖，放包里不漏。热水放到下午还烫。"},
-    {name: "暖物 扫拖机器人", kind: "扫地机 · 扫拖一体 · 自动集尘 · 包邮", category: "家居家电", price: "¥1899 演示价", image: "p30.png", remote: false, desc: "扫拖一体，自动倒尘。搬进新家，地板交给它。"},
-    {name: "声屿 S6 55 英寸 QLED 电视", kind: "电视 · 55 英寸 · QLED · 包邮包安装", category: "数码影音", price: "¥2499 演示价", image: "p31.png", remote: false, desc: "55 英寸量子点屏，颜色比普通 4K 更鲜亮。窄边框，挂在卧室不占地方。"},
-    {name: "澄光 Q6 65 英寸 4K 电视", kind: "电视 · 65 英寸 · 4K · 包邮包安装", category: "数码影音", price: "¥2999 演示价", image: "p32.png", remote: false, desc: "65 英寸 4K，三千块以内能买到的大屏。护眼模式、开机无广告。"}
-]
-let tab = "command"
+let products = []
+let categories = [{id: "", name: "全部"}]
+let friends = []
+let my_wishes = []
+let friend_wishes = []
+let inbox = []
+let outbox = []
+let contracts = []
+let contract_templates = []
+let account = nil
+let auth_state = "checking"
+let auth_message = "正在检查登录状态…"
+let auth_generation = 0
+let profile = nil
+let wallet = nil
+let addresses = []
+let wish_previews = []
+let wish_detail = nil
+let edit_title = ""
+let edit_note = ""
+let edit_date = ""
+let gift_detail = nil
+let gift_side = "inbox"
+let shop_side = "shop"
+let pact_side = "mine"
+let contact_index = -1
+let contact_id = -1
+let contact_section_kind = "wishes"
+let contact_wish_origin = "contact_detail"
+let gift_from_contact = false
+let friend_edit_field = ""
+let friend_edit_value = ""
+let tab = "discover"
 let stage = "browse"
-let selected = -1
-let active_gift = -1
-let gifts = []
-let wishes = []
-let contacts = []
+let selected_product = -1
+let category_index = 0
+let product_search = ""
+let status = "正在连接 LIYU 服务…"
 let notice = ""
-let draft_recipient = ""
-let draft_message = ""
-let draft_wish = ""
 let draft_command = ""
 let draft_kind = ""
 let draft_product = -1
+let draft_wish_item_id = -1
 let show_all_products = false
-let draft_contact = -1
-let draft_title = "我的心愿单"
-let draft_question = "我们第一次一起去哪里？"
-let draft_answer = "公园"
-let draft_unlock = "题目"
-let draft_name = ""
-let draft_relation = "朋友"
-let draft_note = "生日"
+let draft_recipient_ids = []
+let draft_title = ""
+let draft_note = ""
+let draft_date = ""
+let draft_expiry_hours = "24"
+let draft_message = ""
+let draft_contract = ""
+let draft_clue = ""
+let draft_answer = ""
+let draft_error = ""
+let draft_unlock = "free"
+let draft_occasion = "other"
+let draft_audience = -1
+let draft_item_mode = "exact"
+let draft_vague_kind = ""
+let draft_budget_cents = 0
+let draft_wants = ""
+let quote = nil
+let order_key = ""
 let guess = ""
-let catalog_status = "离线目录已就绪；可选同步公开演示目录。"
-let product_search = ""
-let category_names = ["全部", "咖啡茶饮", "电影", "潮流生活", "惊喜盲盒", "甜点鲜花", "数码影音", "家居家电", "母婴", "数码"]
-let category_index = 0
-let editing_contact = -1
+let recipient_name = ""
+let recipient_phone = ""
+let recipient_address = ""
+let edit_expiry_hours = ""
+let desktop_mode = false
 
-fn product_image(p){
-    if p.image == "" { return "" }
-    if p.remote { return "https://raw.githubusercontent.com/chrislearn/OctoSense/liyu/apps/liyu/resources/products/" + p.image }
-    return assets + "/assets/" + p.image
-}
-fn product_visible(p){
-    if category_index > 0 && p.category != category_names[category_index] { return false }
-    let q = product_search.trim()
-    if q == "" { return true }
-    if p.name.search(q) >= 0 || p.kind.search(q) >= 0 || p.category.search(q) >= 0 { return true }
-    if (q == "iphone" || q == "IPHONE") && p.name.search("iPhone") >= 0 { return true }
-    return false
-}
-fn next_category(){ category_index = (category_index + 1) % category_names.len(); refresh() }
-fn sync_catalog(){
-    catalog_status = "正在同步公开演示目录…"; refresh()
-    net.http_request(net.HttpRequest{url: "https://raw.githubusercontent.com/chrislearn/liyu-mini/main/catalog/products.json" method: net.HttpMethod.GET headers: {"User-Agent": "LIYU-MINI/1.0"}}) do net.HttpEvents{
-        on_response: |res| {
-            if res.status_code != 200 { catalog_status = "在线目录暂不可用，继续使用包内商品。"; refresh(); return }
-            let data = res.body.to_string().parse_json()
-            if data == nil || data.schema != 1 || data.items == nil || data.items.len() != 35 {
-                catalog_status = "在线目录格式不符，继续使用包内商品。"; refresh(); return
-            }
-            for i in data.items.len() {
-                let p = data.items[i]
-                if p.name == nil || p.kind == nil || p.category == nil || p.price == nil || p.image == nil || p.remote == nil || p.desc == nil {
-                    catalog_status = "在线目录字段不完整，继续使用包内商品。"; refresh(); return
-                }
-            }
-            products = data.items
-            catalog_status = "公开演示目录已同步；金额仍仅供演示。"
-            refresh()
-        }
-        on_error: |_err| { catalog_status = "网络不可用，继续使用包内商品。"; refresh() }
-    }
-}
-
-fn save(){ fs.write("mini-v1.json", {gifts: gifts, wishes: wishes, contacts: contacts}.to_json()) }
-fn load(){
-    if fs.exists("mini-v1.json") {
-        let saved = fs.read("mini-v1.json").parse_json()
-        if saved.gifts != nil { gifts = saved.gifts }
-        if saved.wishes != nil { wishes = saved.wishes }
-        if saved.contacts != nil { contacts = saved.contacts }
-    } else {
-        contacts = [{name: "阿宁", relation: "朋友", note: "生日 · 喜欢数码"}, {name: "小林", relation: "同事", note: "感谢 · 喜欢咖啡"}, {name: "妈妈", relation: "家人", note: "节日 · 喜欢鲜花"}, {name: "爸爸", relation: "家人", note: "生日 · 喜欢电影"}, {name: "小雨", relation: "朋友", note: "乔迁 · 喜欢家居"}, {name: "阿哲", relation: "同学", note: "毕业 · 喜欢耳机"}]
-        gifts = [{product: 8, recipient: "阿宁", message: "愿你的每个夜晚都有一点温柔的光。", unlock: "题目", question: "我们第一次一起去哪里？", answer: "公园", status: "sealed"}]
-        wishes = [{title: "周末的小心愿", items: [{product: 5, note: "找一个晚上一起看电影"}]}]
-        save()
-    }
-    ui.content.render()
-}
 fn refresh(){ ui.content.render() }
-fn go(name){ tab = name; stage = "browse"; active_gift = -1; notice = ""; refresh() }
-fn choose(i){ selected = i; stage = "detail"; notice = ""; refresh() }
+fn pad2(n){ if n < 10 { return "0" + n } return "" + n }
+fn today(){ let t = local_time(time_now() + 8 * 3600); return "" + t.year + "-" + pad2(t.month) + "-" + pad2(t.day) }
+fn expiry_time(epoch){ let t = local_time(epoch + 8 * 3600); return "" + t.year + "-" + pad2(t.month) + "-" + pad2(t.day) + " " + pad2(t.hour) + ":" + pad2(t.minute) }
+fn expiry_short(epoch){ let t = local_time(epoch + 8 * 3600); return "" + t.month + "/" + t.day + " " + pad2(t.hour) + ":" + pad2(t.minute) }
+fn expiry_hours(){ let s = draft_expiry_hours.trim(); if !regex("^[0-9]+$", "").test(s) { return -1 }; let n = s.to_f64(); if n < 1 || n > 720 { return -1 }; return floor(n) }
+fn money(cents){ if cents % 100 == 0 { return "¥" + floor(cents / 100) } return "¥" + floor(cents / 100) + "." + pad2(cents % 100) }
+fn product_by_id(id){ for p in products { if p.id == id { return p } } return nil }
+fn product_for_item(item){
+    if item.product_id != nil { return product_by_id(item.product_id) }
+    for p in products { if p.kind == item.kind && (item.max_price_cents == 0 || p.price_cents <= item.max_price_cents) { return p } }
+    for p in products { if p.name.search(item.kind) >= 0 && (item.max_price_cents == 0 || p.price_cents <= item.max_price_cents) { return p } }
+    return nil
+}
+fn open_wish_count(w){ let n = 0; for item in w.items { if item.status == "open" { n = n + 1 } } return n }
+fn wish_state_name(state){ if state == "open" { return "还没人送" }; if state == "by_me" { return "由我送出" }; return "已有人送" }
+fn product_image(p){ return "https://liyu.localhost:8443" + p.image_detail_url }
+fn category_name(id){ for c in categories { if c.id == id { return c.name } } return id }
+fn product_meta(p){
+    let result = category_name(p.category) + " · " + p.brand
+    for tag in p.tags { result = result + " · " + tag }
+    return result
+}
+fn initial(name){ let parts = name.split(""); if parts.len() > 1 { return parts[1] } return "?" }
+fn preview_by_id(id){ for w in wish_previews { if w.id == id { return w } } return nil }
+fn occasion_name(kind){
+    if kind == "birthday" { return "生日" }
+    if kind == "wedding" { return "结婚" }
+    if kind == "housewarming" { return "乔迁" }
+    if kind == "graduation" { return "毕业" }
+    if kind == "baby" { return "宝宝" }
+    return "其他"
+}
+fn visible_product(p){
+    if category_index > 0 && p.category != categories[category_index].id { return false }
+    let q = product_search.trim()
+    return q == "" || p.name.search(q) >= 0 || p.kind.search(q) >= 0 || p.description.search(q) >= 0
+}
+fn state_name(s){
+    if s == "sealed" { return "待打开" }
+    if s == "opened" || s == "revealed" || s == "accepted" || s == "handled" || s == "exchanged" || s == "cashed_out" { return "已打开" }
+    if s == "withdrawn" { return "已撤回" }
+    if s == "expired" { return "过期退回" }
+    return s
+}
+fn pact_count(side){ let n = 0; for c in contracts { if (side == "mine" && c.mine) || (side == "theirs" && !c.mine) { n = n + 1 } } return n }
+fn fulfilled_count(){ let n = 0; for c in contracts { if c.mine && c.status == "fulfilled" { n = n + 1 } } return n }
+fn contract_state(status){ if status == "fulfilled" { return "已兑现" }; if status == "waived" { return "已免除" }; return "待兑现" }
+fn clear_account_data(){
+    auth_generation = auth_generation + 1
+    products = []; categories = [{id: "", name: "全部"}]; friends = []
+    my_wishes = []; friend_wishes = []; inbox = []; outbox = []; contracts = []; contract_templates = []
+    draft_recipient_ids = []
+    account = nil; profile = nil; wallet = nil; addresses = []; wish_previews = []
+    wish_detail = nil; gift_detail = nil; quote = nil
+    tab = "discover"; stage = "browse"; notice = ""; contact_index = -1; contact_id = -1; gift_from_contact = false
+}
+fn auth_lost(message){ clear_account_data(); auth_state = "signed_out"; auth_message = message; refresh() }
+fn auth_ready(){ clear_account_data(); auth_state = "signed_in"; auth_message = ""; refresh(); load_all() }
+fn check_auth(){
+    host.request("liyu.status", {}, fn(r){
+        if !r.is_ok { auth_state = "error"; auth_message = r.error; refresh(); return }
+        if r.data.signed_in { auth_ready() }
+        else { auth_lost(if r.data.expired { "登录已过期，请重新登录。" } else { "请登录或注册 LIYU 账号。" }) }
+    })
+}
+fn sign_in(){
+    auth_message = "请在 LIYU 登录弹层中继续。"; refresh()
+    host.request("liyu.sign_in", {}, fn(r){
+        if r.is_ok { auth_ready() }
+        else { auth_state = "signed_out"; auth_message = r.error; refresh() }
+    })
+}
+fn logout(){
+    auth_lost("已退出 LIYU 账号。")
+    host.request("liyu.logout", {}, fn(r){ if !r.is_ok { auth_message = r.error; refresh() } })
+}
+fn get(path, kind){
+    if auth_state != "signed_in" { return }
+    let generation = auth_generation
+    host.request("liyu.request", {method: "GET", path: path}, fn(r){
+            if generation != auth_generation { return }
+            if !r.is_ok { status = r.error + "（" + kind + "）"; refresh(); return }
+            if r.data.status == 401 { auth_lost("登录已过期，请重新登录。"); return }
+            if r.data.status < 200 || r.data.status >= 300 {
+                status = "LIYU 服务返回 " + r.data.status + "（" + kind + "）"; refresh(); return
+            }
+            let data = r.data.body
+            if data == nil { status = "LIYU 服务响应无法解析（" + kind + "）"; refresh(); return }
+            if kind == "catalog" { products = data.items; status = "已连接 LIYU 服务 · " + products.len() + " 件商品" }
+            if kind == "categories" { categories = [{id: "", name: "全部"}]; for c in data { categories.push(c) } }
+            if kind == "friends" {
+                friends = data
+                if contact_id >= 0 {
+                    contact_index = -1
+                    for i in friends.len() { if friends[i].id == contact_id { contact_index = i } }
+                }
+                let valid = []
+                for id in draft_recipient_ids { for friend in friends { if friend.id == id { valid.push(id) } } }
+                if valid.len() != draft_recipient_ids.len() { quote = nil }
+                draft_recipient_ids = valid
+            }
+            if kind == "mine" { my_wishes = data }
+            if kind == "friend_wishes" { friend_wishes = data; wish_previews = []; for w in data { get("/wishlists/" + w.id, "preview") } }
+            if kind == "preview" { wish_previews.push(data) }
+            if kind == "inbox" { inbox = data }
+            if kind == "outbox" { outbox = data }
+            if kind == "contracts" { contracts = data }
+            if kind == "contract_templates" { contract_templates = data }
+            if kind == "me" { account = data }
+            if kind == "profile" { profile = data }
+            if kind == "wallet" { wallet = data }
+            if kind == "addresses" { addresses = data }
+            if kind == "wish_detail" { wish_detail = data }
+            if kind == "gift_detail" { gift_detail = data }
+            refresh()
+    })
+}
+fn mutate(path, method, payload, done){
+    if auth_state != "signed_in" { return }
+    let generation = auth_generation
+    host.request("liyu.request", {method: method, path: path, body: payload}, fn(r){
+        if generation != auth_generation { return }
+        if !r.is_ok { notice = r.error; refresh(); return }
+        if r.data.status == 401 { auth_lost("登录已过期，请重新登录。"); return }
+        if r.data.status < 200 || r.data.status >= 300 {
+            notice = "服务端拒绝操作（HTTP " + r.data.status + "）：" + r.data.body.error; refresh(); return
+        }
+        done(r.data.body)
+    })
+}
+fn load_all(){
+    get("/catalog/categories", "categories")
+    get("/catalog?limit=50", "catalog")
+    get("/me", "me")
+    get("/me/profile", "profile")
+    get("/wallet", "wallet")
+    get("/me/addresses", "addresses")
+    get("/friends", "friends")
+    get("/wishlists/mine", "mine")
+    get("/wishlists/friends", "friend_wishes")
+    get("/gifts/inbox", "inbox")
+    get("/gifts/outbox", "outbox")
+    get("/contracts", "contracts")
+    get("/contract-templates", "contract_templates")
+}
+fn go(next){ tab = next; stage = "browse"; notice = ""; gift_from_contact = false; refresh() }
+fn choose_product(i){ selected_product = i; stage = "detail"; refresh() }
+fn gift_product_id(id){ for i in products.len() { if products[i].id == id { begin("gift", i); return } } notice = "这件商品已不在服务端目录中。"; refresh() }
+fn gift_wish_item(item){
+    let p = product_for_item(item)
+    if p == nil { notice = "服务端目录没有符合这份心愿的商品。"; refresh(); return }
+    gift_product_id(p.id)
+    draft_wish_item_id = item.id
+    if wish_detail != nil { for friend in friends { if friend.id == wish_detail.owner.id { draft_recipient_ids.push(friend.id) } } }
+    refresh()
+}
+fn choose_wish(id){ wish_detail = nil; stage = "wish_detail"; get("/wishlists/" + id, "wish_detail"); refresh() }
+fn edit_wish(){
+    if wish_detail == nil { return }
+    edit_title = wish_detail.title; edit_note = wish_detail.note; edit_date = wish_detail.event_on; edit_expiry_hours = ""
+    stage = "wish_edit"; refresh()
+}
+fn save_wish_edit(){
+    if wish_detail == nil { return }
+    if edit_expiry_hours.trim() != "" && (!regex("^[0-9]+$", "").test(edit_expiry_hours.trim()) || edit_expiry_hours.trim().to_f64() < 1 || edit_expiry_hours.trim().to_f64() > 720) { notice = "有效期请输入 1–720 小时。"; refresh(); return }
+    let id = wish_detail.id
+    let body = {title: edit_title.trim(), note: edit_note.trim(), occasion: wish_detail.occasion, event_on: edit_date.trim()}
+    if edit_expiry_hours.trim() != "" { body.expires_hours = floor(edit_expiry_hours.trim().to_f64()) }
+    mutate("/wishlists/" + id, "PUT", body, |_data| {
+        notice = "心愿单已更新。"; stage = "wish_detail"; get("/wishlists/" + id, "wish_detail"); get("/wishlists/mine", "mine"); refresh()
+    })
+}
+fn confirm_wish_action(action){
+    if wish_detail == nil { return }
+    let id = wish_detail.id
+    if action == "close" { mutate("/wishlists/" + id + "/close", "POST", {}, |_data| { notice = "心愿单已提前结束。"; stage = "wish_detail"; get("/wishlists/" + id, "wish_detail"); get("/wishlists/mine", "mine"); refresh() }) }
+    if action == "delete" { mutate("/wishlists/" + id, "DELETE", {}, |_data| { notice = "心愿单已删除。"; tab = "wishes"; stage = "browse"; get("/wishlists/mine", "mine"); refresh() }) }
+}
+fn choose_gift(id){ gift_from_contact = false; gift_detail = nil; stage = "gift_detail"; get("/gifts/" + id, "gift_detail"); refresh() }
+fn choose_contact(i){ contact_index = i; contact_id = friends[i].id; notice = ""; stage = "contact_detail"; refresh() }
+fn contact_section(kind){ contact_section_kind = kind; stage = "contact_section"; refresh() }
+fn contact_wish(id, origin){ contact_wish_origin = origin; wish_detail = nil; stage = "contact_wish_detail"; get("/wishlists/" + id, "wish_detail"); refresh() }
+fn contact_gift(id, side){ gift_side = side; tab = "box"; choose_gift(id); gift_from_contact = true; refresh() }
+fn friend_wish_count(id){ let n = 0; for w in friend_wishes { if w.owner.id == id { n = n + 1 } } return n }
+fn friend_gift_count(id, kind){
+    let n = 0
+    if kind == "sent" { for g in outbox { if g.recipient.id == id { n = n + 1 } } }
+    else { for g in inbox { if g.sender != nil && g.sender.id == id { n = n + 1 } } }
+    return n
+}
+fn friend_field(f, field){
+    if field == "nickname" { return f.nickname }
+    if field == "phone" { return f.phone }
+    if field == "email" { return f.email }
+    if field == "relationship" { return f.relationship }
+    if field == "birthday" { return f.birthday }
+    return f.note
+}
+fn friend_field_name(field){
+    if field == "nickname" { return "称呼" }
+    if field == "phone" { return "手机号" }
+    if field == "email" { return "邮箱" }
+    if field == "relationship" { return "关系" }
+    if field == "birthday" { return "生日" }
+    return "备注"
+}
+fn edit_friend(field){ friend_edit_field = field; friend_edit_value = friend_field(friends[contact_index], field); stage = "contact_edit"; refresh() }
+fn save_friend(){
+    if contact_index < 0 { return }
+    let f = friends[contact_index]
+    let value = friend_edit_value.trim()
+    let body = {nickname: f.nickname, phone: f.phone, email: f.email, relationship: f.relationship, birthday: f.birthday, note: f.note}
+    if friend_edit_field == "nickname" { body.nickname = value }
+    if friend_edit_field == "phone" { body.phone = value }
+    if friend_edit_field == "email" { body.email = value }
+    if friend_edit_field == "relationship" { body.relationship = value }
+    if friend_edit_field == "birthday" { body.birthday = value }
+    if friend_edit_field == "note" { body.note = value }
+    mutate("/friends/" + f.id + "/details", "PUT", body, |_data| {
+        stage = "contact_profile"; notice = ""; get("/friends", "friends"); refresh()
+    })
+}
+fn set_gift_side(side){ gift_side = side; get("/gifts/" + side, side); refresh() }
+fn next_category(){ category_index = (category_index + 1) % categories.len(); refresh() }
 fn begin(kind, product){
-    draft_kind = kind; draft_product = product; draft_contact = -1
+    draft_kind = kind; draft_product = product; draft_wish_item_id = -1; draft_recipient_ids = []
     show_all_products = false
-    draft_title = "我的心愿单"
-    if product == 0 || product == 1 { draft_title = "我的 iPhone 心愿单" }
-    draft_message = ""
-    if kind == "gift" { draft_message = "愿你收到一份惊喜。" }
-    draft_unlock = "题目"; draft_question = "我们第一次一起去哪里？"; draft_answer = "公园"
+    draft_title = ""; draft_note = ""; draft_date = today(); draft_expiry_hours = "24"
+    draft_message = ""; draft_contract = ""; draft_clue = ""; draft_answer = ""; draft_error = ""
+    draft_unlock = "free"; draft_occasion = "other"; draft_audience = -1
+    draft_item_mode = "exact"; draft_vague_kind = ""; draft_budget_cents = 0; draft_wants = ""; quote = nil
+    order_key = "mini-" + time_now() + "-" + random_u32()
     tab = "command"; stage = "draft"; notice = ""; refresh()
+}
+fn recipient_selected(id){ for selected in draft_recipient_ids { if selected == id { return true } } return false }
+fn choose_recipient(i){
+    let id = friends[i].id
+    if recipient_selected(id) { notice = "这位熟人已在送礼名单中。"; refresh(); return }
+    if draft_recipient_ids.len() >= 100 { notice = "一次最多选择 100 位熟人。"; refresh(); return }
+    if draft_wish_item_id >= 0 && draft_recipient_ids.len() > 0 {
+        draft_wish_item_id = -1
+        notice = "多人送礼已取消单人心愿关联。"
+    }
+    draft_recipient_ids.push(id); quote = nil; stage = "draft"; refresh()
+}
+fn remove_recipient(id){
+    let kept = []
+    for selected in draft_recipient_ids { if selected != id { kept.push(selected) } }
+    draft_recipient_ids = kept; quote = nil; refresh()
+}
+fn recipient_name(id){ for friend in friends { if friend.id == id { return friend.display_name } } return "已失效的熟人" }
+fn recipients_valid(){
+    if draft_recipient_ids.len() == 0 { return false }
+    for id in draft_recipient_ids {
+        let found = false
+        for friend in friends { if friend.id == id { found = true } }
+        if !found { return false }
+    }
+    return true
+}
+fn gift_checkout_body(){
+    let items = []
+    for id in draft_recipient_ids {
+        let item = {product_id: products[draft_product].id, recipient_id: id}
+        if draft_wish_item_id >= 0 && draft_recipient_ids.len() == 1 { item.wish_item_id = draft_wish_item_id }
+        items.push(item)
+    }
+    return {items: items, expires_hours: expiry_hours()}
+}
+fn gift_form_error(){
+    let clue = draft_clue.trim()
+    let answer = draft_answer.trim()
+    if draft_unlock != "free" {
+        if draft_unlock != "guess_who" && clue == "" { return "请填写题目或暗号提示。" }
+        if answer == "" { return "请填写答案。" }
+        if !regex("[[:alnum:]]", "").test(answer) { return "答案至少包含一个文字或数字。" }
+        if clue.split("").len() > 30 { return "题目或提示最多 30 个字。" }
+        if answer.split("").len() > 20 { return "答案最多 20 个字。" }
+    }
+    if draft_message.trim().split("").len() > 40 { return "想说的话最多 40 个字。" }
+    if draft_contract.trim().split("").len() > 24 { return "约定最多 24 个字。" }
+    return ""
+}
+fn unlock_name(mode){
+    if mode == "guess_who" { return "猜我是谁" }
+    if mode == "question" { return "私密问答" }
+    if mode == "passphrase" { return "专属暗号" }
+    return "直接领取"
 }
 fn parse_command(){
     let q = draft_command.trim()
     if q == "" { notice = "先输入一句想做的事。"; refresh(); return }
-    let product = -1
-    if q.search("iphone") >= 0 || q.search("iPhone") >= 0 || q.search("苹果手机") >= 0 { product = 0 }
-    if q.search("咖啡") >= 0 || q.search("拿铁") >= 0 { product = 3 }
-    if q.search("电影") >= 0 { product = 5 }
-    if q.search("鲜花") >= 0 || q.search("花束") >= 0 { product = 13 }
-    if q.search("耳机") >= 0 { product = 19 }
-    if q.search("蛋糕") >= 0 { product = 12 }
-    if q.search("电视") >= 0 { product = 14 }
     let kind = ""
     if q.search("心愿") >= 0 || q.search("想要") >= 0 { kind = "wish" }
     if q.search("送") >= 0 || q.search("礼物") >= 0 { kind = "gift" }
-    if kind == "" { notice = "目前识别心愿和送礼；可试试下方示例。"; refresh(); return }
-    begin(kind, product)
-    if kind == "gift" { for i in contacts.len() { if q.search(contacts[i].name) >= 0 { draft_contact = i } } }
+    if kind == "" { notice = "目前识别心愿和送礼。"; refresh(); return }
+    let found = -1
+    for i in products.len() { if q.search(products[i].name) >= 0 || q.search(products[i].kind) >= 0 { found = i } }
+    begin(kind, found)
+    if kind == "gift" { for friend in friends { if q.search(friend.display_name) >= 0 && !recipient_selected(friend.id) { draft_recipient_ids.push(friend.id) } } }
+    if found < 0 { notice = "服务端目录中没有识别到对应商品，请从实际在售商品中选择。" }
     refresh()
 }
-fn example(q){ draft_command = q; parse_command() }
-fn pick_product(i){ draft_product = i; show_all_products = false; refresh() }
-fn pick_contact(i){ draft_contact = i; refresh() }
-fn pick_unlock(s){ draft_unlock = s; refresh() }
-fn confirm_draft(){
-    if draft_product < 0 { notice = "请先选择商品或型号。"; refresh(); return }
-    if draft_kind == "wish" {
-        if draft_title.trim() == "" { notice = "请给心愿单起名。"; refresh(); return }
-        let found = -1
-        for i in wishes.len() { if wishes[i].title == draft_title.trim() { found = i } }
-        if found < 0 { wishes.push({title: draft_title.trim(), items: [{product: draft_product, note: draft_message.trim()}]}) }
-        if found >= 0 { wishes[found].items.push({product: draft_product, note: draft_message.trim()}) }
-        save(); go("wishes"); notice = "已创建本机心愿单；没有购买商品。"; refresh(); return
+fn create_wish(){
+    if expiry_hours() < 1 { notice = "有效期请输入 1–720 小时（最多 30 天）。"; refresh(); return }
+    if draft_title.trim() == "" { notice = "请输入心愿单名称。"; refresh(); return }
+    if draft_item_mode == "exact" && draft_product < 0 { notice = "请选择服务端商品。"; refresh(); return }
+    if draft_item_mode == "vague" && draft_vague_kind == "" { notice = "请选择一个礼物种类。"; refresh(); return }
+    let audience = []
+    if draft_audience >= 0 { audience.push(friends[draft_audience].id) }
+    let items = []
+    if draft_item_mode == "exact" { items.push({product_id: products[draft_product].id, wants: draft_wants.trim()}) }
+    else { items.push({kind: draft_vague_kind, max_price_cents: draft_budget_cents, wants: draft_wants.trim()}) }
+    let body = {title: draft_title.trim(), note: draft_note.trim(), occasion: draft_occasion, event_on: draft_date.trim(), expires_hours: expiry_hours(), audience_user_ids: audience, items: items}
+    mutate("/wishlists", "POST", body, |data| {
+        notice = "心愿单已保存至 LIYU 服务（编号 " + data.id + "）。"
+        tab = "wishes"; stage = "browse"; get("/wishlists/mine", "mine"); refresh()
+    })
+}
+fn quote_gift(){
+    if expiry_hours() < 1 { draft_error = "有效期请输入 1–720 小时（最多 30 天）。"; refresh(); return }
+    if draft_product < 0 { notice = "请确认商品。"; refresh(); return }
+    if !recipients_valid() { notice = "请从熟人列表选择至少一位收礼人。"; refresh(); return }
+    draft_error = gift_form_error()
+    if draft_error != "" { notice = ""; refresh(); return }
+    let body = gift_checkout_body()
+    mutate("/orders/quote", "POST", body, |data| { quote = data; stage = "checkout"; notice = "价格已由 LIYU 服务端核算。"; refresh() })
+}
+fn create_order(){
+    if expiry_hours() < 1 { stage = "draft"; draft_error = "有效期请输入 1–720 小时（最多 30 天）。"; refresh(); return }
+    if quote == nil { notice = "请先获取服务端报价。"; refresh(); return }
+    if !recipients_valid() { notice = "收礼人已不在熟人列表，请重新选择。"; quote = nil; refresh(); return }
+    draft_error = gift_form_error()
+    if draft_error != "" { stage = "draft"; quote = nil; notice = ""; refresh(); return }
+    let body = gift_checkout_body()
+    let generation = auth_generation
+    host.request("liyu.request", {method: "POST", path: "/orders", body: body, idempotency_key: order_key}, fn(r){
+            if generation != auth_generation { return }
+            if !r.is_ok { notice = r.error; refresh(); return }
+            if r.data.status == 401 { auth_lost("登录已过期，请重新登录。"); return }
+            if r.data.status < 200 || r.data.status >= 300 { notice = "订单创建失败（HTTP " + r.data.status + ")：" + r.data.body.error; refresh(); return }
+            let order = r.data.body
+            notice = "测试订单 " + order.id + " 已创建，正在执行测试支付…"; refresh()
+            mutate("/orders/" + order.id + "/pay-test", "POST", {}, |_paid| {
+                get_paid_order(order.id)
+            })
+    })
+}
+fn get_paid_order(id){
+    let generation = auth_generation
+    host.request("liyu.request", {method: "GET", path: "/orders/" + id}, fn(r){
+            if generation != auth_generation { return }
+            if !r.is_ok { notice = r.error; refresh(); return }
+            if r.data.status == 401 { auth_lost("登录已过期，请重新登录。"); return }
+            if r.data.status != 200 { notice = "测试支付已发出；请在服务端确认订单 " + id + "。"; refresh(); return }
+            let order = r.data.body
+            if order.items.len() == 0 { notice = "订单没有礼物，需核查服务端。"; refresh(); return }
+            configure_paid_gifts(order.items, 0)
+    })
+}
+fn configure_paid_gifts(items, index){
+    if index >= items.len() {
+        notice = items.len() + " 份测试礼物已保存到 LIYU 服务。"
+        tab = "box"; stage = "browse"; gift_side = "outbox"
+        get("/gifts/outbox", "outbox"); get("/gifts/inbox", "inbox"); refresh()
+        return
     }
-    if draft_contact < 0 { notice = "请确认一位联系人。"; refresh(); return }
-    if draft_message.trim() == "" { notice = "请写一句寄语。"; refresh(); return }
-    if draft_unlock != "直接揭晓" && (draft_question.trim() == "" || draft_answer.trim() == "") { notice = "请填写题目或暗号与答案。"; refresh(); return }
-    gifts.push({product: draft_product, recipient: contacts[draft_contact].name, message: draft_message.trim(), unlock: draft_unlock, question: draft_question.trim(), answer: draft_answer.trim(), status: "sealed"})
-    save(); go("box"); notice = "已保存本机模拟礼物；未付款、未发送。"; refresh()
+    let gift_id = items[index].gift_id
+    if gift_id == nil { notice = "订单中的第 " + (index + 1) + " 份礼物尚未生成，请核查服务端。"; refresh(); return }
+    let clue = if draft_unlock == "free" { "" } else { draft_clue.trim() }
+    let answer = if draft_unlock == "free" { "" } else { draft_answer.trim() }
+    let body = {unlock_kind: draft_unlock, clue: clue, answer: answer, message: draft_message.trim(), contract_text: draft_contract.trim()}
+    mutate("/gifts/" + gift_id + "/puzzle", "PUT", body, |_configured| { configure_paid_gifts(items, index + 1) })
 }
-fn add_contact(){
-    if draft_name.trim() == "" { notice = "请输入称呼。"; refresh(); return }
-    let item = {name: draft_name.trim(), relation: draft_relation.trim(), note: draft_note.trim()}
-    if editing_contact < 0 { contacts.push(item) }
-    if editing_contact >= 0 { contacts[editing_contact] = item }
-    editing_contact = -1; draft_name = ""; draft_note = ""; save(); notice = "联系人已保存在本机。"; refresh()
+fn gift_action(action, body){
+    if gift_detail == nil { return }
+    let id = gift_detail.id
+    mutate("/gifts/" + id + "/" + action, "POST", body, |_data| {
+        notice = "服务端礼物状态已更新。"
+        get("/gifts/" + id, "gift_detail"); get("/gifts/inbox", "inbox"); get("/gifts/outbox", "outbox"); get("/contracts", "contracts")
+    })
 }
-fn edit_contact(i){
-    editing_contact = i; draft_name = contacts[i].name; draft_relation = contacts[i].relation; draft_note = contacts[i].note; refresh()
-}
-fn remove_contact(i){
-    let kept = []
-    for j in contacts.len() { if j != i { kept.push(contacts[j]) } }
-    contacts = kept; editing_contact = -1; save(); notice = "已移除联系人；历史礼卡保留原称呼。"; refresh()
-}
-fn open_gift(i){ active_gift = i; guess = ""; notice = ""; refresh() }
-fn accept_gift(){ gifts[active_gift].status = "accepted"; save(); notice = "已在本机模拟收下；没有真实履约。"; refresh() }
-fn remove_gift(i){ gifts.remove(i); save(); notice = "本机模拟礼物已移除。"; refresh() }
-fn answer(correct){
-    if correct { gifts[active_gift].status = "opened"; notice = "演示谜题已解开。" }
-    else { notice = "答案不匹配；演示答案见下方提示。" }
-    save()
-    refresh()
-}
-fn try_answer(){ answer(guess.trim() == gifts[active_gift].answer) }
-fn remove_wish(i){
-    let kept = []
-    for j in wishes.len() { if j != i { kept.push(wishes[j]) } }
-    wishes = kept
-    save()
-    notice = "已移除心愿。"
-    refresh()
-}
-fn remove_wish_item(i,j){
-    wishes[i].items.remove(j)
-    if wishes[i].items.len() == 0 { wishes.remove(i) }
-    save(); notice = "已从本机心愿单移除商品。"; refresh()
-}
+start_timeout(0.05, || check_auth())
 
-start_timeout(0.05, || load())
-
-let ink = #x23334a
-let muted = #x68798e
-let accent = #x177c8d
-let Primary = ButtonFlat{height: 42 padding: Inset{left: 15 right: 15}
-    draw_bg +: {color: #x177c8d color_hover: #x1e899b color_down: #x116777 border_radius: 11.0 border_size: 0.0}
-    draw_text +: {color: #xffffff color_hover: #xffffff color_down: #xffffff}}
-let Secondary = ButtonFlat{height: 40 padding: Inset{left: 13 right: 13}
-    draw_bg +: {color: #xe8f4f2 color_hover: #xd8ece9 color_down: #xcce3df color_focus: #xe8f4f2 border_radius: 10.0 border_size: 0.0}
-    draw_text +: {color: #x176675 color_hover: #x176675 color_down: #x176675 color_focus: #x176675}}
+let ink = #xf2ecf8
+let muted = #xc4b4d4
+let faint = #x9b8aab
+let accent = #xf0c883
+let blue = #x9d90f2
+let Card = RoundedView{width: Fill height: Fit flow: Down draw_bg +: {color: #x271a36 border_color: #x3a294f border_size: 1.0 border_radius: 8.0}}
+let Primary = ButtonFlat{height: 44 padding: Inset{left: 16 right: 16}
+    draw_bg +: {color: blue color_hover: #xb3a8f5 color_down: #x8a7ce8 color_focus: blue color_disabled: #x6b617f border_radius: 6.0 border_size: 0.0}
+    draw_text +: {color: #x0b0812 color_hover: #x0b0812 color_down: #x0b0812 color_focus: #x0b0812 color_disabled: #xc4b4d4 text_style: theme.font_bold{font_size: 14.5}}}
+let Secondary = ButtonFlat{height: 36 padding: Inset{left: 13 right: 13}
+    draw_bg +: {color: #x211530 color_hover: #x3a2a58 color_down: #x463a75 color_focus: #x352446 color_disabled: #x211530 border_color: #x3a294f border_color_hover: #x665184 border_color_down: blue border_color_focus: blue border_color_disabled: #x3a294f border_size: 1.0 border_radius: 6.0}
+    draw_text +: {color: ink color_hover: ink color_down: ink color_focus: ink color_disabled: faint text_style: theme.font_bold{font_size: 13.5}}}
+let Chip = ButtonFlat{width: Fit height: 32 padding: Inset{left: 14 right: 14}
+    draw_bg +: {color: #x211530 color_hover: #x352446 color_down: #x3a2a58 color_focus: #x352446 color_disabled: #x211530 border_color: #x3a294f border_color_hover: #x665184 border_color_down: blue border_color_focus: blue border_color_disabled: #x3a294f border_size: 1.0 border_radius: 16.0}
+    draw_text +: {color: muted color_hover: ink color_down: ink color_focus: ink color_disabled: faint text_style: theme.font_regular{font_size: 12.5}}}
+let ChipOn = ButtonFlat{width: Fit height: 32 padding: Inset{left: 14 right: 14}
+    draw_bg +: {color: #x3a2a58 color_hover: #x463a75 color_down: #x352446 color_focus: #x3a2a58 color_disabled: #x211530 border_color: #x9d90f2 border_color_hover: blue border_color_down: blue border_color_focus: blue border_color_disabled: #x3a294f border_size: 1.0 border_radius: 16.0}
+    draw_text +: {color: ink color_hover: ink color_down: ink color_focus: ink color_disabled: faint text_style: theme.font_bold{font_size: 12.5}}}
+let Segment = ButtonFlat{width: Fill height: 36 padding: 4
+    draw_bg +: {color: #x1f142c color_hover: #x352446 color_down: #x352446 color_focus: #x352446 color_disabled: #x1f142c border_radius: 6.0 border_size: 0.0}
+    draw_text +: {color: muted color_hover: ink color_down: ink color_focus: ink color_disabled: faint text_style: theme.font_bold{font_size: 13.0}}}
+let SegmentOn = ButtonFlat{width: Fill height: 36 padding: 4
+    draw_bg +: {color: #x3a2a58 color_hover: #x463a75 color_down: #x3a2a58 color_focus: #x3a2a58 color_disabled: #x1f142c border_radius: 6.0 border_size: 0.0}
+    draw_text +: {color: ink color_hover: ink color_down: ink color_focus: ink color_disabled: faint text_style: theme.font_bold{font_size: 13.0}}}
 let Entry = TextInput{width: Fill height: 44
-    draw_bg +: {color: #xffffff color_hover: #xffffff color_focus: #xffffff color_empty: #xffffff border_radius: 9.0}
-    draw_text +: {color: ink color_hover: ink color_focus: ink color_empty: muted color_empty_hover: muted}}
+    draw_bg +: {color: #x1f142c color_hover: #x261a36 color_focus: #x261a36 color_down: #x261a36 color_empty: #x1f142c color_disabled: #x1f142c border_color: #x3a294f border_color_hover: #x665184 border_color_focus: blue border_color_down: blue border_color_empty: #x3a294f border_color_disabled: #x3a294f border_size: 1.0 border_radius: 6.0}
+    draw_text +: {color: ink color_hover: ink color_focus: ink color_down: ink color_disabled: faint color_empty: faint color_empty_hover: muted color_empty_focus: muted}}
+let RowHit = ButtonFlat{width: Fill height: Fill text: "" padding: 0
+    draw_bg +: {color: #x00000000 color_hover: #x9d90f214 color_down: #x9d90f229 color_focus: #x00000000 color_disabled: #x00000000 border_size: 0.0 border_radius: 6.0}}
+let RemoveHit = ButtonFlat{width: 26 height: 26 text: "×" padding: 0
+    draw_bg +: {color: #x3a2a58 color_hover: #x5a3a6a color_down: #x6a3a6a color_focus: #x3a2a58 border_size: 0.0 border_radius: 13.0}
+    draw_text +: {color: ink color_hover: ink color_down: ink color_focus: ink text_style: theme.font_bold{font_size: 17}}}
+let NavHit = ButtonFlat{width: Fill height: Fill text: "" padding: 0
+    draw_bg +: {color: #x00000000 color_hover: #x9d90f214 color_down: #x9d90f229 color_focus: #x00000000 color_disabled: #x00000000 border_size: 0.0 border_radius: 8.0}}
+let Link = ButtonFlat{width: Fit height: 36
+    draw_bg +: {color: #x00000000 color_hover: #x9d90f214 color_down: #x9d90f229 color_focus: #x00000000 color_disabled: #x00000000 border_size: 0.0 border_radius: 6.0}
+    draw_text +: {color: accent color_hover: accent color_down: accent color_focus: accent color_disabled: faint}}
 
-SolidView{width: Fill height: Fill flow: Down draw_bg.color: #xf4f8f7
-    RoundedView{width: Fill height: Fit flow: Down padding: 17 spacing: 5 draw_bg.color: #x16304a
-        Label{text: "LIYU-MINI" draw_text.color: #xffffff draw_text.text_style: theme.font_bold{font_size: 25}}
-        Label{text: "从一句话到可确认的心愿与礼卡" draw_text.color: #xc9e1e3 draw_text.text_style.font_size: 14}
-    }
-    RoundedView{width: Fill height: Fit padding: 10 margin: Inset{left: 12 right: 12 top: 10 bottom: 0} draw_bg.color: #xfff0d8
-        Label{width: Fill text: "本机演示 · 商品和金额为示意 · 不付款、不发送" draw_text.color: #x76502b draw_text.text_style.font_size: 12}
-    }
+SolidView{width: Fill height: Fill flow: Down draw_bg.color: #x191021
     content := View{width: Fill height: Fill flow: Down on_render: || {
-        if notice != "" { Label{width: Fill height: Fit margin: Inset{left: 22 top: 10 bottom: 0} text: notice draw_text.color: accent draw_text.text_style.font_size: 13} }
-        if tab == "command" && stage == "browse" {
-            ScrollYView{width: Fill height: Fill flow: Down padding: 16 spacing: 11
-                Label{text: "用一句话开始" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 22}}
-                Label{width: Fill text: "本地规则识别演示；商品、收礼人和谜题由你逐项确认。" draw_text.color: muted draw_text.text_style.font_size: 13}
-                command_entry := Entry{empty_text: "例如：送阿宁一个 iPhone" text: draft_command on_change: |value| draft_command = value}
-                Primary{text: "生成待确认卡片" on_click: || parse_command()}
-                Secondary{text: "示例：创建 iPhone 心愿单" on_click: || example("给我创建一个心愿单，买一个 iphone")}
-                Secondary{text: "示例：送阿宁一个 iPhone" on_click: || example("送阿宁一个 iphone")}
-                Secondary{text: "示例：送妈妈一束鲜花" on_click: || example("送妈妈一束鲜花")}
-                Secondary{text: "示例：送小林一杯拿铁" on_click: || example("送小林一杯拿铁")}
-                RoundedView{width: Fill height: Fit flow: Down padding: 13 spacing: 6 draw_bg.color: #xffffff
-                    Label{text: "演示路径" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 16}}
-                    Label{width: Fill text: "识别意图 → 选择商品型号 → 核对联系人与谜题 → 本机保存。" draw_text.color: muted draw_text.text_style.font_size: 13}
-                    Label{width: Fill text: "尚未接入系统 AppCard 或 AI，也不读取私人通讯录。" draw_text.color: muted draw_text.text_style.font_size: 12}
-                }
+    if auth_state != "signed_in" {
+        ScrollYView{width: Fill height: Fill flow: Down padding: Inset{left: 16 right: 16 top: 80 bottom: 24} spacing: 14 align: Align{x: 0.5}
+            Card{padding: 24 spacing: 12
+                Label{text: "欢迎来到礼遇" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 22}}
+                Label{text: "猜得到的心意。登录或注册后继续。" draw_text.color: muted draw_text.text_style.font_size: 13}
+                Label{width: Fill text: auth_message draw_text.color: accent draw_text.text_style.font_size: 12}
+                if auth_state == "signed_out" { Primary{width: Fill text: "登录或注册" on_click: || sign_in()} }
+                if auth_state == "error" { Secondary{width: Fill text: "重试连接" on_click: || check_auth()} }
             }
         }
-        if tab == "command" && stage == "draft" {
-            ScrollYView{width: Fill height: Fill flow: Down padding: 16 spacing: 10
-                Secondary{text: "← 返回指令" on_click: || go("command")}
-                Label{text: "待确认卡片" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 22}}
-                if draft_kind == "wish" { Label{width: Fill text: "创建心愿单：选择想要的商品或型号" draw_text.color: muted draw_text.text_style.font_size: 13} }
-                if draft_kind == "gift" { Label{width: Fill text: "模拟送礼：确认收礼人、型号、解谜与寄语" draw_text.color: muted draw_text.text_style.font_size: 13} }
-                Label{text: "商品与型号" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 16}}
-                if draft_product >= 0 {
-                    Label{width: Fill text: "当前：" + products[draft_product].name + " · " + products[draft_product].kind draw_text.color: accent draw_text.text_style.font_size: 14}
-                }
-                if draft_product < 0 { Label{text: "尚未识别商品，请从下方选择。" draw_text.color: muted} }
-                if (draft_product == 0 || draft_product == 1) && !show_all_products {
-                    Secondary{text: products[0].name + " · " + products[0].kind on_click: || pick_product(0)}
-                    Secondary{text: products[1].name + " · " + products[1].kind on_click: || pick_product(1)}
-                    Secondary{text: "选择其他商品" on_click: || { show_all_products = true; refresh() }}
-                }
-                if draft_product >= 2 && !show_all_products {
-                    Secondary{text: "选择其他商品" on_click: || { show_all_products = true; refresh() }}
-                }
-                if draft_product < 0 || show_all_products {
-                    for i in products.len() { Secondary{text: products[i].name + " · " + products[i].kind on_click: || pick_product(i)} }
-                }
-                if draft_kind == "wish" {
-                    Label{text: "心愿单名称" draw_text.color: ink draw_text.text_style.font_size: 14}
-                    title_entry := Entry{text: draft_title on_change: |value| draft_title = value}
-                    if wishes.len() > 0 {
-                        Label{text: "或加入已有心愿单" draw_text.color: muted draw_text.text_style.font_size: 13}
-                        for i in wishes.len() { Secondary{text: wishes[i].title on_click: || { draft_title = wishes[i].title; refresh() }} }
-                    }
-                    Label{text: "补充说明（可选）" draw_text.color: ink draw_text.text_style.font_size: 14}
-                    note_entry := Entry{empty_text: "例如：喜欢的颜色" text: draft_message on_change: |value| draft_message = value}
-                }
-                if draft_kind == "gift" {
-                    Label{text: "收礼人 · 请确认" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 16}}
-                    if draft_contact >= 0 { Label{text: "当前：" + contacts[draft_contact].name draw_text.color: accent} }
-                    for i in contacts.len() { Secondary{text: contacts[i].name + " · " + contacts[i].relation on_click: || pick_contact(i)} }
-                    Label{width: Fill text: "若名单里没有 TA，请先到联系人页添加。" draw_text.color: muted draw_text.text_style.font_size: 12}
-                    Label{text: "揭晓方式" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 16}}
-                    Secondary{text: "专属题目" on_click: || pick_unlock("题目")}
-                    Secondary{text: "专属暗号" on_click: || pick_unlock("暗号")}
-                    Secondary{text: "直接揭晓" on_click: || pick_unlock("直接揭晓")}
-                    Label{text: "当前：" + draft_unlock draw_text.color: accent draw_text.text_style.font_size: 13}
-                    if draft_unlock != "直接揭晓" {
-                        Label{text: "题目或暗号提示" draw_text.color: muted draw_text.text_style.font_size: 13}
-                        question_entry := Entry{text: draft_question on_change: |value| draft_question = value}
-                        Label{text: "演示答案（保存在本机）" draw_text.color: muted draw_text.text_style.font_size: 13}
-                        answer_entry := Entry{text: draft_answer on_change: |value| draft_answer = value}
-                    }
-                    Label{text: "礼卡寄语" draw_text.color: ink draw_text.text_style.font_size: 14}
-                    message_entry := Entry{text: draft_message on_change: |value| draft_message = value}
-                }
-                Primary{text: "确认并保存本机演示" on_click: || confirm_draft()}
-                Label{width: Fill text: "此确认只创建本机记录，不构成购买或发送。" draw_text.color: muted draw_text.text_style.font_size: 12}
+    } else {
+    View{width: Fill height: Fill flow: Right
+    if desktop_mode {
+        View{width: 208 height: Fill flow: Down padding: Inset{left: 12 right: 12 top: 20 bottom: 14} spacing: 6 draw_bg.color: #x1c1228
+            View{width: Fill height: Fit flow: Down padding: Inset{left: 6 bottom: 16} spacing: 2
+                Label{text: "礼遇 LiYu" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 18}}
+                Label{text: "猜得到的心意" draw_text.color: muted draw_text.text_style.font_size: 12.5}
             }
+            for nav in [{id: "discover", name: "挑礼", icon: "gift"}, {id: "box", name: "礼盒", icon: "box"}, {id: "pact", name: "约定", icon: "pact"}, {id: "contacts", name: "熟人", icon: "contacts"}, {id: "me", name: "我", icon: "me"}] {
+                View{width: Fill height: 48 flow: Overlay
+                    RoundedView{width: Fill height: Fill flow: Right align: Align{x: 0.0 y: 0.5} padding: Inset{left: 14 right: 10} spacing: 12 draw_bg +: {color: if tab == nav.id {#x352446} else {#x1c1228} border_radius: 8.0}
+                        Image{width: 21 height: 21 src: http_resource(assets + "/assets/ui/nav-" + nav.icon + if tab == nav.id {"-on.png"} else {".png"}) fit: ImageFit.Stretch}
+                        Label{text: nav.name draw_text.color: if tab == nav.id {accent} else {muted} draw_text.text_style.font_size: 14}
+                    }
+                    NavHit{on_click: || go(nav.id)}
+                }
+            }
+            View{width: Fill height: Fill}
+            if account != nil { Label{width: Fill max_lines: 1 text_overflow: Ellipsis text: account.display_name draw_text.color: muted draw_text.text_style.font_size: 12} }
         }
-        if tab == "discover" {
-            if stage == "browse" {
-                ScrollYView{width: Fill height: Fill flow: Down padding: 16 spacing: 12
-                Label{text: "为 TA 挑一份礼物" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 21}}
-                Label{width: Fill text: "LIYU 原目录 33 件商品 + 2 件 iPhone 型号占位；价格不是实时报价。" draw_text.color: muted draw_text.text_style.font_size: 13}
-                search_entry := Entry{empty_text: "搜索商品、品类或规格" text: product_search on_change: |value| { product_search = value; refresh() }}
-                Secondary{text: "分类：" + category_names[category_index] + "（点击切换）" on_click: || next_category()}
-                Secondary{text: "同步公开演示目录" on_click: || sync_catalog()}
-                Label{width: Fill text: catalog_status draw_text.color: muted draw_text.text_style.font_size: 12}
-                for i in products.len() {
-                    if product_visible(products[i]) {
-                    RoundedView{width: Fill height: Fit flow: Right spacing: 10 padding: 10 draw_bg.color: #xffffff
-                        if products[i].image != "" { Image{width: 72 height: 72 src: http_resource(product_image(products[i])) fit: ImageFit.CropToFill} }
-                        if products[i].image == "" { Label{text: "📱" draw_text.text_style.font_size: 32} }
-                        View{width: Fill height: Fit flow: Down spacing: 3
-                            Label{width: Fill text: products[i].name draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 14}}
-                            Label{text: products[i].kind draw_text.color: muted draw_text.text_style.font_size: 12}
-                            Label{text: products[i].price draw_text.color: accent draw_text.text_style.font_size: 13}
-                            Secondary{text: "看看这份礼物" on_click: || choose(i)}
+    }
+    View{width: Fill height: Fill flow: Down
+    View{width: Fill height: 58 flow: Right align: Align{x: 0.5 y: 0.5} padding: Inset{left: 12 right: 12} draw_bg.color: #x1c1228
+        View{width: 140 height: Fill align: Align{x: 0.0 y: 0.5}
+            if stage != "browse" { Link{text: "‹" draw_text.text_style: theme.font_bold{font_size: 28} on_click: || {
+                if tab == "discover" { go("discover") }
+                if tab == "box" && stage == "gift_detail" && gift_from_contact {tab = "contacts"; stage = "contact_section"; gift_from_contact = false; refresh(); return}
+                else { if tab == "box" { go("box") } }
+                if tab == "contacts" {
+                    if stage == "contact_edit" { stage = "contact_profile"; refresh() }
+                    else { if stage == "contact_profile" || stage == "contact_section" { stage = "contact_detail"; refresh() }
+                    else { if stage == "contact_wish_detail" { stage = contact_wish_origin; refresh() }
+                    else { go("contacts") } } }
+                }
+                if tab == "wishes" && (stage == "wish_edit" || stage == "wish_confirm_close" || stage == "wish_confirm_delete") { stage = "wish_detail"; refresh() }
+                else { if tab == "wishes" { go("wishes") } }
+                if tab == "command" && (stage == "checkout" || stage == "recipient") { stage = "draft"; refresh() }
+                else { if tab == "command" { go("command") } }
+                if tab == "me" { go("me") }
+            }} }
+            if stage == "browse" && tab == "wishes" { Link{text: "‹" draw_text.text_style: theme.font_bold{font_size: 28} on_click: || { shop_side = "wish"; go("discover") }} }
+        }
+        View{width: Fill height: Fill align: Align{x: 0.5 y: 0.5}
+            if tab == "discover" && stage == "browse" { Label{text: "挑礼" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 17}} }
+            if tab == "discover" && stage == "detail" { Label{text: "商品详情" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 17}} }
+            if tab == "box" && stage == "browse" { Label{text: "礼盒" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 17}} }
+            if tab == "box" && stage == "gift_detail" { Label{text: "礼物详情" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 17}} }
+            if tab == "pact" { Label{text: "约定" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 17}} }
+            if tab == "contacts" && stage == "browse" { Label{text: "熟人" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 17}} }
+            if tab == "contacts" && stage == "contact_detail" { Label{text: "熟人详情" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 17}} }
+            if tab == "contacts" && stage == "contact_profile" { Label{text: "详细资料" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 17}} }
+            if tab == "contacts" && stage == "contact_edit" { Label{text: "编辑" + friend_field_name(friend_edit_field) draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 17}} }
+            if tab == "contacts" && stage == "contact_section" { Label{text: if contact_section_kind == "wishes" {"TA 的心愿单"} else {if contact_section_kind == "sent" {"我送 TA 的礼物"} else {"TA 送我的礼物"}} draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 17}} }
+            if tab == "contacts" && stage == "contact_wish_detail" { Label{text: "心愿单" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 17}} }
+            if tab == "me" && stage == "browse" { Label{text: "我" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 17}} }
+            if tab == "me" && stage == "profile" { Label{text: "个人资料" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 17}} }
+            if tab == "me" && stage == "wallet" { Label{text: "钱包与流水" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 17}} }
+            if tab == "me" && stage == "settings" { Label{text: "设置" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 17}} }
+            if tab == "me" && stage == "about" { Label{text: "关于礼遇" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 17}} }
+            if tab == "wishes" && stage == "browse" { Label{text: "我的心愿单" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 17}} }
+            if tab == "wishes" && stage == "wish_detail" { Label{text: "心愿单" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 17}} }
+            if tab == "wishes" && stage == "wish_edit" { Label{text: "编辑心愿单" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 17}} }
+            if tab == "wishes" && stage == "wish_confirm_close" { Label{text: "提前结束" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 17}} }
+            if tab == "wishes" && stage == "wish_confirm_delete" { Label{text: "删除心愿单" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 17}} }
+            if tab == "command" && stage == "browse" { Label{text: "一句话开始" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 17}} }
+            if tab == "command" && stage == "draft" && draft_kind == "wish" { Label{text: "发布心愿单" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 17}} }
+            if tab == "command" && stage == "draft" && draft_kind == "gift" { Label{text: "神秘送礼" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 17}} }
+            if tab == "command" && stage == "recipient" { Label{text: "选择熟人" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 17}} }
+            if tab == "command" && stage == "checkout" { Label{text: "确认订单" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 17}} }
+        }
+        View{width: 140 height: Fill flow: Right align: Align{x: 1.0 y: 0.5} spacing: 4
+            if tab == "discover" && stage == "browse" && shop_side == "wish" { Link{height: 34 text: "发布心愿" draw_text.text_style.font_size: 12 on_click: || begin("wish", -1)} }
+            if tab == "box" && stage == "browse" { Link{height: 34 text: "神秘送礼" draw_text.text_style.font_size: 12 on_click: || begin("gift", -1)} }
+            if tab == "wishes" && stage == "browse" { Link{height: 34 text: "＋ 发布" draw_text.text_style.font_size: 12 on_click: || begin("wish", -1)} }
+            Link{height: 34 text: if desktop_mode {"手机"} else {"桌面"} draw_text.text_style.font_size: 12 on_click: || {desktop_mode = !desktop_mode; refresh()}}
+        }
+    }
+    View{width: Fill height: Fill flow: Down
+        if notice != "" { Label{width: Fill height: Fit margin: Inset{left: 16 right: 16 top: 4 bottom: 4} text: notice draw_text.color: accent draw_text.text_style.font_size: 12} }
+        if tab == "discover" && stage == "browse" {
+            ScrollYView{width: Fill height: Fill flow: Down padding: Inset{left: 16 right: 16 top: 10 bottom: 12} spacing: 14
+                RoundedView{width: Fill height: Fit flow: Right padding: 4 spacing: 4 draw_bg +: {color: #x1f142c border_radius: 8.0}
+                    if shop_side == "shop" { SegmentOn{text: "挑礼物" on_click: || {shop_side = "shop"; refresh()}} } else { Segment{text: "挑礼物" on_click: || {shop_side = "shop"; refresh()}} }
+                    if shop_side == "wish" { SegmentOn{text: "熟人的心愿单" on_click: || {shop_side = "wish"; refresh()}} } else { Segment{text: "熟人的心愿单" on_click: || {shop_side = "wish"; refresh()}} }
+                }
+                if shop_side == "shop" {
+                    View{width: Fill height: Fit flow: Right{wrap: true} wrap_spacing: 8 spacing: 8
+                        for i in categories.len() {
+                            if category_index == i { ChipOn{text: categories[i].name on_click: || {category_index = i; refresh()}} }
+                            else { Chip{text: categories[i].name on_click: || {category_index = i; refresh()}} }
                         }
                     }
+                    if products.len() == 0 { Label{text: "正在读取礼物目录…" draw_text.color: muted} }
+                    View{width: Fill height: Fit flow: Right{wrap: true} wrap_spacing: 12 spacing: 12
+                        for i in products.len() { if visible_product(products[i]) {
+                            View{width: 181 height: Fit flow: Overlay
+                                RoundedView{width: 181 height: Fit flow: Down padding: 8 spacing: 3 draw_bg +: {color: #x271a36 border_color: #x3a294f border_size: 1.0 border_radius: 8.0}
+                                    Image{width: 165 height: 165 src: http_resource(product_image(products[i])) fit: ImageFit.CropToFill}
+                                    Label{width: Fill max_lines: 1 text_overflow: Ellipsis text: products[i].name draw_text.color: ink draw_text.text_style.font_size: 13.5}
+                                    Label{width: Fill max_lines: 1 text_overflow: Ellipsis text: products[i].brand draw_text.color: faint draw_text.text_style.font_size: 11.5}
+                                    View{width: Fill height: Fit flow: Right align: Align{x: 0.0 y: 0.5}
+                                        Label{width: Fill text: money(products[i].price_cents) draw_text.color: accent draw_text.text_style.font_size: 15}
+                                        if products[i].physical { Label{text: "实物" draw_text.color: muted draw_text.text_style.font_size: 11} }
+                                        else { Label{text: "电子券" draw_text.color: muted draw_text.text_style.font_size: 11} }
+                                    }
+                                }
+                                RowHit{on_click: || choose_product(i)}
+                            }
+                        } }
                     }
+                    Label{width: Fill text: "点一件看详情。礼卡不出现礼物名和价格，解开谜题才揭晓。" draw_text.color: faint draw_text.text_style.font_size: 12}
                 }
-                Label{width: Fill text: "大图按需从公开 HTTPS 加载；断网时商品文字、价格示意与核心流程仍可用。" draw_text.color: muted draw_text.text_style.font_size: 12}
-                }
-            }
-            if stage == "detail" {
-                ScrollYView{width: Fill height: Fill flow: Down padding: 16 spacing: 12
-                Secondary{text: "← 返回目录" on_click: || go("discover")}
-                if products[selected].image != "" { Image{width: Fill height: 190 src: http_resource(product_image(products[selected])) fit: ImageFit.CropToFill} }
-                if products[selected].image == "" { Label{text: "📱 iPhone 演示商品" draw_text.color: accent draw_text.text_style.font_size: 22} }
-                Label{width: Fill text: products[selected].name draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 22}}
-                Label{width: Fill text: products[selected].desc draw_text.color: muted draw_text.text_style.font_size: 15}
-                Label{text: products[selected].kind + "  " + products[selected].price draw_text.color: accent draw_text.text_style.font_size: 16}
-                Primary{text: "加入心愿草稿" on_click: || begin("wish", selected)}
-                Secondary{text: "生成送礼草稿" on_click: || begin("gift", selected)}
+                if shop_side == "wish" {
+                    Card{padding: 6 spacing: 0
+                        View{width: Fill height: 64 flow: Overlay
+                            View{width: Fill height: Fill flow: Right align: Align{x: 0.0 y: 0.5} padding: Inset{left: 12 right: 12} spacing: 10
+                                RoundedView{width: 38 height: 38 align: Align{x: 0.5 y: 0.5} draw_bg +: {color: #x352446 border_radius: 8.0} Label{text: "♡" draw_text.color: accent draw_text.text_style.font_size: 19}}
+                                View{width: Fill height: Fit flow: Down spacing: 3
+                                    Label{text: "我的心愿单" draw_text.color: ink draw_text.text_style.font_size: 15}
+                                    Label{text: my_wishes.len() + " 份心愿单" draw_text.color: faint draw_text.text_style.font_size: 12}
+                                }
+                                Label{text: "›" draw_text.color: faint draw_text.text_style.font_size: 21}
+                            }
+                            RowHit{on_click: || go("wishes")}
+                        }
+                    }
+                    Label{text: "熟人的心愿单" draw_text.color: muted draw_text.text_style: theme.font_bold{font_size: 13}}
+                    if friend_wishes.len() == 0 { Card{padding: 20 Label{text: "暂无可见的熟人心愿单" draw_text.color: faint}} }
+                    for w in friend_wishes {
+                        let wd = preview_by_id(w.id)
+                        View{width: Fill height: Fit flow: Overlay
+                            Card{padding: 14 spacing: 10
+                                View{width: Fill height: Fit flow: Right align: Align{x: 0.0 y: 0.5} spacing: 10
+                                    RoundedView{width: 36 height: 36 align: Align{x: 0.5 y: 0.5} draw_bg +: {color: #x352446 border_radius: 8.0} Label{text: initial(w.owner.display_name) draw_text.color: accent draw_text.text_style.font_size: 15}}
+                                    View{width: Fill height: Fit flow: Down spacing: 2
+                                        Label{width: Fill max_lines: 1 text_overflow: Ellipsis text: w.title draw_text.color: ink draw_text.text_style.font_size: 15}
+                                        Label{text: w.owner.display_name + " · " + w.event_on draw_text.color: faint draw_text.text_style.font_size: 12}
+                                    }
+                                    Label{text: occasion_name(w.occasion) draw_text.color: accent draw_text.text_style.font_size: 11}
+                                }
+                                if wd != nil {
+                                    View{width: Fill height: Fit flow: Right spacing: 8
+                                        for i in wd.items.len() { if i < 5 {
+                                            let p = product_for_item(wd.items[i])
+                                            if p != nil { Image{width: 52 height: 52 src: http_resource(product_image(p)) fit: ImageFit.CropToFill} }
+                                        } }
+                                    }
+                                    Label{text: wd.items.len() + " 件 · 还有 " + open_wish_count(wd) + " 件没人送" draw_text.color: muted draw_text.text_style.font_size: 12.5}
+                                }
+                            }
+                            RowHit{on_click: || {tab = "wishes"; choose_wish(w.id)}}
+                        }
+                    }
+                    Label{width: Fill text: "谁送了哪一件，揭晓前心愿单主人都不知道。" draw_text.color: faint draw_text.text_style.font_size: 12}
                 }
             }
         }
-        if tab == "contacts" {
-            ScrollYView{width: Fill height: Fill flow: Down padding: 16 spacing: 10
-                Label{text: "演示联系人" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 22}}
-                Label{width: Fill text: "样例联系人与手动添加；没有读取系统通讯录。" draw_text.color: muted draw_text.text_style.font_size: 13}
-                for i in contacts.len() {
-                    RoundedView{width: Fill height: Fit flow: Down padding: 11 spacing: 4 draw_bg.color: #xffffff
-                        Label{text: contacts[i].name + " · " + contacts[i].relation draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 16}}
-                        Label{text: contacts[i].note draw_text.color: muted draw_text.text_style.font_size: 12}
-                        Secondary{text: "编辑" on_click: || edit_contact(i)}
-                        Secondary{text: "移除" on_click: || remove_contact(i)}
+        if tab == "discover" && stage == "detail" && selected_product >= 0 {
+            let p = products[selected_product]
+            ScrollYView{width: Fill height: Fill flow: Down padding: Inset{left: 16 right: 16 top: 10 bottom: 16} spacing: 14
+                Image{width: Fill height: 360 src: http_resource("https://liyu.localhost:8443" + p.image_detail_url) fit: ImageFit.CropToFill}
+                View{width: Fill height: Fit flow: Down spacing: 5
+                    Label{width: Fill max_lines: 1 text_overflow: Ellipsis text: p.name draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 18}}
+                    View{width: Fill height: Fit flow: Right align: Align{x: 0.0 y: 0.0} padding: Inset{bottom: 6} spacing: 9
+                        Label{text: money(p.price_cents) draw_text.color: accent draw_text.text_style: theme.font_bold{font_size: 20}}
+                        Label{width: Fill max_lines: 1 text_overflow: Ellipsis margin: Inset{top: 10} text: product_meta(p) draw_text.color: faint draw_text.text_style.font_size: 11.5}
                     }
                 }
-                Label{text: "添加或编辑本机联系人" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 16}}
-                name_entry := Entry{empty_text: "称呼" text: draft_name on_change: |value| draft_name = value}
-                relation_entry := Entry{empty_text: "关系，例如朋友" text: draft_relation on_change: |value| draft_relation = value}
-                note_entry := Entry{empty_text: "备注，例如生日 · 喜欢咖啡" text: draft_note on_change: |value| draft_note = value}
-                Primary{text: "保存联系人" on_click: || add_contact()}
-            }
-        }
-        if tab == "box" {
-            if active_gift < 0 {
-                ScrollYView{width: Fill height: Fill flow: Down padding: 16 spacing: 12
-                Label{text: "神秘礼盒" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 22}}
-                Label{width: Fill text: "体验收礼与揭晓；礼物只存在此设备。" draw_text.color: muted draw_text.text_style.font_size: 13}
-                if gifts.len() == 0 { Label{text: "礼盒还是空的，先去挑礼吧。" draw_text.color: muted} }
-                for i in gifts.len() {
-                    let item = gifts[i]
-                    RoundedView{width: Fill height: Fit flow: Down padding: 13 spacing: 6 draw_bg.color: #xffffff
-                        Label{text: "送给 " + item.recipient draw_text.color: muted draw_text.text_style.font_size: 12}
-                        if item.status == "sealed" { Label{text: "一份尚未揭晓的礼物" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 17}} }
-                        if item.status == "opened" || item.status == "accepted" { Label{text: products[item.product].name draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 17}} }
-                        if item.status == "accepted" { Label{text: "本机模拟：已收下" draw_text.color: accent draw_text.text_style.font_size: 12} }
-                        Secondary{text: "打开体验" on_click: || open_gift(i)}
-                        Secondary{text: "移除本机礼物" on_click: || remove_gift(i)}
-                    }
+                View{width: Fill height: Fit flow: Right spacing: 8
+                    Primary{width: Fill text: "送给TA" on_click: || begin("gift", selected_product)}
+                    Secondary{width: Fill text: "加到心愿单" on_click: || begin("wish", selected_product)}
                 }
+                Card{padding: 14 spacing: 10
+                    Label{text: "礼物详情" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 18}}
+                    Label{width: Fill text: p.description draw_text.color: muted draw_text.text_style.font_size: 14.5}
+                    Label{text: "规格  " + p.spec draw_text.color: muted draw_text.text_style.font_size: 13}
+                    if p.physical { Label{text: "类型  实物礼物" draw_text.color: muted draw_text.text_style.font_size: 13} }
+                    else { Label{text: "类型  电子礼物" draw_text.color: muted draw_text.text_style.font_size: 13} }
                 }
-            }
-            if active_gift >= 0 {
-                let item = gifts[active_gift]
-                let product = products[item.product]
-                ScrollYView{width: Fill height: Fill flow: Down padding: 16 spacing: 12
-                Secondary{text: "← 返回礼盒" on_click: || go("box")}
-                Label{text: "一份给 " + item.recipient + " 的心意" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 20}}
-                Label{width: Fill text: "礼卡寄语：" + item.message draw_text.color: muted draw_text.text_style.font_size: 15}
-                if item.status == "sealed" {
-                    Label{text: "解开小谜题，看看里面是什么" draw_text.color: ink draw_text.text_style.font_size: 16}
-                    if item.unlock == "直接揭晓" { Primary{text: "直接揭晓" on_click: || answer(true)} }
-                    if item.unlock != "直接揭晓" {
-                        Label{width: Fill text: item.question draw_text.color: muted draw_text.text_style.font_size: 14}
-                        guess_entry := Entry{empty_text: "输入演示答案" text: guess on_change: |value| guess = value}
-                        Primary{text: "解开礼物" on_click: || try_answer()}
-                        Label{width: Fill text: "演示提示：" + item.answer draw_text.color: muted draw_text.text_style.font_size: 12}
-                    }
+                Card{padding: 14 spacing: 7
+                    Label{text: "送礼提示" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 15}}
+                    Label{width: Fill text: "送出后礼卡会暂时隐藏礼物，收礼人解开谜题后才能看到。" draw_text.color: muted draw_text.text_style.font_size: 13}
                 }
-                if item.status == "opened" || item.status == "accepted" {
-                    if product.image != "" { Image{width: Fill height: 190 src: http_resource(product_image(product)) fit: ImageFit.CropToFill} }
-                    Label{width: Fill text: "惊喜是：" + product.name draw_text.color: accent draw_text.text_style: theme.font_bold{font_size: 18}}
-                    Label{width: Fill text: "没有真实商品、券码或配送。" draw_text.color: muted draw_text.text_style.font_size: 13}
-                    if item.status == "opened" { Primary{text: "模拟收下礼物" on_click: || accept_gift()} }
-                }
+                Label{text: "同类还有" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 18}}
+                View{width: Fill height: Fit flow: Right{wrap: true} wrap_spacing: 12 spacing: 12
+                    for i in products.len() { if i != selected_product && products[i].category == p.category {
+                        View{width: 181 height: Fit flow: Overlay
+                            Card{width: 181 padding: 8 spacing: 4
+                                Image{width: 165 height: 165 src: http_resource(product_image(products[i])) fit: ImageFit.CropToFill}
+                                Label{width: Fill max_lines: 1 text_overflow: Ellipsis text: products[i].name draw_text.color: ink draw_text.text_style.font_size: 13.5}
+                                Label{text: money(products[i].price_cents) draw_text.color: accent draw_text.text_style.font_size: 15}
+                            }
+                            RowHit{on_click: || choose_product(i)}
+                        }
+                    } }
                 }
             }
         }
-        if tab == "wishes" {
+        if tab == "box" && stage == "browse" {
+            ScrollYView{width: Fill height: Fill flow: Down padding: Inset{left: 16 right: 16 top: 10 bottom: 16} spacing: 14
+                RoundedView{width: Fill height: Fit flow: Right padding: 4 spacing: 4 draw_bg +: {color: #x1f142c border_radius: 8.0}
+                    if gift_side == "inbox" { SegmentOn{text: "收到的" on_click: || set_gift_side("inbox")} } else { Segment{text: "收到的" on_click: || set_gift_side("inbox")} }
+                    if gift_side == "outbox" { SegmentOn{text: "送出的" on_click: || set_gift_side("outbox")} } else { Segment{text: "送出的" on_click: || set_gift_side("outbox")} }
+                }
+                Card{padding: 6 spacing: 2
+                    if gift_side == "inbox" && inbox.len() == 0 { Label{text: "暂无收到的礼物" draw_text.color: faint} }
+                    if gift_side == "outbox" && outbox.len() == 0 { Label{text: "暂无送出的礼物" draw_text.color: faint} }
+                    if gift_side == "inbox" { for g in inbox {
+                        View{width: Fill height: 100 flow: Overlay
+                            View{width: Fill height: Fill flow: Right align: Align{x: 0.0 y: 0.5} padding: Inset{left: 8 right: 8} spacing: 10
+                                if g.state == "sealed" || g.state == "opened" { RoundedView{width: 44 height: 44 align: Align{x: 0.5 y: 0.5} draw_bg +: {color: #x352446 border_radius: 6.0} Label{text: "?" draw_text.color: accent draw_text.text_style.font_size: 23}} }
+                                else { let p = product_by_id(g.product_id); if p != nil { Image{width: 44 height: 44 src: http_resource(product_image(p)) fit: ImageFit.CropToFill} } }
+                                View{width: Fill height: Fit flow: Down spacing: 3
+                                    if g.state == "sealed" || g.state == "opened" { Label{text: "一份神秘礼物" draw_text.color: ink draw_text.text_style.font_size: 15} }
+                                    else { let p = product_by_id(g.product_id); if p != nil { Label{width: Fill max_lines: 1 text_overflow: Ellipsis text: p.name draw_text.color: ink draw_text.text_style.font_size: 15} } }
+                                    if g.state == "sealed" || g.state == "opened" { Label{text: "拆开前不展示商品和送礼人" draw_text.color: faint draw_text.text_style.font_size: 12} }
+                                    else { Label{text: "礼物已打开" draw_text.color: faint draw_text.text_style.font_size: 12} }
+                                    Label{width: Fill max_lines: 1 text_overflow: Ellipsis text: "有效期至 " + expiry_time(g.expires_at) draw_text.color: faint draw_text.text_style.font_size: 11}
+                                }
+                                Label{text: state_name(g.state) draw_text.color: accent draw_text.text_style.font_size: 12}
+                            }
+                            RowHit{on_click: || choose_gift(g.id)}
+                        }
+                    } }
+                    if gift_side == "outbox" { for g in outbox {
+                        View{width: Fill height: 80 flow: Overlay
+                            View{width: Fill height: Fill flow: Right align: Align{x: 0.0 y: 0.5} padding: Inset{left: 8 right: 8} spacing: 10
+                                let p = product_by_id(g.product_id)
+                                if p != nil { Image{width: 44 height: 44 src: http_resource(product_image(p)) fit: ImageFit.CropToFill} }
+                                View{width: Fill height: Fit flow: Down spacing: 3
+                                    if p != nil { Label{width: Fill max_lines: 1 text_overflow: Ellipsis text: p.name draw_text.color: ink draw_text.text_style.font_size: 15} }
+                                    Label{width: Fill max_lines: 1 text_overflow: Ellipsis text: "送给 " + g.recipient.display_name + " · " + expiry_short(g.expires_at) + " 到期" draw_text.color: faint draw_text.text_style.font_size: 11.5}
+                                }
+                                Label{text: state_name(g.state) draw_text.color: accent draw_text.text_style.font_size: 12}
+                            }
+                            RowHit{on_click: || choose_gift(g.id)}
+                        }
+                    } }
+                }
+            }
+        }
+        if tab == "box" && stage == "gift_detail" {
+            ScrollYView{width: Fill height: Fill flow: Down padding: 16 spacing: 14
+                if gift_detail == nil { Label{text: "正在读取礼卡…" draw_text.color: faint} }
+                if gift_detail != nil {
+                    if gift_side == "outbox" {
+                        let p = product_by_id(gift_detail.product_id)
+                        Card{padding: 16 spacing: 13
+                            View{width: Fill height: Fit flow: Right align: Align{x: 0.0 y: 0.5} spacing: 12
+                                if p != nil { Image{width: 88 height: 88 src: http_resource(product_image(p)) fit: ImageFit.CropToFill} }
+                                View{width: Fill height: Fit flow: Down spacing: 6
+                                    if p != nil { Label{width: Fill max_lines: 2 text_overflow: Ellipsis text: p.name draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 18}} }
+                                    Label{width: Fill max_lines: 1 text_overflow: Ellipsis text: "送给 " + gift_detail.recipient.display_name draw_text.color: muted draw_text.text_style.font_size: 13}
+                                    Label{text: state_name(gift_detail.state) draw_text.color: accent draw_text.text_style.font_size: 13}
+                                }
+                            }
+                        }
+                        Card{padding: 16 spacing: 11
+                            Label{text: "礼物信息" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 16}}
+                            Label{text: "收礼人  " + gift_detail.recipient.display_name draw_text.color: muted draw_text.text_style.font_size: 13}
+                            Label{text: "礼物金额  " + money(gift_detail.price_cents) draw_text.color: muted draw_text.text_style.font_size: 13}
+                            Label{text: "有效期至  " + expiry_time(gift_detail.expires_at) draw_text.color: muted draw_text.text_style.font_size: 13}
+                            Label{text: "礼物编号  " + gift_detail.id draw_text.color: faint draw_text.text_style.font_size: 12}
+                        }
+                        if gift_detail.contract_text != "" {
+                            Card{padding: 16 spacing: 10
+                                Label{text: "附带的约定" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 16}}
+                                Label{width: Fill text: gift_detail.contract_text draw_text.color: muted draw_text.text_style.font_size: 14}
+                                for c in contracts { if c.gift_id == gift_detail.id { Label{text: contract_state(c.status) draw_text.color: accent draw_text.text_style.font_size: 12} } }
+                            }
+                        }
+                        Card{padding: 16 spacing: 10
+                            Label{text: "礼物进度" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 16}}
+                            if gift_detail.state == "sealed" { Label{text: "等待 TA 打开礼物" draw_text.color: muted draw_text.text_style.font_size: 13} }
+                            if gift_detail.state == "opened" || gift_detail.state == "revealed" { Label{text: "TA 已打开礼物" draw_text.color: muted draw_text.text_style.font_size: 13} }
+                            if gift_detail.state == "handled" { Label{text: "TA 已收下礼物" draw_text.color: muted draw_text.text_style.font_size: 13} }
+                            if gift_detail.state == "expired" { Label{text: "礼物已过期退回" draw_text.color: muted draw_text.text_style.font_size: 13} }
+                            if gift_detail.state == "withdrawn" { Label{text: "礼物已撤回" draw_text.color: muted draw_text.text_style.font_size: 13} }
+                            if p != nil && p.physical && gift_detail.state == "handled" {
+                                if gift_detail.carrier_delivered { Label{text: "物流  已送达" draw_text.color: muted draw_text.text_style.font_size: 13} }
+                                else { Label{text: "物流  待送达" draw_text.color: muted draw_text.text_style.font_size: 13} }
+                                if gift_detail.recipient_confirmed { Label{text: "收礼确认  已确认" draw_text.color: muted draw_text.text_style.font_size: 13} }
+                                else { Label{text: "收礼确认  待确认" draw_text.color: muted draw_text.text_style.font_size: 13} }
+                            }
+                        }
+                        if gift_detail.state == "sealed" { Secondary{width: Fill text: "撤回未打开的礼物" on_click: || gift_action("withdraw", {})} }
+                    }
+                    if gift_side == "inbox" {
+                        Card{padding: 16 spacing: 12
+                            if gift_detail.state == "sealed" || gift_detail.state == "opened" {
+                                Label{text: "一份神秘礼物" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 18}}
+                            }
+                            else {
+                                let p = product_by_id(gift_detail.product_id)
+                                if p != nil { Image{width: 88 height: 88 src: http_resource(product_image(p)) fit: ImageFit.CropToFill} }
+                                if p != nil { Label{width: Fill text: p.name draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 18}} }
+                            }
+                            Label{text: state_name(gift_detail.state) draw_text.color: accent draw_text.text_style.font_size: 14}
+                            Label{text: "有效期至  " + expiry_time(gift_detail.expires_at) draw_text.color: muted draw_text.text_style.font_size: 13}
+                            if gift_detail.sender != nil { Label{text: "送礼人  " + gift_detail.sender.display_name draw_text.color: muted draw_text.text_style.font_size: 13} }
+                            if gift_detail.state == "sealed" || gift_detail.state == "opened" {
+                                if gift_detail.clue != "" { Label{width: Fill text: gift_detail.clue draw_text.color: muted draw_text.text_style.font_size: 13} }
+                                if gift_detail.state == "sealed" { Primary{width: Fill text: "打开礼物" on_click: || gift_action("open", {})} }
+                                if gift_detail.state == "opened" && gift_detail.unlock_kind != "free" {
+                                    guess_entry := Entry{empty_text: "输入答案" text: guess on_change: |v| guess = v}
+                                    Secondary{width: Fill text: "提交答案" on_click: || gift_action("answer", {answer: guess})}
+                                }
+                            }
+                        }
+                        if gift_detail.state == "revealed" || gift_detail.state == "accepted" || gift_detail.state == "exchanged" || gift_detail.state == "cashed_out" {
+                            Card{padding: 16 spacing: 10
+                                Label{text: "礼物信息" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 16}}
+                                Label{text: "礼物金额  " + money(gift_detail.price_cents) draw_text.color: muted draw_text.text_style.font_size: 13}
+                                if gift_detail.message != "" { Label{width: Fill text: gift_detail.message draw_text.color: muted draw_text.text_style.font_size: 13} }
+                                if gift_detail.contract_text != "" { Label{width: Fill text: "约定  " + gift_detail.contract_text draw_text.color: accent draw_text.text_style.font_size: 13} }
+                                Label{text: "礼物编号  " + gift_detail.id draw_text.color: faint draw_text.text_style.font_size: 12}
+                            }
+                            if gift_detail.state == "revealed" {
+                                Card{padding: 16 spacing: 10
+                                    Label{text: "收下礼物" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 16}}
+                                    name_entry := Entry{empty_text: "收货人" text: recipient_name on_change: |v| recipient_name = v}
+                                    phone_entry := Entry{empty_text: "电话" text: recipient_phone on_change: |v| recipient_phone = v}
+                                    address_entry := Entry{empty_text: "地址" text: recipient_address on_change: |v| recipient_address = v}
+                                    Primary{width: Fill text: "确认收下" on_click: || gift_action("accept", {agree: true, recipient_name: recipient_name, recipient_phone: recipient_phone, recipient_address: recipient_address})}
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        if tab == "pact" {
+            ScrollYView{width: Fill height: Fill flow: Down padding: Inset{left: 16 right: 16 top: 10 bottom: 16} spacing: 14
+                RoundedView{width: Fill height: Fit flow: Right padding: 4 spacing: 4 draw_bg +: {color: #x1f142c border_radius: 8.0}
+                    if pact_side == "mine" { SegmentOn{text: "我答应的" on_click: || {pact_side = "mine"; refresh()}} } else { Segment{text: "我答应的" on_click: || {pact_side = "mine"; refresh()}} }
+                    if pact_side == "theirs" { SegmentOn{text: "答应我的" on_click: || {pact_side = "theirs"; refresh()}} } else { Segment{text: "答应我的" on_click: || {pact_side = "theirs"; refresh()}} }
+                }
+                Card{padding: 6 spacing: 2
+                    if pact_count(pact_side) == 0 {
+                        View{width: Fill height: 106 flow: Down align: Align{x: 0.5 y: 0.5} spacing: 8
+                            Image{width: 28 height: 28 src: http_resource(assets + "/assets/ui/nav-pact.png") fit: ImageFit.Stretch}
+                            if pact_side == "mine" { Label{text: "还没有答应的约定" draw_text.color: faint draw_text.text_style.font_size: 13} }
+                            else { Label{text: "还没有别人答应的约定" draw_text.color: faint draw_text.text_style.font_size: 13} }
+                        }
+                    }
+                    for c in contracts { if (pact_side == "mine" && c.mine) || (pact_side == "theirs" && !c.mine) {
+                        View{width: Fill height: 78 flow: Overlay
+                            View{width: Fill height: Fill flow: Right align: Align{x: 0.0 y: 0.5} padding: 8 spacing: 10
+                                RoundedView{width: 44 height: 44 align: Align{x: 0.5 y: 0.5} draw_bg +: {color: #x352446 border_radius: 6.0} Label{text: "✓" draw_text.color: accent draw_text.text_style.font_size: 20}}
+                                View{width: Fill height: Fit flow: Down spacing: 3
+                                    Label{width: Fill max_lines: 1 text_overflow: Ellipsis text: c.contract_text draw_text.color: ink draw_text.text_style.font_size: 15}
+                                    Label{text: (if c.mine { "答应 " } else { "送给 " }) + c.peer_name + " · " + c.created_on draw_text.color: faint draw_text.text_style.font_size: 12}
+                                }
+                                Label{text: contract_state(c.status) draw_text.color: accent draw_text.text_style.font_size: 12}
+                            }
+                            RowHit{on_click: || {gift_side = if c.mine { "inbox" } else { "outbox" }; tab = "box"; choose_gift(c.gift_id)}}
+                        }
+                    } }
+                }
+                Label{width: Fill text: "约定是收礼时答应的一件小事。逾期无惩罚，完成了记得标记。" draw_text.color: faint draw_text.text_style.font_size: 12}
+            }
+        }
+        if tab == "contacts" && stage == "browse" {
+            ScrollYView{width: Fill height: Fill flow: Down padding: Inset{left: 16 right: 16 top: 10 bottom: 16} spacing: 14
+                Card{padding: 16 spacing: 2
+                    if friends.len() == 0 { Label{text: "暂无熟人" draw_text.color: faint} }
+                    for i in friends.len() {
+                        View{width: Fill height: 64 flow: Overlay
+                            View{width: Fill height: Fill flow: Right align: Align{x: 0.0 y: 0.5} spacing: 10
+                                RoundedView{width: 36 height: 36 align: Align{x: 0.5 y: 0.5} draw_bg +: {color: #x352446 border_radius: 18.0} Label{text: initial(friends[i].display_name) draw_text.color: accent draw_text.text_style.font_size: 17}}
+                                View{width: Fill height: Fit flow: Down spacing: 2
+                                    Label{text: friends[i].display_name draw_text.color: ink draw_text.text_style.font_size: 15}
+                                    Label{text: "熟人" draw_text.color: faint draw_text.text_style.font_size: 12}
+                                }
+                                Label{text: "›" draw_text.color: faint draw_text.text_style.font_size: 21}
+                            }
+                            RowHit{on_click: || choose_contact(i)}
+                        }
+                    }
+                }
+            }
+        }
+        if tab == "contacts" && stage == "contact_detail" && contact_index >= 0 {
+            let f = friends[contact_index]
+            ScrollYView{width: Fill height: Fill flow: Down padding: 16 spacing: 14
+                Card{padding: 16 spacing: 10
+                    View{width: Fill height: Fit flow: Right align: Align{x: 0.0 y: 0.5} spacing: 12
+                        RoundedView{width: 52 height: 52 align: Align{x: 0.5 y: 0.5} draw_bg +: {color: #x352446 border_radius: 26.0}
+                            Label{text: initial(f.display_name) draw_text.color: accent draw_text.text_style.font_size: 24}
+                        }
+                        View{width: Fill height: Fit flow: Down spacing: 3
+                            Label{width: Fill max_lines: 1 text_overflow: Ellipsis text: f.display_name draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 18}}
+                            if f.phone != "" { Label{width: Fill max_lines: 1 text_overflow: Ellipsis text: f.phone draw_text.color: muted draw_text.text_style.font_size: 12} }
+                            if f.email != "" { Label{width: Fill max_lines: 1 text_overflow: Ellipsis text: f.email draw_text.color: muted draw_text.text_style.font_size: 12} }
+                        }
+                    }
+                    View{width: Fill height: Fit flow: Right spacing: 8
+                        Primary{text: "神秘送礼" on_click: || {begin("gift", -1); draft_recipient_ids.push(friends[contact_index].id); refresh()}}
+                        Secondary{text: "详细资料" on_click: || {stage = "contact_profile"; refresh()}}
+                    }
+                }
+                if friend_wish_count(f.id) > 0 {
+                    Card{padding: 6 spacing: 2
+                        let preview_count = 0
+                        for w in friend_wishes { if w.owner.id == f.id && preview_count < 3 {
+                            let preview = preview_by_id(w.id)
+                            View{width: Fill height: 140 flow: Overlay
+                                View{width: Fill height: Fill flow: Down padding: 12 spacing: 7
+                                    View{width: Fill height: Fit flow: Right align: Align{x: 0.0 y: 0.5} spacing: 8
+                                        View{width: Fill height: Fit flow: Down spacing: 3
+                                            Label{width: Fill max_lines: 1 text_overflow: Ellipsis text: w.title draw_text.color: ink draw_text.text_style.font_size: 15}
+                                            Label{text: w.event_on draw_text.color: faint draw_text.text_style.font_size: 12}
+                                        }
+                                        Label{text: "›" draw_text.color: faint draw_text.text_style.font_size: 21}
+                                    }
+                                    if preview != nil {
+                                        View{width: Fill height: 44 flow: Right spacing: 6
+                                            let thumb_count = 0
+                                            for item in preview.items { if thumb_count < 4 {
+                                                let p = product_for_item(item)
+                                                if p != nil { Image{width: 44 height: 44 src: http_resource(product_image(p)) fit: ImageFit.CropToFill} }
+                                                thumb_count = thumb_count + 1
+                                            } }
+                                        }
+                                    }
+                                }
+                                RowHit{on_click: || contact_wish(w.id, "contact_detail")}
+                            }
+                            preview_count = preview_count + 1
+                        } }
+                    }
+                }
+                Card{padding: 6 spacing: 2
+                    for row in [{id: "wishes", name: "心愿单"}, {id: "sent", name: "我送 TA 的礼物"}, {id: "received", name: "TA 送我的礼物"}] {
+                        View{width: Fill height: 58 flow: Overlay
+                            View{width: Fill height: Fill flow: Right align: Align{x: 0.0 y: 0.5} padding: 12
+                                Label{width: Fill text: row.name draw_text.color: ink draw_text.text_style.font_size: 15}
+                                Label{text: "›" draw_text.color: faint draw_text.text_style.font_size: 21}
+                            }
+                            RowHit{on_click: || contact_section(row.id)}
+                        }
+                    }
+                }
+            }
+        }
+        if tab == "contacts" && stage == "contact_profile" && contact_index >= 0 {
+            let f = friends[contact_index]
+            ScrollYView{width: Fill height: Fill flow: Down padding: 16 spacing: 14
+                Card{padding: 6 spacing: 2
+                    Label{margin: Inset{left: 12 top: 8 bottom: 5} text: "基本资料" draw_text.color: accent draw_text.text_style: theme.font_bold{font_size: 13}}
+                    View{width: Fill height: 56 flow: Right align: Align{x: 0.0 y: 0.5} padding: 12
+                        Label{width: Fill text: "账号姓名" draw_text.color: ink draw_text.text_style.font_size: 14}
+                        Label{text: f.account_name draw_text.color: muted draw_text.text_style.font_size: 13}
+                    }
+                    for field in [{id: "nickname", name: "称呼"}, {id: "relationship", name: "关系"}, {id: "birthday", name: "生日"}] {
+                        View{width: Fill height: 56 flow: Overlay
+                            View{width: Fill height: Fill flow: Right align: Align{x: 0.0 y: 0.5} padding: 12 spacing: 8
+                                Label{width: Fill text: field.name draw_text.color: ink draw_text.text_style.font_size: 14}
+                                Label{max_lines: 1 text_overflow: Ellipsis text: if friend_field(f, field.id) == "" {"添加"} else {friend_field(f, field.id)} draw_text.color: muted draw_text.text_style.font_size: 13}
+                                Label{text: "›" draw_text.color: faint draw_text.text_style.font_size: 20}
+                            }
+                            RowHit{on_click: || edit_friend(field.id)}
+                        }
+                    }
+                }
+                Card{padding: 6 spacing: 2
+                    Label{margin: Inset{left: 12 top: 8 bottom: 5} text: "联系方式" draw_text.color: accent draw_text.text_style: theme.font_bold{font_size: 13}}
+                    for field in [{id: "phone", name: "手机号"}, {id: "email", name: "邮箱"}] {
+                        View{width: Fill height: 56 flow: Overlay
+                            View{width: Fill height: Fill flow: Right align: Align{x: 0.0 y: 0.5} padding: 12 spacing: 8
+                                Label{width: Fill text: field.name draw_text.color: ink draw_text.text_style.font_size: 14}
+                                Label{max_lines: 1 text_overflow: Ellipsis text: if friend_field(f, field.id) == "" {"添加"} else {friend_field(f, field.id)} draw_text.color: muted draw_text.text_style.font_size: 13}
+                                Label{text: "›" draw_text.color: faint draw_text.text_style.font_size: 20}
+                            }
+                            RowHit{on_click: || edit_friend(field.id)}
+                        }
+                    }
+                }
+                Card{padding: 6 spacing: 2
+                    Label{margin: Inset{left: 12 top: 8 bottom: 5} text: "私人备注" draw_text.color: accent draw_text.text_style: theme.font_bold{font_size: 13}}
+                    View{width: Fill height: 72 flow: Overlay
+                        View{width: Fill height: Fill flow: Right align: Align{x: 0.0 y: 0.5} padding: 12 spacing: 8
+                            Label{width: Fill max_lines: 2 text_overflow: Ellipsis text: if f.note == "" {"添加备注"} else {f.note} draw_text.color: muted draw_text.text_style.font_size: 13}
+                            Label{text: "›" draw_text.color: faint draw_text.text_style.font_size: 20}
+                        }
+                        RowHit{on_click: || edit_friend("note")}
+                    }
+                }
+                Label{width: Fill text: "这里修改的是你保存的熟人资料，不会改动 TA 的账号或已验证联系方式。" draw_text.color: faint draw_text.text_style.font_size: 12}
+            }
+        }
+        if tab == "contacts" && stage == "contact_edit" && contact_index >= 0 {
+            ScrollYView{width: Fill height: Fill flow: Down padding: 16 spacing: 14
+                Card{padding: 16 spacing: 12
+                    Label{text: friend_field_name(friend_edit_field) draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 17}}
+                    friend_edit_entry := Entry{text: friend_edit_value on_change: |v| friend_edit_value = v}
+                    Label{width: Fill text: "仅保存在你的熟人资料中；清空后不显示。" draw_text.color: faint draw_text.text_style.font_size: 12}
+                }
+                Primary{width: Fill text: "保存" on_click: || save_friend()}
+            }
+        }
+        if tab == "contacts" && stage == "contact_section" && contact_index >= 0 {
+            let f = friends[contact_index]
             ScrollYView{width: Fill height: Fill flow: Down padding: 16 spacing: 12
-            Label{text: "我的心愿单" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 22}}
-            Label{width: Fill text: "同名心愿单可继续添加商品；所有内容仅存在本机。" draw_text.color: muted draw_text.text_style.font_size: 13}
-            if wishes.len() == 0 { Label{text: "还没有心愿，去指令页创建一个吧。" draw_text.color: muted} }
-            for i in wishes.len() {
-                RoundedView{width: Fill height: Fit flow: Down padding: 12 spacing: 6 draw_bg.color: #xffffff
-                    Label{width: Fill text: wishes[i].title draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 16}}
-                    for j in wishes[i].items.len() {
-                        let item = wishes[i].items[j]
-                        Label{width: Fill text: products[item.product].name + " · " + products[item.product].kind draw_text.color: accent draw_text.text_style.font_size: 13}
-                        if item.note != "" { Label{width: Fill text: item.note draw_text.color: muted draw_text.text_style.font_size: 12} }
-                        Secondary{text: "移除此商品" on_click: || remove_wish_item(i,j)}
-                    }
-                    Secondary{text: "移除整个心愿单" on_click: || remove_wish(i)}
+                Card{padding: 6 spacing: 2
+                    if contact_section_kind == "wishes" && friend_wish_count(f.id) == 0 { Label{margin: 14 text: "TA 还没有可见的心愿单" draw_text.color: faint} }
+                    if contact_section_kind == "sent" && friend_gift_count(f.id, "sent") == 0 { Label{margin: 14 text: "还没有送给 TA 的礼物" draw_text.color: faint} }
+                    if contact_section_kind == "received" && friend_gift_count(f.id, "received") == 0 { Label{margin: 14 text: "还没有可识别为 TA 送出的礼物" draw_text.color: faint} }
+                    if contact_section_kind == "wishes" { for w in friend_wishes { if w.owner.id == f.id {
+                        View{width: Fill height: 68 flow: Overlay
+                            View{width: Fill height: Fill flow: Right align: Align{x: 0.0 y: 0.5} padding: 12
+                                View{width: Fill height: Fit flow: Down spacing: 3
+                                    Label{text: w.title draw_text.color: ink draw_text.text_style.font_size: 15}
+                                    Label{text: w.event_on + " · " + occasion_name(w.occasion) draw_text.color: faint draw_text.text_style.font_size: 12}
+                                }
+                                Label{text: "›" draw_text.color: faint draw_text.text_style.font_size: 21}
+                            }
+                            RowHit{on_click: || contact_wish(w.id, "contact_section")}
+                        }
+                    } } }
+                    if contact_section_kind == "sent" { for g in outbox { if g.recipient.id == f.id {
+                        View{width: Fill height: 68 flow: Overlay
+                            View{width: Fill height: Fill flow: Right align: Align{x: 0.0 y: 0.5} padding: 12 spacing: 10
+                                let p = product_by_id(g.product_id)
+                                if p != nil { Image{width: 44 height: 44 src: http_resource(product_image(p)) fit: ImageFit.CropToFill} }
+                                View{width: Fill height: Fit flow: Down spacing: 3
+                                    if p != nil { Label{text: p.name draw_text.color: ink draw_text.text_style.font_size: 15} }
+                                    Label{text: state_name(g.state) draw_text.color: faint draw_text.text_style.font_size: 12}
+                                }
+                                Label{text: "›" draw_text.color: faint draw_text.text_style.font_size: 21}
+                            }
+                            RowHit{on_click: || contact_gift(g.id, "outbox")}
+                        }
+                    } } }
+                    if contact_section_kind == "received" { for g in inbox { if g.sender != nil && g.sender.id == f.id {
+                        View{width: Fill height: 68 flow: Overlay
+                            View{width: Fill height: Fill flow: Right align: Align{x: 0.0 y: 0.5} padding: 12 spacing: 10
+                                let p = product_by_id(g.product_id)
+                                if p != nil { Image{width: 44 height: 44 src: http_resource(product_image(p)) fit: ImageFit.CropToFill} }
+                                View{width: Fill height: Fit flow: Down spacing: 3
+                                    if p != nil { Label{text: p.name draw_text.color: ink draw_text.text_style.font_size: 15} }
+                                    Label{text: state_name(g.state) draw_text.color: faint draw_text.text_style.font_size: 12}
+                                }
+                                Label{text: "›" draw_text.color: faint draw_text.text_style.font_size: 21}
+                            }
+                            RowHit{on_click: || contact_gift(g.id, "inbox")}
+                        }
+                    } } }
                 }
             }
-            Primary{text: "再建一个心愿" on_click: || begin("wish", -1)}
+        }
+        if tab == "wishes" && stage == "browse" {
+            ScrollYView{width: Fill height: Fill flow: Down padding: Inset{left: 16 right: 16 top: 10 bottom: 16} spacing: 12
+                if my_wishes.len() == 0 { Card{padding: 20 Label{text: "还没有发布心愿单" draw_text.color: faint}} }
+                for w in my_wishes {
+                    View{width: Fill height: Fit flow: Overlay
+                        Card{padding: 14 spacing: 10
+                            View{width: Fill height: Fit flow: Right spacing: 10 align: Align{x: 0.0 y: 0.5}
+                                RoundedView{width: 36 height: 36 align: Align{x: 0.5 y: 0.5} draw_bg +: {color: #x352446 border_radius: 8.0} Label{text: initial(w.owner.display_name) draw_text.color: accent draw_text.text_style.font_size: 17}}
+                                View{width: Fill height: Fit flow: Down spacing: 2
+                                    Label{text: w.title draw_text.color: ink draw_text.text_style.font_size: 15}
+                                    Label{text: w.event_on draw_text.color: faint draw_text.text_style.font_size: 12}
+                                    Label{text: "有效期至 " + expiry_time(w.expires_at) draw_text.color: faint draw_text.text_style.font_size: 11}
+                                }
+                                Label{text: occasion_name(w.occasion) draw_text.color: accent draw_text.text_style.font_size: 11}
+                            }
+                            Label{width: Fill text: w.note draw_text.color: muted draw_text.text_style.font_size: 12.5}
+                        }
+                        RowHit{on_click: || choose_wish(w.id)}
+                    }
+                }
             }
         }
-    }}
-    View{width: Fill height: Fit flow: Right padding: 7 spacing: 4
-        Secondary{text: "指令" on_click: || go("command")}
-        Secondary{text: "商品" on_click: || go("discover")}
-        Secondary{text: "联系人" on_click: || go("contacts")}
-        Secondary{text: "礼盒" on_click: || go("box")}
-        Secondary{text: "心愿" on_click: || go("wishes")}
+        if (tab == "wishes" && stage == "wish_detail") || (tab == "contacts" && stage == "contact_wish_detail") {
+            ScrollYView{width: Fill height: Fill flow: Down padding: 16 spacing: 14
+                if wish_detail == nil { Label{text: "正在读取心愿单…" draw_text.color: faint} }
+                if wish_detail != nil {
+                    Card{padding: 14 spacing: 10
+                        View{width: Fill height: Fit flow: Right align: Align{x: 0.0 y: 0.5} spacing: 12
+                            RoundedView{width: 44 height: 44 align: Align{x: 0.5 y: 0.5} draw_bg +: {color: #x352446 border_radius: 8.0} Label{text: initial(wish_detail.owner.display_name) draw_text.color: accent draw_text.text_style.font_size: 16}}
+                            View{width: Fill height: Fit flow: Down spacing: 2
+                                Label{width: Fill max_lines: 1 text_overflow: Ellipsis text: wish_detail.title draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 18}}
+                                Label{text: wish_detail.owner.display_name + " · " + wish_detail.event_on draw_text.color: faint draw_text.text_style.font_size: 12}
+                            }
+                            Label{text: occasion_name(wish_detail.occasion) draw_text.color: accent draw_text.text_style.font_size: 12}
+                        }
+                        Label{width: Fill text: wish_detail.note draw_text.color: muted draw_text.text_style.font_size: 13}
+                        Label{text: "有效期至 " + expiry_time(wish_detail.expires_at) draw_text.color: muted draw_text.text_style.font_size: 12}
+                        Label{text: wish_detail.items.len() + " 件心愿 · 还有 " + open_wish_count(wish_detail) + " 件没人送" draw_text.color: muted draw_text.text_style.font_size: 12.5}
+                        View{width: Fill height: 6 flow: Right spacing: 2
+                            for item in wish_detail.items {
+                                if item.status == "open" { RoundedView{width: Fill height: 6 draw_bg +: {color: #x3a2a58 border_radius: 3.0}} }
+                                else { RoundedView{width: Fill height: 6 draw_bg +: {color: accent border_radius: 3.0}} }
+                            }
+                        }
+                    }
+                    Card{padding: 6 spacing: 2
+                        for item in wish_detail.items {
+                            let p = product_for_item(item)
+                            View{width: Fill height: 72 flow: Right align: Align{x: 0.0 y: 0.5} padding: 8 spacing: 10
+                                if p != nil { Image{width: 52 height: 52 src: http_resource(product_image(p)) fit: ImageFit.CropToFill} }
+                                View{width: Fill height: Fit flow: Down spacing: 3
+                                    if p != nil && item.product_id != nil { Label{width: Fill max_lines: 1 text_overflow: Ellipsis text: p.name draw_text.color: ink draw_text.text_style.font_size: 14} }
+                                    if p != nil && item.product_id == nil { Label{width: Fill max_lines: 1 text_overflow: Ellipsis text: p.name + " · 大概" draw_text.color: ink draw_text.text_style.font_size: 14} }
+                                    if p == nil { Label{text: item.kind draw_text.color: ink draw_text.text_style.font_size: 14} }
+                                    Label{text: wish_state_name(item.status) draw_text.color: faint draw_text.text_style.font_size: 12}
+                                }
+                                if p != nil && account != nil && wish_detail.owner.id != account.id && item.status == "open" { Secondary{text: "送给TA" on_click: || gift_wish_item(item)} }
+                            }
+                        }
+                    }
+                    if account != nil && wish_detail.owner.id == account.id {
+                        View{width: Fill height: Fit flow: Right{wrap: true} wrap_spacing: 8 spacing: 8
+                            if wish_detail.is_open { Secondary{text: "编辑" on_click: || edit_wish()} }
+                            if wish_detail.is_open { Secondary{text: "提前结束" on_click: || {stage = "wish_confirm_close"; refresh()}} }
+                            Secondary{text: "删除" on_click: || {stage = "wish_confirm_delete"; refresh()}}
+                        }
+                    }
+                }
+            }
+        }
+        if tab == "wishes" && stage == "wish_edit" {
+            ScrollYView{width: Fill height: Fill flow: Down padding: 16 spacing: 14
+                Label{text: "心愿单名称" draw_text.color: muted draw_text.text_style.font_size: 13}
+                wish_edit_title := Entry{text: edit_title on_change: |v| edit_title = v}
+                Label{text: "日子" draw_text.color: muted draw_text.text_style.font_size: 13}
+                wish_edit_date := Entry{text: edit_date on_change: |v| edit_date = v}
+                Label{text: "说明" draw_text.color: muted draw_text.text_style.font_size: 13}
+                wish_edit_note := Entry{text: edit_note on_change: |v| edit_note = v}
+                Label{text: "有效期至 " + expiry_time(wish_detail.expires_at) draw_text.color: muted draw_text.text_style.font_size: 13}
+                wish_edit_expiry := Entry{empty_text: "重新设置有效期（小时，留空则不变）" text: edit_expiry_hours on_change: |v| edit_expiry_hours = v}
+                Label{text: "可设置 1–720 小时（最多 30 天）。" draw_text.color: faint draw_text.text_style.font_size: 12}
+                Primary{width: Fill text: "保存修改" on_click: || save_wish_edit()}
+            }
+        }
+        if tab == "wishes" && stage == "wish_confirm_close" {
+            ScrollYView{width: Fill height: Fill flow: Down padding: 16 spacing: 14
+                Card{padding: 16 spacing: 10
+                    Label{text: "提前结束这份心愿单？" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 18}}
+                    Label{width: Fill text: "结束后熟人不能再认领其中的礼物。" draw_text.color: muted draw_text.text_style.font_size: 13}
+                }
+                Primary{width: Fill text: "确认提前结束" on_click: || confirm_wish_action("close")}
+                Secondary{width: Fill text: "取消" on_click: || {stage = "wish_detail"; refresh()}}
+            }
+        }
+        if tab == "wishes" && stage == "wish_confirm_delete" {
+            ScrollYView{width: Fill height: Fill flow: Down padding: 16 spacing: 14
+                Card{padding: 16 spacing: 10
+                    Label{text: "删除这份心愿单？" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 18}}
+                    Label{width: Fill text: "此操作会从测试服务器移除心愿单。" draw_text.color: muted draw_text.text_style.font_size: 13}
+                }
+                Primary{width: Fill text: "确认删除" on_click: || confirm_wish_action("delete")}
+                Secondary{width: Fill text: "取消" on_click: || {stage = "wish_detail"; refresh()}}
+            }
+        }
+        if tab == "me" && stage == "browse" {
+            ScrollYView{width: Fill height: Fill flow: Down padding: Inset{left: 16 right: 16 top: 10 bottom: 16} spacing: 14
+                Card{padding: 16 spacing: 8
+                    if account == nil { Label{text: "正在读取账户…" draw_text.color: faint} }
+                    if account != nil { Label{text: account.display_name draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 18}} }
+                    Label{text: "账号与设置" draw_text.color: faint draw_text.text_style.font_size: 13}
+                }
+                View{width: Fill height: Fit flow: Right spacing: 10
+                    Card{width: Fill padding: 12 spacing: 2 Label{text: outbox.len() + "" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 18}} Label{text: "送出" draw_text.color: faint draw_text.text_style.font_size: 12}}
+                    Card{width: Fill padding: 12 spacing: 2 Label{text: inbox.len() + "" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 18}} Label{text: "收到" draw_text.color: faint draw_text.text_style.font_size: 12}}
+                    Card{width: Fill padding: 12 spacing: 2 Label{text: fulfilled_count() + "" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 18}} Label{text: "兑现的约定" draw_text.color: faint draw_text.text_style.font_size: 12}}
+                }
+                Card{padding: 6 spacing: 0
+                    for i in 5 {
+                        View{width: Fill height: 52 flow: Overlay
+                            View{width: Fill height: Fill flow: Right align: Align{x: 0.0 y: 0.5} padding: 12
+                                if i == 0 { Label{width: Fill text: "个人资料" draw_text.color: ink draw_text.text_style.font_size: 14} }
+                                if i == 1 { Label{width: Fill text: "我的心愿单" draw_text.color: ink draw_text.text_style.font_size: 14} }
+                                if i == 2 { Label{width: Fill text: "钱包与流水" draw_text.color: ink draw_text.text_style.font_size: 14} }
+                                if i == 3 { Label{width: Fill text: "设置" draw_text.color: ink draw_text.text_style.font_size: 14} }
+                                if i == 4 { Label{width: Fill text: "关于礼遇" draw_text.color: ink draw_text.text_style.font_size: 14} }
+                                Label{text: "›" draw_text.color: faint draw_text.text_style.font_size: 21}
+                            }
+                            RowHit{on_click: || {if i == 0 {stage = "profile"; refresh()}; if i == 1 {go("wishes")}; if i == 2 {stage = "wallet"; refresh()}; if i == 3 {stage = "settings"; refresh()}; if i == 4 {stage = "about"; refresh()}}}
+                        }
+                    }
+                }
+            }
+        }
+        if tab == "me" && stage == "profile" {
+            ScrollYView{width: Fill height: Fill flow: Down padding: 16 spacing: 14
+                Label{text: "基本资料" draw_text.color: muted draw_text.text_style: theme.font_bold{font_size: 13}}
+                Card{padding: 14 spacing: 10
+                    Label{text: "显示名" draw_text.color: faint draw_text.text_style.font_size: 13}
+                    if profile != nil { Label{text: profile.display_name draw_text.color: ink draw_text.text_style.font_size: 15} }
+                    Label{text: "头像" draw_text.color: faint draw_text.text_style.font_size: 13}
+                    if profile != nil { Image{width: 64 height: 64 src: http_resource("https://liyu.localhost:8443" + profile.avatar_url) fit: ImageFit.CropToFill} }
+                }
+                Card{padding: 6 spacing: 2
+                    View{width: Fill height: 56 flow: Right align: Align{x: 0.0 y: 0.5} padding: 10
+                        Label{width: Fill text: "手机号" draw_text.color: ink draw_text.text_style.font_size: 14}
+                        if profile != nil && profile.phone != nil { Label{text: profile.phone draw_text.color: muted draw_text.text_style.font_size: 12} }
+                        else { Label{text: "未绑定" draw_text.color: faint draw_text.text_style.font_size: 12} }
+                    }
+                    View{width: Fill height: 56 flow: Right align: Align{x: 0.0 y: 0.5} padding: 10
+                        Label{width: Fill text: "邮箱" draw_text.color: ink draw_text.text_style.font_size: 14}
+                        if profile != nil && profile.email != nil { Label{text: profile.email draw_text.color: muted draw_text.text_style.font_size: 12} }
+                        else { Label{text: "未绑定" draw_text.color: faint draw_text.text_style.font_size: 12} }
+                    }
+                }
+                Label{text: "收货地址" draw_text.color: muted draw_text.text_style: theme.font_bold{font_size: 13}}
+                Card{padding: 14 spacing: 10
+                    if addresses.len() == 0 { Label{text: "还没有保存地址" draw_text.color: faint draw_text.text_style.font_size: 13} }
+                    for a in addresses { Label{width: Fill text: a.recipient_name + " · " + a.phone + " · " + a.address draw_text.color: muted draw_text.text_style.font_size: 13} }
+                }
+            }
+        }
+        if tab == "me" && stage == "wallet" {
+            ScrollYView{width: Fill height: Fill flow: Down padding: 16 spacing: 14
+                Card{padding: 16 spacing: 8
+                    Label{text: "礼遇余额" draw_text.color: muted draw_text.text_style.font_size: 13}
+                    if wallet != nil { Label{text: money(wallet.balance_cents) draw_text.color: accent draw_text.text_style: theme.font_bold{font_size: 26}} }
+                    Label{width: Fill text: "只在礼遇内使用 · 折现、换购退差都进这里" draw_text.color: faint draw_text.text_style.font_size: 12}
+                }
+                Label{text: "流水" draw_text.color: muted draw_text.text_style: theme.font_bold{font_size: 13}}
+                Card{padding: 14 spacing: 8
+                    if wallet != nil && wallet.ledger.len() == 0 { Label{text: "暂无流水" draw_text.color: faint draw_text.text_style.font_size: 13} }
+                }
+            }
+        }
+        if tab == "me" && stage == "settings" {
+            ScrollYView{width: Fill height: Fill flow: Down padding: 16 spacing: 14
+                Label{text: "外观" draw_text.color: muted draw_text.text_style: theme.font_bold{font_size: 13}}
+                Card{padding: 14 spacing: 10
+                    RoundedView{width: Fill height: Fit flow: Right padding: 4 spacing: 4 draw_bg +: {color: #x1f142c border_radius: 8.0}
+                        SegmentOn{text: "深色"}
+                        Segment{text: "浅色"}
+                    }
+                }
+                Label{text: "数据" draw_text.color: muted draw_text.text_style: theme.font_bold{font_size: 13}}
+                Card{padding: 14 spacing: 8
+                    Label{width: Fill text: status draw_text.color: muted draw_text.text_style.font_size: 13}
+                    Secondary{text: "刷新服务端数据" on_click: || load_all()}
+                    Secondary{text: "退出登录" on_click: || logout()}
+                }
+            }
+        }
+        if tab == "me" && stage == "about" {
+            ScrollYView{width: Fill height: Fill flow: Down padding: 16 spacing: 14
+                Card{padding: 16 spacing: 10
+                    Label{text: "礼遇 LIYU-MINI" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 18}}
+                    Label{width: Fill text: "使用 OctoScript / Splash 呈现的 LIYU 简化版本。商品、熟人、心愿单与礼物均来自本地 liyu-server。" draw_text.color: muted draw_text.text_style.font_size: 13}
+                }
+                Secondary{text: "一句话开始" on_click: || go("command")}
+            }
+        }
+        if tab == "command" && stage == "browse" {
+            ScrollYView{width: Fill height: Fill flow: Down padding: 16 spacing: 14
+                Card{padding: 16 spacing: 10
+                    Label{text: "用一句话开始" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 18}}
+                    Label{width: Fill text: "从真实商品和熟人生成待确认的礼卡或心愿单。" draw_text.color: muted draw_text.text_style.font_size: 13}
+                    command_entry := Entry{empty_text: "例如：送林舟一份咖啡" text: draft_command on_change: |v| draft_command = v}
+                    Primary{text: "生成待确认卡片" on_click: || parse_command()}
+                }
+                Secondary{text: "发布心愿单" on_click: || begin("wish", -1)}
+                Secondary{text: "神秘送礼" on_click: || begin("gift", -1)}
+            }
+        }
+        if tab == "command" && stage == "draft" && draft_kind == "wish" {
+            View{width: Fill height: Fill flow: Down
+            wish_draft_scroll := ScrollYView{width: Fill height: Fill flow: Down padding: 16 spacing: 14
+                Label{text: "1 · 什么日子" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 15}}
+                View{width: Fill height: Fit flow: Right{wrap: true} wrap_spacing: 8 spacing: 8
+                    for o in [{id: "birthday", name: "生日"}, {id: "wedding", name: "结婚"}, {id: "housewarming", name: "乔迁"}, {id: "graduation", name: "毕业"}, {id: "baby", name: "宝宝"}, {id: "other", name: "其他"}] {
+                        if draft_occasion == o.id { ChipOn{text: o.name on_click: || {draft_occasion = o.id; refresh()}} }
+                        else { Chip{text: o.name on_click: || {draft_occasion = o.id; refresh()}} }
+                    }
+                }
+                date_entry := Entry{empty_text: "YYYY-MM-DD" text: draft_date on_change: |v| draft_date = v}
+                Label{text: "心愿单有效期" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 15}}
+                wish_expiry_entry := Entry{empty_text: "有效小时数" text: draft_expiry_hours on_change: |v| draft_expiry_hours = v}
+                Label{text: "默认 24 小时；可设置 1–720 小时（最多 30 天）。" draw_text.color: faint draw_text.text_style.font_size: 12}
+                Label{text: "2 · 说说这份心愿" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 15}}
+                title_entry := Entry{empty_text: "心愿单名称" text: draft_title on_change: |v| draft_title = v}
+                note_entry := Entry{empty_text: "写一点心愿说明" text: draft_note on_change: |v| draft_note = v}
+                Label{text: "3 · 想要什么" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 15}}
+                Card{padding: 14 spacing: 10
+                    if draft_item_mode == "exact" && draft_product >= 0 {
+                        View{width: Fill height: Fit flow: Right spacing: 10
+                            Image{width: 52 height: 52 src: http_resource(product_image(products[draft_product])) fit: ImageFit.CropToFill}
+                            View{width: Fill height: Fit flow: Down spacing: 3
+                                Label{text: products[draft_product].name draw_text.color: ink draw_text.text_style.font_size: 14}
+                                Label{text: money(products[draft_product].price_cents) draw_text.color: accent draw_text.text_style.font_size: 13}
+                            }
+                        }
+                        Secondary{text: "换一件" on_click: || {draft_product = -1; show_all_products = false; refresh()}}
+                    }
+                    if draft_item_mode == "exact" && draft_product < 0 {
+                        Label{text: "还没有放进心愿的礼物" draw_text.color: faint draw_text.text_style.font_size: 13}
+                        Secondary{text: "挑一件具体的" on_click: || {show_all_products = true; refresh()}}
+                    }
+                    if draft_item_mode == "vague" {
+                        Label{text: "说个大概 · " + draft_vague_kind draw_text.color: muted draw_text.text_style.font_size: 13}
+                        Secondary{text: "改挑具体商品" on_click: || {draft_item_mode = "exact"; refresh()}}
+                    }
+                    if draft_item_mode == "exact" { Secondary{text: "说个大概" on_click: || {draft_item_mode = "vague"; show_all_products = false; refresh()}} }
+                }
+                if draft_item_mode == "exact" && show_all_products { Card{padding: 10 spacing: 5
+                    for i in products.len() { Secondary{width: Fill text: products[i].name + " · " + money(products[i].price_cents) on_click: || {draft_product = i; show_all_products = false; refresh()}} }
+                } }
+                if draft_item_mode == "vague" {
+                    Label{text: "想要哪一类" draw_text.color: muted draw_text.text_style.font_size: 13}
+                    View{width: Fill height: Fit flow: Right{wrap: true} wrap_spacing: 8 spacing: 8
+                        for kind in ["咖啡", "电影", "甜点", "鲜花", "数码", "家居", "盲盒", "玩具"] {
+                            if draft_vague_kind == kind { ChipOn{text: kind on_click: || {draft_vague_kind = kind; refresh()}} }
+                            else { Chip{text: kind on_click: || {draft_vague_kind = kind; refresh()}} }
+                        }
+                    }
+                    Label{text: "预算" draw_text.color: muted draw_text.text_style.font_size: 13}
+                    View{width: Fill height: Fit flow: Right{wrap: true} wrap_spacing: 8 spacing: 8
+                        for budget in [{cents: 0, name: "不限"}, {cents: 10000, name: "¥100 以内"}, {cents: 30000, name: "¥300 以内"}, {cents: 50000, name: "¥500 以内"}, {cents: 100000, name: "¥1000 以内"}] {
+                            if draft_budget_cents == budget.cents { ChipOn{text: budget.name on_click: || {draft_budget_cents = budget.cents; refresh()}} }
+                            else { Chip{text: budget.name on_click: || {draft_budget_cents = budget.cents; refresh()}} }
+                        }
+                    }
+                }
+                wants_entry := Entry{empty_text: "有什么要求（可不写）" text: draft_wants on_change: |v| draft_wants = v}
+                Label{text: "4 · 给谁看" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 15}}
+                View{width: Fill height: Fit flow: Right{wrap: true} wrap_spacing: 8 spacing: 8
+                    if draft_audience < 0 { ChipOn{text: "所有熟人" on_click: || {draft_audience = -1; refresh()}} } else { Chip{text: "所有熟人" on_click: || {draft_audience = -1; refresh()}} }
+                    for i in friends.len() {
+                        if draft_audience == i { ChipOn{text: friends[i].display_name on_click: || {draft_audience = i; refresh()}} }
+                        else { Chip{text: friends[i].display_name on_click: || {draft_audience = i; refresh()}} }
+                    }
+                }
+            }
+            View{width: Fill height: Fit padding: Inset{left: 16 right: 16 top: 8 bottom: 8} draw_bg.color: #x191021
+                Primary{width: Fill text: "发布心愿单" on_click: || create_wish()}
+            }
+            }
+        }
+        if tab == "command" && stage == "draft" && draft_kind == "gift" {
+            View{width: Fill height: Fill flow: Down
+            gift_draft_scroll := ScrollYView{width: Fill height: Fill flow: Down padding: 16 spacing: 14
+                Card{padding: 14 spacing: 10
+                    View{width: Fill height: Fit flow: Right
+                        Label{width: Fill text: "已选礼物" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 15}}
+                        Secondary{text: "换一件" on_click: || {draft_product = -1; show_all_products = true; quote = nil; refresh()}}
+                    }
+                    if draft_product >= 0 {
+                        View{width: Fill height: Fit flow: Right spacing: 10
+                            Image{width: 56 height: 56 src: http_resource(product_image(products[draft_product])) fit: ImageFit.CropToFill}
+                            View{width: Fill height: Fit flow: Down spacing: 3
+                                Label{text: products[draft_product].name draw_text.color: ink draw_text.text_style.font_size: 14}
+                                Label{text: products[draft_product].spec draw_text.color: faint draw_text.text_style.font_size: 12}
+                                Label{text: money(products[draft_product].price_cents) draw_text.color: accent draw_text.text_style.font_size: 14}
+                            }
+                        }
+                    }
+                    if draft_product < 0 { Secondary{text: "从礼物目录挑选" on_click: || {show_all_products = true; refresh()}} }
+                }
+                if show_all_products { Card{padding: 10 spacing: 5
+                    for i in products.len() { Secondary{width: Fill text: products[i].name + " · " + money(products[i].price_cents) on_click: || {draft_product = i; show_all_products = false; quote = nil; refresh()}} }
+                } }
+                Label{text: "送给谁（仅自己可见）" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 15}}
+                View{width: Fill height: Fit flow: Right{wrap: true} wrap_spacing: 8 spacing: 8
+                    for id in draft_recipient_ids {
+                        View{width: 184 height: 56 flow: Overlay
+                            RoundedView{width: Fill height: Fill flow: Right align: Align{x: 0.0 y: 0.5} padding: Inset{left: 38 right: 8} spacing: 7 draw_bg +: {color: #x211530 border_color: #x3a294f border_size: 1.0 border_radius: 8.0}
+                                RoundedView{width: 32 height: 32 align: Align{x: 0.5 y: 0.5} draw_bg +: {color: #x352446 border_radius: 16.0}
+                                    Label{text: initial(recipient_name(id)) draw_text.color: accent draw_text.text_style.font_size: 15}
+                                }
+                                Label{width: Fill max_lines: 1 text_overflow: Ellipsis text: recipient_name(id) draw_text.color: ink draw_text.text_style.font_size: 14}
+                            }
+                            View{width: Fill height: Fill flow: Down padding: Inset{left: 5 top: 5}
+                                RemoveHit{on_click: || remove_recipient(id)}
+                            }
+                        }
+                    }
+                    Secondary{width: 184 height: 56 text: "+ TA" on_click: || {
+                        if friends.len() == 0 { notice = "还没有可选的熟人。"; get("/friends", "friends"); refresh() }
+                        else { stage = "recipient"; refresh() }
+                    }}
+                }
+                Label{text: "礼物有效期" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 15}}
+                gift_expiry_entry := Entry{empty_text: "有效小时数" text: draft_expiry_hours on_change: |v| {draft_expiry_hours = v; quote = nil}}
+                Label{text: "默认 24 小时；可设置 1–720 小时（最多 30 天）。" draw_text.color: faint draw_text.text_style.font_size: 12}
+                Label{text: "怎么解开礼卡" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 15}}
+                RoundedView{width: Fill height: Fit flow: Right{wrap: true} wrap_spacing: 4 spacing: 4 padding: 4 draw_bg +: {color: #x1f142c border_radius: 8.0}
+                    for mode in [{id: "guess_who", name: "猜我是谁"}, {id: "question", name: "私密问答"}, {id: "passphrase", name: "专属暗号"}, {id: "free", name: "直接领取"}] {
+                        if draft_unlock == mode.id { ChipOn{text: mode.name on_click: || {draft_unlock = mode.id; draft_error = ""; refresh()}} }
+                        else { Chip{text: mode.name on_click: || {draft_unlock = mode.id; draft_error = ""; refresh()}} }
+                    }
+                }
+                if draft_unlock != "free" {
+                    clue_entry := Entry{empty_text: "题目或暗号提示" text: draft_clue on_change: |v| draft_clue = v}
+                    answer_entry := Entry{empty_text: "答案" text: draft_answer on_change: |v| draft_answer = v}
+                    Label{text: "答案必填，最多 20 字；题目或提示最多 30 字。" draw_text.color: faint draw_text.text_style.font_size: 12}
+                }
+                Label{text: "附个约定（可不填）" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 15}}
+                if contract_templates.len() > 0 {
+                    View{width: Fill height: Fit flow: Right{wrap: true} wrap_spacing: 6 spacing: 6
+                        for template in contract_templates {
+                            if draft_contract == template.body { ChipOn{text: template.label on_click: || {draft_contract = template.body; refresh()}} }
+                            else { Chip{text: template.label on_click: || {draft_contract = template.body; refresh()}} }
+                        }
+                    }
+                }
+                contract_entry := Entry{empty_text: "答应我一件小事" text: draft_contract on_change: |v| draft_contract = v}
+                Label{text: "想说的话（可不填）" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 15}}
+                message_entry := Entry{empty_text: "写在礼卡上的寄语" text: draft_message on_change: |v| draft_message = v}
+            }
+            View{width: Fill height: Fit flow: Down padding: Inset{left: 16 right: 16 top: 8 bottom: 8} spacing: 6 draw_bg.color: #x191021
+                if draft_error != "" { Label{width: Fill text: draft_error draw_text.color: accent draw_text.text_style.font_size: 12} }
+                Primary{width: Fill text: "去结算" on_click: || quote_gift()}
+            }
+            }
+        }
+        if tab == "command" && stage == "recipient" {
+            View{width: Fill height: Fill flow: Down
+            recipient_scroll := ScrollYView{width: Fill height: Fill flow: Down padding: 16 spacing: 12
+                Label{text: "选择送给谁" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 18}}
+                Label{text: "已选 " + draft_recipient_ids.len() + " 位，点选熟人后添加到礼卡。" draw_text.color: faint draw_text.text_style.font_size: 12}
+                View{width: Fill height: Fit flow: Right{wrap: true} wrap_spacing: 8 spacing: 8
+                    for i in friends.len() { if !recipient_selected(friends[i].id) {
+                        View{width: 184 height: 56 flow: Overlay
+                            RoundedView{width: Fill height: Fill flow: Right align: Align{x: 0.0 y: 0.5} padding: 10 spacing: 8 draw_bg +: {color: #x211530 border_color: #x3a294f border_size: 1.0 border_radius: 8.0}
+                                RoundedView{width: 38 height: 38 align: Align{x: 0.5 y: 0.5} draw_bg +: {color: #x352446 border_radius: 19.0}
+                                    Label{text: initial(friends[i].display_name) draw_text.color: accent draw_text.text_style.font_size: 17}
+                                }
+                                Label{width: Fill max_lines: 1 text_overflow: Ellipsis text: friends[i].display_name draw_text.color: ink draw_text.text_style.font_size: 14}
+                            }
+                            RowHit{on_click: || choose_recipient(i)}
+                        }
+                    } }
+                }
+            }
+            }
+        }
+        if tab == "command" && stage == "checkout" {
+            ScrollYView{width: Fill height: Fill flow: Down padding: 16 spacing: 14
+                Card{padding: 16 spacing: 10
+                    Label{text: "确认礼物" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 18}}
+                    if draft_product >= 0 { Label{text: products[draft_product].name draw_text.color: ink} }
+                    Label{text: "送给 " + draft_recipient_ids.len() + " 位熟人" draw_text.color: muted}
+                    Label{text: "有效期  " + draft_expiry_hours + " 小时（测试支付后开始）" draw_text.color: muted draw_text.text_style.font_size: 13}
+                    for id in draft_recipient_ids { Label{text: recipient_name(id) draw_text.color: muted draw_text.text_style.font_size: 13} }
+                    Label{text: "解开方式  " + unlock_name(draft_unlock) draw_text.color: muted draw_text.text_style.font_size: 13}
+                    if draft_unlock != "free" {
+                        if draft_clue.trim() != "" { Label{width: Fill text: "题目或提示  " + draft_clue.trim() draw_text.color: muted draw_text.text_style.font_size: 13} }
+                        Label{text: "答案已填写" draw_text.color: muted draw_text.text_style.font_size: 13}
+                    }
+                    if quote != nil { Label{text: "应付  " + money(quote.total_cents) draw_text.color: accent draw_text.text_style: theme.font_bold{font_size: 24}} }
+                    Label{width: Fill text: "本地测试结算会在 liyu-server 生成真实测试订单。" draw_text.color: faint draw_text.text_style.font_size: 12}
+                }
+                Primary{width: Fill text: "确认并测试支付" on_click: || create_order()}
+                Secondary{width: Fill text: "返回修改礼卡" on_click: || {stage = "draft"; refresh()}}
+            }
+        }
     }
+    if !desktop_mode { View{width: Fill height: 66 flow: Right padding: Inset{left: 5 right: 5 top: 5 bottom: 5} spacing: 2 draw_bg.color: #x1c1228
+        for nav in [{id: "discover", name: "挑礼", icon: "gift"}, {id: "box", name: "礼盒", icon: "box"}, {id: "pact", name: "约定", icon: "pact"}, {id: "contacts", name: "熟人", icon: "contacts"}, {id: "me", name: "我", icon: "me"}] {
+            View{width: Fill height: Fill flow: Overlay
+                View{width: Fill height: Fill flow: Down align: Align{x: 0.5 y: 0.5} spacing: 2
+                    if tab == nav.id { Image{width: 21 height: 21 src: http_resource(assets + "/assets/ui/nav-" + nav.icon + "-on.png") fit: ImageFit.Stretch} }
+                    else { Image{width: 21 height: 21 src: http_resource(assets + "/assets/ui/nav-" + nav.icon + ".png") fit: ImageFit.Stretch} }
+                    if tab == nav.id { Label{text: nav.name draw_text.color: accent draw_text.text_style.font_size: 11.5} }
+                    else { Label{text: nav.name draw_text.color: muted draw_text.text_style.font_size: 11.5} }
+                }
+                NavHit{on_click: || go(nav.id)}
+            }
+        }
+    } }
+    }
+    if desktop_mode && tab != "me" {
+        ScrollYView{width: 300 height: Fill flow: Down padding: Inset{left: 0 right: 20 top: 20 bottom: 20} spacing: 14
+            if tab == "discover" || tab == "command" {
+                Card{padding: 16 spacing: 8
+                    Label{text: "怎么玩" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 17}}
+                    Label{width: Fill text: "1 挑一件小礼物\n2 出一道只有 TA 答得上的题，可附一个约定\n3 把礼卡发给 TA，等 TA 来拆" draw_text.color: muted draw_text.text_style.font_size: 13}
+                }
+                Card{padding: 16 spacing: 8
+                    Label{text: "心愿单" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 17}}
+                    Label{width: Fill text: "生日、乔迁、毕业……列出想要的礼物，让熟人知道送什么。" draw_text.color: muted draw_text.text_style.font_size: 13}
+                    Secondary{text: "我的心愿单" on_click: || go("wishes")}
+                }
+            }
+            if tab == "box" { Card{padding: 16 spacing: 8
+                Label{text: "礼盒一览" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 17}}
+                Label{text: "收到 " + inbox.len() + " 份 · 送出 " + outbox.len() + " 份" draw_text.color: muted draw_text.text_style.font_size: 13}
+            } }
+            if tab == "pact" { Card{padding: 16 spacing: 8
+                Label{text: "关于约定" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 17}}
+                Label{width: Fill text: "只写轻约定，不涉及钱；兑现了记得标记。" draw_text.color: muted draw_text.text_style.font_size: 13}
+            } }
+            if tab == "contacts" { Card{padding: 16 spacing: 8
+                Label{text: "熟人" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 17}}
+                Label{text: friends.len() + " 位熟人" draw_text.color: muted draw_text.text_style.font_size: 13}
+            } }
+        }
+    }
+    }}}
 }

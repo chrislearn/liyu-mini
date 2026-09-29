@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "subtitle": "从一句话到心愿单与神秘礼卡的本机演示",
-  "description": "LIYU-MINI 以 LIYU 的 33 件示例商品和 2 个 iPhone 型号占位，演示商品搜索、分类、待确认心愿/送礼卡片、联系人编辑、多商品心愿单、谜题或暗号及礼盒揭晓和模拟收下。可手动同步公开 HTTPS 演示目录；部分大图在线加载。商品价格仅为示意。指令由本地规则识别，记录保存在本机。尚未接入系统 AppCard、账户、多人协作、真实支付、订单、券码或配送。",
+  "subtitle": "连接 LIYU 账号的本地礼物流程测试",
+  "description": "LIYU-MINI 本地联调版按原生 LIYU 手机页面元素重排，用户可通过宿主登录或注册自己的 LIYU 账号，读取服务端商品、熟人、心愿单和礼物。支持心愿单、送礼报价与测试订单、礼卡谜题。需要包含 LIYU 认证服务的本地 App-Hub 宿主；尚未接入系统 AppCard，不能直接公开上架。",
   "category": "lifestyle",
   "keywords": [
     "礼物",
@@ -11,12 +11,14 @@
     "指令演示"
   ],
   "screenshots": [
-    "screenshots/01-command.png",
-    "screenshots/02-draft-card.png",
-    "screenshots/03-wishes.png",
-    "screenshots/04-catalog.png",
-    "screenshots/05-gift.png",
-    "screenshots/06-contacts.png"
+    "screenshots/09-auth.png",
+    "screenshots/01-shop.png",
+    "screenshots/02-product.png",
+    "screenshots/03-friend-wishes.png",
+    "screenshots/04-box.png",
+    "screenshots/11-contact-detail.png",
+    "screenshots/08-gift-draft.png",
+    "screenshots/10-desktop.png"
   ],
   "icon": "assets/icon.svg",
   "platforms": [
@@ -27,7 +29,7 @@
     "support": "https://github.com/chrislearn/liyu-mini/issues",
     "privacy_policy_url": "https://github.com/chrislearn/liyu-mini/blob/main/PRIVACY.md"
   },
-  "release_notes": "LIYU-MINI 首个发布版：扩展至 LIYU 的 33 件商品及 2 个 iPhone 演示型号，加入目录搜索与筛选、HTTPS 目录同步、多商品心愿单、联系人编辑和礼盒收下演示。",
+  "release_notes": "送出礼物列表将收礼人与到期时间合并为一行，手机与桌面均保持两行紧凑布局。",
   "age_rating": "all",
   "license": "Apache-2.0"
 }

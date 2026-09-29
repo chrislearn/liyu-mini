@@ -34,6 +34,9 @@ export OCTOSENSE_APP_DATA="$app_root/build/desktop-apps"
 export OCTOS_APP_CORE_BIN
 export OCTOSENSE_LLM_VAULT=file
 export OCTOSENSE_MAIL_VAULT=file
+export LIYU_SERVICE_URL="${LIYU_SERVICE_URL:-https://liyu.localhost:8443}"
+export LIYU_SERVICE_CA_FILE="${LIYU_SERVICE_CA_FILE:-$app_root/build/local-caddy/data/pki/authorities/local/root.crt}"
+export MAKEPAD_WM_TEST_APP="${MAKEPAD_WM_TEST_APP:-hub:liyu-mini}"
 export MAKEPAD_REMOTE="${MAKEPAD_REMOTE:-8399}"
 
 cd "$runner"

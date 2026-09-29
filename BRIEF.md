@@ -1,7 +1,5 @@
 # LIYU-MINI brief
 
-A publishable OctoScript/Splash demonstration of LIYU's request-to-draft-card gift experience, with no claimed commercial transaction.
+This checkout is a local OctoScript/Splash integration of LIYU with `liyu-server`. Its running catalog, friend list, wishlists, account and gifts come from the server through a host-owned account service; no sample data is constructed in the app. The five LIYU destinations, server-backed exact and broad wishlists, gift inbox/outbox, contract templates and fulfillment status, test order quote and confirmation, multi-select confirmed-friend recipients with individual removal and one combined test order, and gift reveal actions are available in Splash. The phone layout follows the native element tree described in [UI-PARITY.md](UI-PARITY.md). The command field uses local keyword matching to prefill a review screen, not a system AppCard action.
 
-The bundle contains LIYU's 33 sample products and two iPhone placeholders, search and category filtering, optional public HTTPS catalog synchronization, 25 bundled product images and eight remotely loaded larger images. It provides six fictional starter contacts and local add/edit/remove, multi-item wishlists, gift drafts with recipient/message/reveal mode, a local gift box, puzzle opening and simulated acceptance. Local Chinese keyword matching is deliberately limited; the system AppCard does not invoke it.
-
-`liyu-mini` is a new app ID and storage jail. The former `liyu-demo` local data is not automatically imported. The new schema uses `mini-v1.json`. See CAPABILITY-GAP.md for native LIYU features that require a public HTTPS backend or new host services.
+The local App-Hub host service now handles LIYU registration, sign-in, session restoration, expiry, and logout. A public release still needs the new capability deployed to OctoSense hosts and a public HTTPS LIYU server. See [CAPABILITY-GAP.md](CAPABILITY-GAP.md).
