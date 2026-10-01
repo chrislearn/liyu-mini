@@ -2,11 +2,13 @@
   "capabilities": [
     "images",
     "liyu",
-    "net"
+    "model",
+    "net",
+    "storage"
   ],
   "id": "liyu-mini",
   "integrity": {
-    "bundle_blake3": "81d1ec984aa581af7905ac67c8ad0483391f76d4b1fe84f99766febfe51c876d"
+    "bundle_blake3": "aa135d5932b161c7d04a8634d1c8165841690e0561f36dd5f6c3b4f7f331508d"
   },
   "name": "LIYU-MINI",
   "network": {
@@ -15,5 +17,5 @@
     ]
   },
   "schema": 1,
-  "version": "1.0.19"
+  "version": "1.0.31"
 }

@@ -1,24 +1,21 @@
 {
   "schema": 1,
-  "subtitle": "连接 LIYU 账号的本地礼物流程测试",
-  "description": "LIYU-MINI 本地联调版按原生 LIYU 手机页面元素重排，用户可通过宿主登录或注册自己的 LIYU 账号，读取服务端商品、熟人、心愿单和礼物。支持心愿单、送礼报价与测试订单、礼卡谜题。需要包含 LIYU 认证服务的本地 App-Hub 宿主；尚未接入系统 AppCard，不能直接公开上架。",
+  "subtitle": "连接 LIYU 账号的本地送礼流程测试",
+  "description": "LIYU-MINI 本地联调版连接 LIYU 账号，读取服务端商品、熟人、心愿单和礼盒。支持生日与结婚纪念日站内提醒、测试订单和主动开礼盒；送礼人可选择直接揭晓或答对谜题后揭晓。按需使用设备配置的 AI 分析匿名线索与挑礼，AI 不知道送礼人答案。需要包含 LIYU 认证服务的本地 App-Hub 宿主；不能直接公开上架。",
   "category": "lifestyle",
   "keywords": [
     "礼物",
-    "礼卡",
+    "礼盒",
     "心愿单",
     "商品目录",
     "指令演示"
   ],
   "screenshots": [
-    "screenshots/09-auth.png",
-    "screenshots/01-shop.png",
-    "screenshots/02-product.png",
-    "screenshots/03-friend-wishes.png",
-    "screenshots/04-box.png",
-    "screenshots/11-contact-detail.png",
-    "screenshots/08-gift-draft.png",
-    "screenshots/10-desktop.png"
+    "screenshots/10-desktop.png",
+    "screenshots/15-contacts.png",
+    "screenshots/13-tags.png",
+    "screenshots/14-wish-audience.png",
+    "screenshots/09-auth.png"
   ],
   "icon": "assets/icon.svg",
   "platforms": [
@@ -29,7 +26,7 @@
     "support": "https://github.com/chrislearn/liyu-mini/issues",
     "privacy_policy_url": "https://github.com/chrislearn/liyu-mini/blob/main/PRIVACY.md"
   },
-  "release_notes": "送出礼物列表将收礼人与到期时间合并为一行，手机与桌面均保持两行紧凑布局。",
+  "release_notes": "增加熟人纪念日提醒与按需 AI 建议；礼盒必须主动打开，谜题只有答对才揭晓。",
   "age_rating": "all",
   "license": "Apache-2.0"
 }

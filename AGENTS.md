@@ -30,3 +30,10 @@ Rules:
 - Stop at human steps: publisher key, publisher details, platform claims, submission.
 
 Add this app's own requirements, data sources and tests below.
+
+## Product terminology
+
+- 商品: catalog products and wishlist contents. Category/budget entries that do not select a product are explicitly labeled 商品需求.
+- 礼盒: the object a user sends, including its product and opening settings. Unopened and solving states remain 礼盒; product information is visible before unwrapping, while sender identity stays hidden.
+- 礼物: the product a recipient receives from another user after successfully unwrapping the box.
+- Sent history uses 礼盒. Incoming history includes unopened boxes and uses 礼盒; recipient detail becomes 礼物详情 after successful unwrapping. Do not call these objects 礼卡. Preserve product names and user-authored titles/messages.
