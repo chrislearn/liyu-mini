@@ -1,12 +1,27 @@
 # LIYU-MINI
 
-LIYU-MINI is the OctoScript/Splash version of [LIYU](https://github.com/chrislearn/OctoSense/tree/liyu/apps/liyu). This checkout is configured for **local integration testing** with `liyu-server`; the running app has no bundled catalog, fictional contacts, or local gift/wishlist records. It requests products, categories, prices, stock, the signed-in account, friends, wishlists, and gifts through the host's `liyu` service. Friend detail now includes owner-private nickname, phone, email, relationship, birthday, and note fields. Each field opens a separate editor and saves through the host service; recent wishes and sent/received gift lists link to the existing detail flows. Product images use `https://liyu.localhost:8443`. An optional short Chinese keyword parser opens a review screen using the returned products and friends. An exact or broad wishlist is written to the server after confirmation. Gift checkout uses “+ TA” to add friends, permits removing each selected friend, and obtains a combined server quote for up to 100 recipients. One test order creates one gift per recipient after explicit confirmation and `pay-test`; puzzle settings and gift state changes also use the server API.
+LIYU-MINI 是 [LIYU](https://github.com/chrislearn/OctoSense/tree/liyu/apps/liyu) 的 OctoScript / Splash 版本，用于与 `liyu-server` 进行本地联调。商品、分类、价格、库存、账号、熟人、心愿单和礼盒记录均通过宿主的 `liyu` 服务读取。应用使用真实用户登录及服务端会话。
 
-The 412-point phone shell follows the Makepad LIYU element tree: 58-point top bar, 66-point icon navigation, segmented tabs, category chips, two-column product cards, compact gift/contact rows, and the four-section wishlist and gift forms. See [UI-PARITY.md](UI-PARITY.md) for the source-to-Splash mapping and remaining differences. `liyu-server` is still a **test** backend with seeded products, optional local social/gift fixtures, test payment, and test delivery; these are persisted server records, not LIYU-MINI fallback data. LIYU-MINI does not sign in with a seeded account. If that backend has no iPhone product, LIYU-MINI does not invent one. The in-app command screen is a Splash view, not a system AppCard integration. A top-bar layout switch enables a desktop mode with LIYU-style 208-point left navigation, a flexible central content column, and a 300-point right information column. The phone layout retains its bottom navigation; the desktop mode is manually selected and is intended for wide viewports.
+## 主要功能
 
-LIYU-MINI now has the same account gate as native LIYU: sign in or register with an email/phone identifier, password, and registration code; restore the server session on restart; return to the gate on logout or HTTP 401. The password and code are typed into an **OctoSense-owned sheet**, not the contained app. The host keeps the Bearer token in `<app-data>/.host/liyu/liyu-mini/session.json` with owner-only file permissions and proxies authenticated business requests. Caddy no longer injects a shared account. The `liyu` capability and service are currently implemented in the **local App-Hub checkout**; its pinned version in the OctoSense shell and the public App Hub do not yet include this change. A public release also needs a public HTTPS LIYU origin and host rollout. See [CAPABILITY-GAP.md](CAPABILITY-GAP.md) and [PRIVACY.md](PRIVACY.md).
+- **挑礼与送礼**：浏览商品目录和详情，选择商品后点击「送给TA」设置礼盒。支持添加、移除收礼人，一次最多选择 100 位熟人，合并报价并生成测试订单，每位收礼人对应一个礼盒。
+- **主动拆盒**：收到礼盒后可以查看商品信息，送礼人身份在拆盒前隐藏。送礼人可选择直接打开、猜送礼人或回答问题；每个礼盒都必须主动打开，谜题答错不能拆盒。
+- **心愿单**：新建心愿单后逐件加入商品，最多 8 项，也可填写商品种类、预算等需求。发布前仅自己可见，发布时设置可见范围和有效期；发布后商品清单固定。重复加入同一商品不会增加重复项。
+- **熟人资料与提醒**：保存仅自己可见的昵称、联系方式、关系、生日、结婚日期和备注。生日及结婚纪念日在提前七天和当天产生站内提醒。
+- **AI 建议**：通过设备配置的模型分析适合赠送的商品，或根据可见线索推测送礼人。AI 无法读取真正答案，也不能替用户拆盒或下单；宿主未提供模型服务时会提示不可用。
+- **约定记录**：双方分别记录待兑现、已兑现状态。点击「附带的约定」进入状态页面，修改只影响当前账号的记录。旧版共享状态保留为历史数据。
+- **账号与地址**：支持修改显示名、验证邮箱或手机号，保存多个收货地址，设置默认地址，以及编辑和删除地址。「我」页面底部提供切换账号和退出登录。
+- **外观与布局**：支持深色、浅色主题并保存偏好。手机布局使用底部导航、双栏商品卡片；桌面布局包含左侧导航、中间内容区和右侧信息栏。具体对应关系见[界面实现说明](UI-PARITY.md)。
 
-The gift flow now requires an explicit open action on every received gift. The sender chooses direct opening, a sender-name guess, or a custom question. The server keeps all new paid gifts locked until that choice is saved; wrong answers never reveal a puzzle gift. Friend birthdays and wedding dates generate private in-app reminders seven days before and on the day. Two optional `model.complete` buttons ask the device's configured AI for gift suggestions or possible senders from visible clues; they cannot read the server's answer, open a gift, or order. Current OctoSense `main` has the model service, while this repository's older local Demo Runner and `card-host` do not; those hosts show a clear unavailable state until updated. The App-Hub LIYU proxy in this workspace now allows the reminder read route.
+## 登录与数据
+
+密码和验证码在 **OctoSense 宿主提供的弹层**中输入。宿主将会话令牌保存在 `<app-data>/.host/liyu/liyu-mini/session.json`，限制为当前用户访问，并代理带认证的业务请求；应用不会收到密码、验证码或令牌。重启后恢复会话，退出登录或收到 HTTP 401 后返回登录入口。Caddy 不注入共享账号。
+
+邮箱和手机号修改由宿主的 `liyu.edit_contact` 方法完成验证，真实邮件、短信发送需要后端配置发送服务。新联系方式验证后用于资料展示；原有已验证身份和登录标识按服务端规则保留。熟人备注与资料属于当前账号，不会修改对方已验证的身份信息。
+
+商品图片通过 `https://liyu.localhost:8443` 加载。此版本使用本地测试后端，测试支付不产生真实扣款；测试数据保存在服务端数据库中。应用没有内置虚构熟人或本地业务数据兜底。中文关键词输入可使用服务端返回的商品和熟人生成待确认内容，目前该页面由 Splash 实现。
+
+本地 App-Hub 已实现 `liyu` 能力。公开上架还需要提供正式 HTTPS 服务地址，并确认目标宿主支持所需能力。详情见[能力差异说明](CAPABILITY-GAP.md)和[隐私政策](PRIVACY.md)。
 
 ## 演示视频
 
@@ -34,7 +49,7 @@ The gift flow now requires an explicit open action on every received gift. The s
 | --- | --- |
 | <img src="screenshots/contacts.png" alt="熟人列表：搜索、关系和标签入口" width="300"> | <img src="screenshots/wishlist-audience.png" alt="心愿单可见范围：按熟人或标签选择" width="300"> |
 
-## Run locally
+## 本地运行
 
 一键启动本地后端和 Caddy HTTPS 反代：
 
@@ -44,17 +59,15 @@ The gift flow now requires an explicit open action on every received gift. The s
 
 可从任意目录用脚本绝对路径运行。后端固定监听 `127.0.0.1:8787`，反代为 `https://liyu.localhost:8443`，管理页面为 `/admin`。首次启动前需配置 `../liyu-server/.env` 并确保其中的 PostgreSQL 数据库可用；命令会增量编译后端，使用现有账号与数据库配置，不启用演示登录或额外开启测试验证码。已有健康的后端会复用；两项服务都就绪时重复执行直接返回。保持终端打开，`Ctrl+C` 只停止本次命令启动的进程。日志在 `build/local-services/`，CA 沿用 `build/local-caddy/data/pki/authorities/local/root.crt`。管理界面需预先在后端执行 `just build-admin`。
 
-Personal profile rows open a display-name editor or an OctoSense-owned email/phone verification sheet. The `liyu.edit_contact` host method requests a bearer-scoped binding challenge and returns the updated profile after verification; the app never receives the code. The new verified contact becomes the displayed contact, while prior verified identities and the login identifier are retained by the existing server API. Real email/SMS changes require the server's delivery webhook. Shipping addresses support multiple saved entries, a default selection, editing, and confirmed deletion through owner-scoped server routes.
-
-For manual startup, run `liyu-server` on `127.0.0.1:8787` with the local database. For a local registration test, `LIYU_TEST_DELIVERY=true` returns a test verification code; normal deployments need a configured delivery webhook. Caddy proxies the same server at `https://liyu.localhost:8443` without attaching Authorization. The host service uses that HTTPS address too; `LIYU_SERVICE_CA_FILE` supplies its local CA to Rust's TLS verifier. After the one-command script has generated its configuration, these long-lived commands can also be run in separate terminals:
+如需分别启动后端与反代，可在一键脚本生成配置后执行以下命令。后端读取现有 `.env`；注册测试可显式设置 `LIYU_TEST_DELIVERY=true` 返回测试验证码，正常验证需要配置发送服务。宿主通过 `LIYU_SERVICE_CA_FILE` 使用本地 CA 校验证书。
 
 ```sh
 cd ../liyu-server && LIYU_BIND=127.0.0.1:8787 target/debug/liyu-server
-# From liyu-mini, in another terminal:
+# 在另一个终端中进入 liyu-mini 后执行：
 LIYU_CADDY_DATA="$PWD/build/local-caddy/data" caddy run --config build/local-services/Caddyfile --adapter caddyfile
 ```
 
-Then use the locally built App-Hub tools containing the `liyu` service:
+随后使用包含 `liyu` 服务的本地 App-Hub 工具启动应用：
 
 ```sh
 OCTO_HUB=../OctoSense-App-Hub/target/debug/hub \
@@ -65,15 +78,23 @@ OCTO_CARD_HOST=../OctoSense-App-Hub/target/debug/card-host \
 ../OctoScript-App-Design-Flow/tools/octo run bundle --port 8141 --detach --app-data build/auth-app-data
 ```
 
-Open the card-host window and choose **登录或注册**. The instance can also be driven at `127.0.0.1:8141` via `/snap`, `/click` and `/g`. Keep Caddy and the server running while using the app. The app's test payment remains simulated; account authentication uses real per-user server sessions.
 
-To open the locally installed **LIYU-MINI 1.0.17** inside OctoSense, use the shell binary built with the local App-Hub `liyu` host service, then run `./run-octosense-local.sh`. The script points OctoSense at the signed local catalog and installed bundle under `build/`, configures the HTTPS service and local CA, and opens `hub:liyu-mini` on startup. The shell's remote control listens on `127.0.0.1:8399` by default. This is a local integration build; the public OctoSense dependency pin does not yet include the `liyu` service.
+打开 `card-host` 窗口，选择「登录或注册」。也可通过 `127.0.0.1:8141` 的 `/snap`、`/click` 和 `/g` 接口查看和操作应用。使用期间保持 Caddy 和后端运行。
 
-约定兑现状态由双方各自记录。约定列表及礼盒详情的「附带的约定」展示当前状态，点击进入约定状态页面，可标记已兑现、改回待兑现；状态按礼物和登录账号保存到后端，仅展示并修改当前账号自己的记录。旧版共享状态保留为历史数据，不推定为任何一方的个人标记。
+如需在 OctoSense 中打开本地安装的应用，使用包含 `liyu` 服务的宿主程序，并执行：
 
-「我」页面底部直接提供切换账号及退出登录。设置中的深色/浅色切换即时更新页面颜色，并将偏好保存在本地；切换账号取消时保留当前登录。
+```sh
+./run-octosense-local.sh
+```
 
-心愿单流程：先新建心愿单，再逐件挑选商品（最多 8 件，也支持填写商品需求），整理后设置可见范围和发布有效期。商品详情的「加入心愿单」选择已有未发布的心愿单；没有可用的心愿单时可在子页新建并加入。未发布的心愿单保存在后端、仅自己可见，重复加入同一商品不会增加重复项，商品可移除。发布后商品清单固定，有效期从发布时起算。
+该脚本使用 `build/` 下的本地签名目录和已安装应用，配置 HTTPS 服务及本地 CA，启动时打开 `hub:liyu-mini`。宿主远程操作端口默认为 `127.0.0.1:8399`。模型功能还需在宿主中完成模型配置。
+
+## 文件说明
+
+- `liyu-demo.mp4`：操作演示视频。
+- `screenshots/`：README 展示的真实页面截图。
+- `bundle/`：提交给 App Hub 的应用包。
+- `build/`：本地构建、日志、证书及运行数据，已被 Git 忽略，不提交到仓库。
 
 ## 产品名词
 
