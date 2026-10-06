@@ -8,15 +8,50 @@ LIYU-MINI now has the same account gate as native LIYU: sign in or register with
 
 The gift flow now requires an explicit open action on every received gift. The sender chooses direct opening, a sender-name guess, or a custom question. The server keeps all new paid gifts locked until that choice is saved; wrong answers never reveal a puzzle gift. Friend birthdays and wedding dates generate private in-app reminders seven days before and on the day. Two optional `model.complete` buttons ask the device's configured AI for gift suggestions or possible senders from visible clues; they cannot read the server's answer, open a gift, or order. Current OctoSense `main` has the model service, while this repository's older local Demo Runner and `card-host` do not; those hosts show a clear unavailable state until updated. The App-Hub LIYU proxy in this workspace now allows the reminder read route.
 
+## 演示视频
+
+[观看 LIYU-MINI 操作演示](liyu-demo.mp4)（MP4，约 3 分钟，32 MB）。
+
+## 界面截图
+
+以下为连接本地 LIYU 后端的真实页面截图，包含浅色、深色及桌面布局。
+
+### 桌面布局
+
+![桌面布局：左侧导航、中央内容与右侧信息栏](screenshots/desktop.png)
+
+### 主要功能
+
+| 挑选商品 | 商品详情 |
+| --- | --- |
+| <img src="screenshots/catalog.png" alt="挑礼：商品分类、图片和价格" width="300"> | <img src="screenshots/product.png" alt="商品详情：介绍、规格以及送礼和加入心愿单入口" width="300"> |
+
+| 心愿单 | 送出的礼盒 |
+| --- | --- |
+| <img src="screenshots/wishlists.png" alt="我的心愿单：商品清单、发布状态和有效期" width="300"> | <img src="screenshots/gift-box.png" alt="礼盒详情：商品、收礼人、礼盒信息及解谜进度" width="300"> |
+
+| 熟人 | 心愿单可见范围 |
+| --- | --- |
+| <img src="screenshots/contacts.png" alt="熟人列表：搜索、关系和标签入口" width="300"> | <img src="screenshots/wishlist-audience.png" alt="心愿单可见范围：按熟人或标签选择" width="300"> |
+
 ## Run locally
+
+一键启动本地后端和 Caddy HTTPS 反代：
+
+```sh
+./start-local-services.sh
+```
+
+可从任意目录用脚本绝对路径运行。后端固定监听 `127.0.0.1:8787`，反代为 `https://liyu.localhost:8443`，管理页面为 `/admin`。首次启动前需配置 `../liyu-server/.env` 并确保其中的 PostgreSQL 数据库可用；命令会增量编译后端，使用现有账号与数据库配置，不启用演示登录或额外开启测试验证码。已有健康的后端会复用；两项服务都就绪时重复执行直接返回。保持终端打开，`Ctrl+C` 只停止本次命令启动的进程。日志在 `build/local-services/`，CA 沿用 `build/local-caddy/data/pki/authorities/local/root.crt`。管理界面需预先在后端执行 `just build-admin`。
 
 Personal profile rows open a display-name editor or an OctoSense-owned email/phone verification sheet. The `liyu.edit_contact` host method requests a bearer-scoped binding challenge and returns the updated profile after verification; the app never receives the code. The new verified contact becomes the displayed contact, while prior verified identities and the login identifier are retained by the existing server API. Real email/SMS changes require the server's delivery webhook. Shipping addresses support multiple saved entries, a default selection, editing, and confirmed deletion through owner-scoped server routes.
 
-Start `liyu-server` on `127.0.0.1:8789` with the local database. For a local registration test, `LIYU_TEST_DELIVERY=true` returns a test verification code; normal deployments need a configured delivery webhook. Caddy proxies the same server at `https://liyu.localhost:8443` without attaching Authorization. The host service uses that HTTPS address too; `LIYU_SERVICE_CA_FILE` supplies its local CA to Rust's TLS verifier. Run these long-lived commands in separate terminals:
+For manual startup, run `liyu-server` on `127.0.0.1:8787` with the local database. For a local registration test, `LIYU_TEST_DELIVERY=true` returns a test verification code; normal deployments need a configured delivery webhook. Caddy proxies the same server at `https://liyu.localhost:8443` without attaching Authorization. The host service uses that HTTPS address too; `LIYU_SERVICE_CA_FILE` supplies its local CA to Rust's TLS verifier. After the one-command script has generated its configuration, these long-lived commands can also be run in separate terminals:
 
 ```sh
-cd ../liyu-server && LIYU_BIND=127.0.0.1:8789 LIYU_TEST_DELIVERY=true target/debug/liyu-server
-caddy run --config build/local-caddy/Caddyfile --adapter caddyfile
+cd ../liyu-server && LIYU_BIND=127.0.0.1:8787 target/debug/liyu-server
+# From liyu-mini, in another terminal:
+LIYU_CADDY_DATA="$PWD/build/local-caddy/data" caddy run --config build/local-services/Caddyfile --adapter caddyfile
 ```
 
 Then use the locally built App-Hub tools containing the `liyu` service:
