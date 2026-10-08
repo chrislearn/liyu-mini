@@ -1,0 +1,14 @@
+{
+  "captured_on": "2026-10-08",
+  "platform": "Darwin",
+  "architecture": "arm64",
+  "os_version": "27.0.1",
+  "runtime_source_revision": "a72989ff2e4d51562693d05210b68e11f3bf3fcd",
+  "runtime_source_dirty": true,
+  "binaries": {
+    "target/debug/hub": "20d4a45266a6ddbdfde9b25d31778380dad6b3f210ce6740975108b91bce4924",
+    "target/debug/card-host": "d83155d071e9ebc98b2a4af80e2ea95f8d6c9f860e756279039a99eaa1ad2f2e",
+    "target/release/hub": "a704b87bc1a47f7dc4c0cf4489d6b1b0662b5475fd986c512a5030650d2d23a6"
+  },
+  "scope": "author-machine native checks; runtime source dirty, not an independently reproducible official-runtime certification"
+}
