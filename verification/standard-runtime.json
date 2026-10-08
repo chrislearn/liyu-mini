@@ -25,5 +25,10 @@
     "no Windows/Linux GUI or real payment verification"
   ],
   "screenshot_sha256": "a6c971acfa1752bed49bce2a0544182007171657496a73026a18a75aac4c0502",
-  "matches_readme_demo_screenshot": true
+  "matches_readme_demo_screenshot": true,
+  "preparation_tool": {
+    "repository": "https://github.com/OctoSense-org/OctoScript-App-Design-Flow",
+    "revision": "9f8ebb21638e51833b190c34d97518d48068692f",
+    "preparation_scripts_match_commit": true
+  }
 }

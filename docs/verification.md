@@ -39,7 +39,7 @@ Windows 的虚拟环境 Python 为 `build/verify-venv/Scripts/python.exe`。获�
 
 ### 复现本轮干净标准运行器
 
-使用 `verification/standard-runtime.json` 中 App Hub 的提交，按官方 Quickstart 克隆 App Hub 与设计流程仓库。在设计流程仓库运行：
+使用 `verification/standard-runtime.json` 中 App Hub 与 `preparation_tool` 的提交，按官方 Quickstart 克隆 App Hub 与设计流程仓库并分别检出记录中的版本。在设计流程仓库运行：
 
 ```sh
 python3 tools/setup-native.py --root <隔离工作目录> --cache <可选本机源码缓存>
@@ -48,3 +48,5 @@ cargo build --locked --manifest-path <隔离工作目录>/OctoSense-App-Hub/Carg
 ```
 
 四个运行时仓库均应 `git status --porcelain` 无输出，并与记录提交对应。在小程序仓库将 `OCTO_HUB` 与 `OCTO_CARD_HOST` 指向新编译的两个二进制，再执行演示和网络检查脚本。网络检查需要可信 HTTPS 后端。缓存仅用于取得已有 Git 对象，不使用缓存中的未提交源码。
+
+本轮以 App Hub 和官方准备工具锁定版本为基准，不表示最新完整 OctoSense 宿主已验证。
