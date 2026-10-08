@@ -21,9 +21,9 @@ size = sum(p.stat().st_size for p in files)
 assert size < 8_000_000, f'Bundle too large: {size}'
 allowed = {'.card', '.json', '.l0', '.octoscript', '.splash', '.svg', '.png', '.jpg', '.jpeg', '.webp', '.ttf', '.otf', '.txt', '.md'}
 assert all(p.suffix.lower() in allowed for p in files), 'Unexpected package content'
-manifest = json.loads((bundle / 'manifest.json').read_text())
-listing = json.loads((bundle / 'listing.json').read_text())
-source = (bundle / 'main.splash').read_text()
+manifest = json.loads((bundle / 'manifest.json').read_text(encoding='utf-8'))
+listing = json.loads((bundle / 'listing.json').read_text(encoding='utf-8'))
+source = (bundle / 'main.splash').read_text(encoding='utf-8')
 assert manifest['capabilities'] == ['images', 'model', 'net', 'storage']
 assert 'host.request("liyu.' not in source and 'services.liyu' not in source
 origin = json.loads(re.search(r'^let service_origin = ("[^"]+")$', source, re.M)[1])
@@ -56,6 +56,7 @@ archive = output / f"liyu-mini-{manifest['version']}.zip"
 with zipfile.ZipFile(archive, 'w', compression=zipfile.ZIP_DEFLATED, compresslevel=9) as z:
     for path in files:
         info = zipfile.ZipInfo(path.relative_to(bundle).as_posix(), date_time=(2020, 1, 1, 0, 0, 0))
+        info.create_system = 3
         info.compress_type = zipfile.ZIP_DEFLATED
         info.external_attr = 0o100644 << 16
         z.writestr(info, path.read_bytes())
@@ -63,7 +64,7 @@ revision = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=root, text=
 dirty = bool(subprocess.check_output(['git', 'status', '--porcelain'], cwd=root, text=True).strip())
 report = {'app_version': manifest['version'], 'source_revision': revision, 'working_tree_dirty': dirty,
           'bundle_blake3': digest, 'bundle_bytes': size, 'archive_sha256': hashlib.sha256(archive.read_bytes()).hexdigest(),
-          'server_revision': (root / 'verification/server-revision.txt').read_text().strip(),
+          'server_revision': (root / 'verification/server-revision.txt').read_text(encoding='utf-8').strip(),
           'scope': 'portable package validation; no GUI, real login, signature or platform certification claim'}
-(output / 'verification.json').write_text(json.dumps(report, ensure_ascii=False, indent=2) + '\n')
+(output / 'verification.json').write_text(json.dumps(report, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
 print(json.dumps(report, ensure_ascii=False))

@@ -26,15 +26,15 @@ if (url.scheme != 'https' or not url.hostname or url.username or url.password
 origin = 'https://' + url.hostname.lower() + (f':{port}' if port else '')
 source_path = args.bundle / 'main.splash'
 manifest_path = args.bundle / 'manifest.json'
-source = source_path.read_text()
+source = source_path.read_text(encoding='utf-8')
 updated, count = re.subn(r'^let service_origin = "[^"]*"$',
                          'let service_origin = ' + json.dumps(origin), source, flags=re.M)
 if count != 1:
     parser.error('服务地址声明缺失或重复，未修改文件')
-manifest = json.loads(manifest_path.read_text())
+manifest = json.loads(manifest_path.read_text(encoding='utf-8'))
 manifest['network']['hosts'] = [url.hostname.lower()]
 # Existing integrity is no longer valid after editing the source.
 manifest.pop('integrity', None)
-source_path.write_text(updated)
-manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + '\n')
+source_path.write_text(updated, encoding='utf-8')
+manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
 print(f'已设置后端 {origin}。请运行 tools/octo check bundle 重新校验与生成完整性信息，再打包发布。')
