@@ -142,3 +142,9 @@ python3 scripts/configure-backend.py https://liyu.example.com
 ## 版本与验证材料
 
 配套服务端提交固定在 `verification/server-revision.txt`。[验证说明](docs/verification.md)列出证据范围、干净检出步骤和完整交互检查清单。小程序 CI 在三个系统上校验包，并产出带提交 SHA、包摘要和 ZIP 摘要的材料；这不等于三个系统的图形运行均已验证。运行需要标准 OctoScript 环境；本地演示不需要后端，真实账号模式需要 `liyu-server`。
+
+## 版本包下载与自动发布
+
+在 [GitHub Releases](https://github.com/chrislearn/liyu-mini/releases) 下载 `liyu-mini-版本号.zip`，附有验证报告和 SHA256SUMS，无需从 Actions 寻找临时产物。该包未经 App Hub 发布者签名。
+
+发布流程：先更新 `bundle/manifest.json` 的版本并重新校验包，再提交到 main，推送一致的标签（如 `git tag v1.0.35 && git push origin v1.0.35`）。标签 CI 通过三个平台的包验证且确认 ZIP 摘要一致后，自动创建对应的 Release。标签与 manifest 版本不一致时拒绝发布；普通 main CI 只产出验证材料。
