@@ -15,7 +15,8 @@
     "screenshots/15-contacts.png",
     "screenshots/13-tags.png",
     "screenshots/14-wish-audience.png",
-    "screenshots/09-auth.png"
+    "screenshots/09-auth.png",
+    "screenshots/16-local-demo.png"
   ],
   "icon": "assets/icon.svg",
   "platforms": [
