@@ -1,0 +1,29 @@
+{
+  "verified_on": "2026-10-08",
+  "platform": "Darwin",
+  "architecture": "arm64",
+  "sources": {
+    "OctoSense-App-Hub": "a72989ff2e4d51562693d05210b68e11f3bf3fcd",
+    "makepad": "975c5630e01b0f3f3ae16cafd2e0fce3c9a5f7d9",
+    "octoscript": "68f6a9df55692b5d8ef8873a12721e279a3f40d6",
+    "octoscript-makepad": "65d30a091eee284ed45afe5b8502835563fb56f7"
+  },
+  "all_runtime_sources_clean": true,
+  "binaries": {
+    "hub": "c8644208eda671c029063fe33d0b02edf37b96c17b1c30a1e1ae22a4bbcbdbad",
+    "card-host": "ccc687bb00a0908aad980ec2092fc65b6e6eef0a1ee0324448895e2dc9520978"
+  },
+  "checks": [
+    "23 local demo transport checks passed",
+    "standard HTTPS catalog returned 200 and 20 products",
+    "app launched; authorization request initiated and cancelled",
+    "local demo opened in the full app and screenshot inspected"
+  ],
+  "limitations": [
+    "author machine; not third-party GUI certification",
+    "complete WebReader credential entry and two-user GUI flow not automated",
+    "no Windows/Linux GUI or real payment verification"
+  ],
+  "screenshot_sha256": "a6c971acfa1752bed49bce2a0544182007171657496a73026a18a75aac4c0502",
+  "matches_readme_demo_screenshot": true
+}

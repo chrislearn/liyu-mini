@@ -31,8 +31,20 @@ Windows 的虚拟环境 Python 为 `build/verify-venv/Scripts/python.exe`。获�
 
 2026-10-08：本机 macOS Apple Silicon 已完成本地演示 23 项检查、标准 HTTPS 商品读取、应用包校验；服务端完成 38 个 Rust 测试、65 项授权、65 项心愿单及 58 项约定接口检查，容器 HTTPS、管理后台、图片与生产测试账号拒绝已通过。
 
-**现有图形截图和运行检查来自作者机器，且其 App Hub 源码有未提交修改。** 实际运行器提交与二进制 SHA256 记录在 `verification/author-runtime.json`，源码有修改的事实不会被隐藏。这些结果不证明官方运行器干净检出或其他平台兼容。现有网页授权测试为 HTTP/API 自动化；完整图形跨账号流程仍应按上面的清单独立复核，不能与 API 结果混算。本仓库未声称双环独立审查通过、苹果公证通过或 Windows/Linux 图形运行通过。
+**早期图形截图和运行检查来自作者机器，当时 App Hub 源码有未提交修改。** 当时的提交与二进制 SHA256 记录在 `verification/author-runtime.json`。本轮另用官方准备工具锁定运行时，从干净的 App Hub 与框架源码编译，验证了 23 项演示检查、HTTPS 商品读取及应用启动／授权请求取消；提交与二进制摘要见 `verification/standard-runtime.json`。这些新增结果仍来自作者机器，未冒充第三方图形审查。这些结果不证明官方运行器干净检出或其他平台兼容。现有网页授权测试为 HTTP/API 自动化；完整图形跨账号流程仍应按上面的清单独立复核，不能与 API 结果混算。本仓库未声称双环独立审查通过、苹果公证通过或 Windows/Linux 图形运行通过。
 
 本轮包 CI 与 API CI 提供独立机器的检查记录，但图形运行、平台认证、真实供应商／支付仍各有自己的验证范围。复现后附提交 SHA、运行环境、命令、结果和实际截图，不引用其他项目的测试结果。
 
 校验工具的 Python 包固定版本及 PyPI wheel SHA256，安装使用 `--require-hashes --only-binary`，不构建源码安装包。CI Actions 也固定到提交 SHA。小程序自身不下载或执行 agent 程序，不需要其进程启动权限。
+
+### 复现本轮干净标准运行器
+
+使用 `verification/standard-runtime.json` 中 App Hub 的提交，按官方 Quickstart 克隆 App Hub 与设计流程仓库。在设计流程仓库运行：
+
+```sh
+python3 tools/setup-native.py --root <隔离工作目录> --cache <可选本机源码缓存>
+python3 tools/setup-native.py --root <隔离工作目录> --check
+cargo build --locked --manifest-path <隔离工作目录>/OctoSense-App-Hub/Cargo.toml -p octosense-app-hub -p octosense-card-host
+```
+
+四个运行时仓库均应 `git status --porcelain` 无输出，并与记录提交对应。在小程序仓库将 `OCTO_HUB` 与 `OCTO_CARD_HOST` 指向新编译的两个二进制，再执行演示和网络检查脚本。网络检查需要可信 HTTPS 后端。缓存仅用于取得已有 Git 对象，不使用缓存中的未提交源码。
