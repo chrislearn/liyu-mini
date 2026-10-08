@@ -1,5 +1,11 @@
-# LIYU-MINI brief
+# 礼遇小程序概述
 
-This checkout is a local OctoScript/Splash integration of LIYU with `liyu-server`. Its running catalog, friend list, wishlists, account and gifts come from the server over standard HTTPS; real-account mode has no sample-data fallback. The explicitly selected local demo uses a separate fictional account and in-memory fixtures with eight bundled product illustrations, without a backend or model request. The five LIYU destinations, server-backed exact and broad wishlists, gift inbox/outbox, contract templates and fulfillment status, test order quote and confirmation, multi-select confirmed-friend recipients with individual removal and one combined test order, and gift reveal actions are available in Splash. The phone layout follows the native element tree described in [UI-PARITY.md](UI-PARITY.md). The command field uses local keyword matching to prefill a review screen, not a system AppCard action.
+礼遇是一种围绕熟人关系的社交电商形态。通过心愿单了解需求，用礼盒与解谜让送礼更有趣，用生日及结婚纪念日提醒、附带约定延续交流，帮助朋友、伴侣和家人表达关心。需求、验收标准和产品边界见[产品需求与价值](docs/product-requirements.md)。
 
-The server-owned WebReader page handles LIYU registration, sign-in, authorization and contact verification. The app holds its own revocable session in isolated storage, restores it against the backend, and calls business APIs directly. No custom LIYU host capability is required. A public release still needs a public HTTPS LIYU server and real verification delivery. See [CAPABILITY-GAP.md](CAPABILITY-GAP.md).
+应用使用标准 HTTPS 直接连接 `liyu-server`，不需要专用 `liyu` 宿主。真实账号在后端授权网页登录，小程序持有自己的可撤销会话；商品、熟人、心愿单、礼盒、约定及钱包数据均来自服务端。网络失败不会切换为演示用户。
+
+登录入口提供「本地演示」，无需后端、账号或模型配置。虚构账号、八件商品和业务记录仅在内存中操作，商品插画随包分发，整包小于 8 MB，退出或重新进入重置。
+
+商品在揭晓前可见，送礼人隐藏；每个礼盒都要求主动打开，谜题模式必须答对。约定状态由双方各自保存。AI 仅建议和推理，不知道真正答案，也不代替拆盒或下单。当前支付、物流和折现是测试业务，不产生真实扣款或提现。
+
+公开真实账号体验需要可访问的 HTTPS 后端及真实验证码发送服务。配置和复现见 README 与[能力说明](CAPABILITY-GAP.md)，服务端的 Compose、Caddy 与镜像步骤见其部署指南。

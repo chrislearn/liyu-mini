@@ -133,6 +133,10 @@ python3 scripts/configure-backend.py https://liyu.example.com
 ../OctoScript-App-Design-Flow/tools/octo check bundle
 ```
 
-替换成自己的域名。脚本同时更新请求地址和网络允许列表，之后必须重新校验打包。恢复本地联调使用 `https://liyu.localhost:8443`。本地演示始终无需后端。
+替换成自己的域名。脚本同时更新请求地址和网络允许列表，之后必须重新校验打包；已签名的发布包还需重新签名。恢复本地联调使用 `https://liyu.localhost:8443`。本地演示始终无需后端。
 
 `net` 是实际使用的标准能力：真实账号的授权状态轮询、商品、心愿单、礼盒、钱包等请求均通过 `net.http_request` 发往上述 HTTPS 地址，并携带当前用户的会话。网络失败明确提示错误，不切换为演示账号。调用依据和复现方法见[能力差异说明](CAPABILITY-GAP.md)。
+
+## 版本与验证材料
+
+配套服务端提交固定在 `verification/server-revision.txt`。[验证说明](docs/verification.md)列出证据范围、干净检出步骤和完整交互检查清单。小程序 CI 在三个系统上校验包，并产出带提交 SHA、包摘要和 ZIP 摘要的材料；这不等于三个系统的图形运行均已验证。运行需要标准 OctoScript 环境；本地演示不需要后端，真实账号模式需要 `liyu-server`。

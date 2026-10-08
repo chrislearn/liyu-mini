@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "subtitle": "连接 LIYU 账号的本地送礼流程测试",
-  "description": "LIYU-MINI 本地联调版连接 LIYU 账号，读取服务端商品、熟人、心愿单和礼盒。支持生日与结婚纪念日站内提醒、测试订单和主动开礼盒；送礼人可选择直接揭晓或答对谜题后揭晓。按需使用设备配置的 AI 分析匿名线索与挑礼，AI 不知道送礼人答案。需要包含 LIYU 认证服务的本地 App-Hub 宿主；不能直接公开上架。",
+  "subtitle": "让熟人之间的送礼更有趣",
+  "description": "礼遇通过心愿单了解需求，用礼盒与解谜让送礼更有趣，用纪念日提醒和个人约定记录延续交流。商品在拆盒前可见，送礼人隐藏；每个礼盒必须主动打开，谜题答对后才揭晓。支持无需服务器的本地演示，虚构数据和图片随包分发。真实账号通过标准 HTTPS 连接 liyu-server，并在后端网页授权登录，无需专用 LIYU 宿主。AI 仅辅助挑礼和分析可见线索，不知道真正答案，不替用户拆盒或下单。支付、物流及折现均为测试流程。需要标准 OctoScript 运行环境；真实账号模式另需 HTTPS 后端及验证码发送服务。",
   "category": "lifestyle",
   "keywords": [
     "礼物",
@@ -26,7 +26,7 @@
     "support": "https://github.com/chrislearn/liyu-mini/issues",
     "privacy_policy_url": "https://github.com/chrislearn/liyu-mini/blob/main/PRIVACY.md"
   },
-  "release_notes": "增加熟人纪念日提醒与按需 AI 建议；礼盒必须主动打开，谜题只有答对才揭晓。",
+  "release_notes": "改用标准 HTTPS 和后端网页登录；增加独立本地演示、部署指南、需求价值与可核对的包验证材料。",
   "age_rating": "all",
   "license": "Apache-2.0"
 }

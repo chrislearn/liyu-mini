@@ -66,7 +66,12 @@ folder=root/'build/demo-flow-check';folder.mkdir(parents=True,exist_ok=True)
 manifest=json.loads((root/'bundle/manifest.json').read_text());manifest.pop('integrity',None)
 (folder/'manifest.json').write_text(json.dumps(manifest))
 harness=root.parent/'OctoScript-App-Design-Flow/tools/octo'
-env=dict(os.environ,OCTO_HUB=str(root.parent/'OctoSense-App-Hub/target/debug/hub'),OCTO_CARD_HOST=str(root.parent/'OctoSense-App-Hub/target/debug/card-host'))
+env = dict(os.environ)
+# Respect configured runtime paths; otherwise let the harness discover releases.
+for key, binary in [('OCTO_HUB', 'hub'), ('OCTO_CARD_HOST', 'card-host')]:
+ candidate = root.parent / 'OctoSense-App-Hub/target/debug' / binary
+ if key not in env and candidate.is_file():
+  env[key] = str(candidate)
 port='8143'
 subprocess.run([str(harness),'run',str(folder),'--port',port,'--detach','--app-data',str(root/'build/demo-flow-check-data')],env=env,check=True,capture_output=True)
 try:

@@ -11,7 +11,12 @@ start_timeout(0.1, || api_request({path:"/catalog"}, fn(r){if r.is_ok {result="N
 View{width:Fill height:Fill flow:Down content:=View{width:Fill height:Fill on_render:||{Label{width:Fill height:Fit text:result draw_text.color:#x111111 draw_text.text_style.font_size:20}}}}
 ''')
 m=json.loads((root/'bundle/manifest.json').read_text());m.pop('integrity',None);m['capabilities']=['net'];(f/'manifest.json').write_text(json.dumps(m))
-env=dict(os.environ,OCTO_HUB=str(root.parent/'OctoSense-App-Hub/target/debug/hub'),OCTO_CARD_HOST=str(root.parent/'OctoSense-App-Hub/target/debug/card-host'))
+env = dict(os.environ)
+# Respect configured runtime paths; otherwise let the harness discover releases.
+for key, binary in [('OCTO_HUB', 'hub'), ('OCTO_CARD_HOST', 'card-host')]:
+ candidate = root.parent / 'OctoSense-App-Hub/target/debug' / binary
+ if key not in env and candidate.is_file():
+  env[key] = str(candidate)
 h=root.parent/'OctoScript-App-Design-Flow/tools/octo'
 subprocess.run([str(h),'run',str(f),'--port','8144','--detach'],env=env,check=True,capture_output=True)
 try:

@@ -10,14 +10,17 @@ parser = argparse.ArgumentParser(description='设置礼遇 HTTPS 后端；随后
 parser.add_argument('origin', help='例如 https://liyu.example.com')
 parser.add_argument('--bundle', type=Path, default=Path(__file__).resolve().parents[1] / 'bundle')
 args = parser.parse_args()
-url = urlsplit(args.origin)
 try:
+    url = urlsplit(args.origin)
     port = url.port
 except ValueError:
-    parser.error('端口无效')
+    parser.error('地址或端口无效')
 if (url.scheme != 'https' or not url.hostname or url.username or url.password
         or url.path not in ('', '/') or url.query or url.fragment
-        or not re.fullmatch(r'[a-zA-Z0-9.-]+', url.hostname)
+        or len(url.hostname) > 253
+        or any(not re.fullmatch(r'[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?', label)
+               for label in url.hostname.split('.'))
+        or url.netloc.endswith(':')
         or (port is not None and not 1 <= port <= 65535)):
     parser.error('必须提供不含账号、路径、查询或片段的 HTTPS 域名地址')
 origin = 'https://' + url.hostname.lower() + (f':{port}' if port else '')
