@@ -1,13 +1,16 @@
-# LIYU-MINI integration boundary (2026-09-29)
+# 能力与发布条件
 
-| Area | Local integration status | Remaining gap |
+应用通过标准 HTTPS 请求直接访问 `liyu-server`，不再声明或调用专用 `liyu` 宿主能力。
+
+| 功能 | 使用的标准能力 | 发布条件 |
 | --- | --- | --- |
-| Catalog, categories, prices, stock, images | Read from `liyu-server` over `https://liyu.localhost:8443`; no app fallback catalog | A public release needs a publicly reachable HTTPS origin. |
-| Account, friends, wishlists | The local App-Hub `liyu` service owns the login/register sheet, session token, authenticated API proxy, restore, expiry, and logout. Each user signs in independently. Friends and wishlists are fetched from the server. | This new capability must be adopted by the OctoSense shell and public App Hub. System contacts are separate from server friendships. |
-| Gifts, contracts and orders | Inbox/outbox, contract templates and accepted-contract states are server projections. The app can request a server quote, create a test order after confirmation, call `pay-test`, configure a puzzle, and invoke server gift actions. | `pay-test` is not commercial payment or delivery. The full native LIYU voucher, wallet editing and logistics UI is not reproduced; the balance and ledger are read from the server. |
-| Assistant and AppCard | The command parser and draft card run inside Splash. | Current shell does not execute contained-app tools as assistant/AppCard actions. See [INTEGRATION.md](INTEGRATION.md). |
-| Native LIYU | LIYU-MINI retains the five primary sections but runs inside a contained Splash app. | It cannot embed native Makepad code or unrestricted device access. |
+| 商品图片 | images | 正式 HTTPS 商品图片地址 |
+| 账号授权与业务数据 | net、网络允许列表、WebReader | 正式 HTTPS 后端；设备可打开标准 WebReader |
+| 登录恢复、待撤销会话和主题 | storage | 应用隔离存储；卸载应用后服务端数据仍保留 |
+| AI 商品建议和送礼人推测 | model | 用户在设备上配置模型 |
 
-The local transport is proven: Caddy `tls internal` proxies `liyu.localhost:8443` without injecting Authorization. The host service sends authenticated API requests to this HTTPS address with its own session token and trusts the local CA named by `LIYU_SERVICE_CA_FILE`; public product images use the same origin. The app bundle contains no password, code, or token. Registration on the local server used `LIYU_TEST_DELIVERY=true` because no real delivery webhook is configured; that affects verification delivery, not the account/session flow.
+本地地址为 `https://liyu.localhost:8443`。标准网络和网页使用系统证书信任，开发时需信任 Caddy 本地根证书。公开发布时应改用正式域名和受信任证书，并同步修改 `bundle/main.splash` 的服务地址和清单的网络允许列表。
 
-The local bundle passes the modified App-Hub gate with the new `liyu` capability; an unmodified host still rejects that unknown capability. Public release needs this host service and capability shipped to supported OctoSense hosts, a public LIYU HTTPS origin, real verification delivery, and updated publishing material. Source: [capabilities](https://github.com/OctoSense-org/OctoScript-App-Design-Flow/blob/main/docs/CAPABILITIES.md), [script API](https://github.com/OctoSense-org/OctoScript-App-Design-Flow/blob/main/docs/SCRIPT-API.md), [host services](https://github.com/OctoSense-org/OctoScript-App-Design-Flow/blob/main/docs/HOST-SERVICES.md).
+账号密码和验证码只由后端网页接收。应用通过独立密钥领取一次性的应用会话并自行携带会话调用业务接口；网页不向 Splash 提供脚本桥。授权请求五分钟过期，网页会话十分钟过期。注册与联系方式修改使用后端配置的真实邮件或短信服务；本地自动测试数据库可以显式启用测试验证码。
+
+公开发布仍需真实验证码发送服务、支付接入以及对应隐私与发布材料。

@@ -1,19 +1,13 @@
-# LIYU-MINI privacy policy — local integration build
+# 隐私说明
 
-This local test build connects to `liyu-server` through an OctoSense-owned LIYU service. It requests the current account, friends, wishlists, gifts, product catalog, prices and stock. You may save private notes and contact details for a friend; these values belong to your account and do not change that friend's verified account identity. A sealed gift is not attributed to a friend until the server reveals the sender. Product images load through `https://liyu.localhost:8443`. When you create a wishlist or confirm a test gift, the app sends the selected product and selected friends' recipient IDs, any title, note, item requirement, message, puzzle clue/answer and contract text you enter to the server. Gift reveal and acceptance actions also update server records. The backend stores these records in its test database; deleting LIYU-MINI's local app data does not delete them.
+LIYU-MINI 通过标准 HTTPS 连接 `liyu-server`，读取当前账号、商品、熟人、心愿单、礼盒、约定和钱包。创建、修改、拆盒及礼物处理操作会更新服务端记录。熟人昵称、备注和联系方式属于当前用户的私有记录，不会修改对方的验证身份。未拆开的礼盒显示商品信息，送礼人身份由服务端隐藏。
 
-Birthday and wedding dates saved for a friend are used by the server to create private in-app reminders seven days before and on the day each year. The app fetches these notifications when you sign in; this build does not send device push notifications.
+登录、注册和修改邮箱、手机号在后端提供的网页完成，由标准 WebReader 展示。账号密码和验证码只提交到该后端，不进入 Splash 应用。网页与应用之间没有脚本桥；应用用独立轮询密钥领取授权结果。授权请求五分钟过期，结果只能领取一次；网页登录会话十分钟过期，确认授权后立即撤销。
 
-The optional AI buttons send data to the model provider configured on your device through OctoSense's `model.complete` service. Gift suggestions send the selected friend's relationship, dates and note plus up to 20 catalog items. Sender clue analysis sends the unopened gift's clue plus names, nicknames and relationships for up to 30 friends. The server's true sender ID and puzzle answer are never sent to the model. Model output is advice only and cannot open a gift or place an order. If the device has no model service or provider, these buttons report that AI is unavailable.
+应用收到的应用会话令牌保存在自身隔离存储中，用于直接请求业务接口并恢复登录。退出登录清除本地登录并请求服务端撤销会话；断网时暂存待撤销令牌，下次启动或登录时重试。切换账号成功后撤销旧会话；取消切换会保留旧账号。主题设置同样保存在隔离存储。清除本地数据不删除服务端业务记录，也不能保证撤销当时未发送成功的会话。
 
-LIYU-MINI does not collect an account password or verification code. The host-owned login sheet sends those fields to the LIYU server and retains only the resulting session token in the host's private app-data directory, outside LIYU-MINI's storage jail. The contained app receives account status and business data, never the password, code or token. Logout revokes the server token when reachable and removes the local session; a rejected token is also removed. The app has no analytics and does not access the system address book.
+个人资料和多个收货地址保存在服务端当前账号下，地址包含收货人、手机号、完整地址和默认选择。邮箱、手机号修改需在网页完成账号验证和新联系方式验证。服务端按现有规则保留历史已验证身份和原登录标识。
 
-The personal profile editor sends your display name and shipping addresses (recipient name, phone, full address, and default selection) to the server for private storage under your account. You can add, edit, or delete saved addresses. Email and phone verification happens in a host-owned sheet and uses the server's configured email/SMS delivery provider; verification codes stay outside the app. The existing server retains prior verified contact identities and the original login identifier when a new contact is verified.
+AI 建议会把你选择的商品、熟人资料和可见线索提交给设备配置的模型。真实答案和隐藏的送礼人信息不会提供给模型。应用没有分析追踪，不读取系统通讯录。
 
-The server's `pay-test` endpoint is a simulated payment and does not charge a payment provider. This build is for local testing only; it is not the privacy policy for a future public release. For questions, use the [LIYU-MINI issue tracker](https://github.com/chrislearn/liyu-mini/issues).
-
-Promise fulfillment marks are saved on the backend per gift and authenticated account. Marking fulfilled or changing back to pending changes only your own record; the other participant's mark is not returned to the app or modified.
-
-The chosen light/dark appearance is stored locally in `appearance.txt`. This setting contains no account credentials or business records.
-
-Unpublished wishlist drafts and their items are stored by LIYU-server for the current account only. Friends cannot list, open, or claim a draft. Publishing makes the list visible only under its saved/confirmed audience; selected friends are checked by the server, and a draft's expiry starts only when published.
+当前版本使用本地 HTTPS 测试后端，测试支付不产生真实扣款；真实邮件或短信发送需要后端配置发送服务。这不是未来公开发行版本的隐私政策。如有问题，请使用 [LIYU-MINI 问题反馈](https://github.com/chrislearn/liyu-mini/issues)。

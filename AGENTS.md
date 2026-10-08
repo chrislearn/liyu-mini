@@ -22,7 +22,7 @@ Rules:
 
 - Ask only for capabilities a screen uses; declare every `https://` host in
   `network.hosts`; never `http://`.
-- Never collect a password, PIN or code; accounts go through a host service.
+- Never collect a password, PIN or code; accounts use a server-owned authorization page in the standard WebReader. The app may retain the resulting revocable app session in its isolated storage.
 - Screenshots are real captures you looked at. Never a dummy.
 - Restamp after every edit (`tools/octo check` does it). After signing, any
   edit needs a new stamp and signature.

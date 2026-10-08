@@ -1,6 +1,48 @@
-// LIYU-MINI: account credentials and bearer sessions belong to the host.
-// Every business request is mediated by its LIYU host service.
+// LIYU-MINI: credentials stay in a server-owned WebReader page.
+// App sessions and business requests use the standard HTTPS capability.
 let assets = "{{assets}}"
+let service_origin = "https://liyu.localhost:8443"
+let session_token = ""
+if fs.exists("session.json") { let saved = fs.read("session.json").parse_json(); for k v in saved { if k.to_string() == "token" { session_token = v } } }
+let revocations = []
+if fs.exists("revocations.json") { let saved = fs.read("revocations.json").parse_json(); for k v in saved { if k.to_string() == "tokens" { revocations = v } } }
+let authorization = nil
+let auth_flow_generation = 0
+// Keep the established response shape so business actions share one transport.
+fn api_request(input, done){
+    let request = {method: "GET", path: "", token: nil, body: nil, idempotency_key: nil}
+    for k v in input { request[k] = v }
+    let headers = {"Content-Type": ["application/json"], "Accept": ["application/json"]}
+    let token = if request.token != nil {request.token} else {session_token}
+    if token != "" { headers["Authorization"] = ["Bearer " + token] }
+    if request.idempotency_key != nil { headers["Idempotency-Key"] = [request.idempotency_key] }
+    let method = net.HttpMethod.GET
+    if request.method == "POST" { method = net.HttpMethod.POST }
+    if request.method == "PUT" { method = net.HttpMethod.PUT }
+    if request.method == "PATCH" { method = net.HttpMethod.PATCH }
+    if request.method == "DELETE" { method = net.HttpMethod.DELETE }
+    let body = if request.body != nil {request.body.to_json().to_bytes()} else {nil}
+    let settled = false
+    net.http_request(net.HttpRequest{url: service_origin + "/api/v1" + request.path method: method headers: headers body: body}) do net.HttpEvents{
+        on_response: |res| { if settled { return }; settled = true; done({is_ok: true, error: "", data: {status: res.status_code, body: if res.body == nil {nil} else {res.body.to_string().parse_json()}}}) }
+        on_error: |_err| { if settled { return }; settled = true; done({is_ok: false, data: {status: 0, body: nil}, error: "无法连接礼遇服务，请检查网络和证书。"}) }
+    }
+    start_timeout(20.0, || { if !settled { settled = true; done({is_ok: false, data: {status: 0, body: nil}, error: "礼遇服务响应超时，请重试。"}) } })
+}
+fn flush_revocations(){
+    for token in revocations {
+        api_request({method: "POST", path: "/auth/logout", token: token, body: {}}, fn(r){
+            if r.is_ok && (r.data.status == 204 || r.data.status == 401) {
+                let remaining = []; for value in revocations { if value != token { remaining.push(value) } }
+                revocations = remaining; fs.write("revocations.json", {tokens: revocations}.to_json())
+            }
+        })
+    }
+}
+fn revoke_later(token){
+    if token == "" { return }
+    revocations.push(token); fs.write("revocations.json", {tokens: revocations}.to_json()); flush_revocations()
+}
 let appearance = if fs.exists("appearance.txt") {fs.read("appearance.txt").trim()} else {"dark"}
 let account_busy = false
 fn set_appearance(value){
@@ -226,7 +268,7 @@ fn toggle_contract(id, status){
     let next = if status == "fulfilled" {"pending"} else {"fulfilled"}
     contract_busy_id = id; notice = ""; refresh()
     let generation = auth_generation
-    host.request("liyu.request", {method: "PUT", path: "/contracts/" + id + "/status", body: {status: next}}, fn(r){
+    api_request({method: "PUT", path: "/contracts/" + id + "/status", body: {status: next}}, fn(r){
         if generation != auth_generation { return }
         contract_busy_id = -1
         if !r.is_ok { notice = r.error; refresh(); return }
@@ -257,42 +299,90 @@ fn clear_account_data(){
     box_origin_tab = ""; wishes_origin_tab = ""; wish_detail_from_discover = false; command_origin_tab = ""; command_browse_origin_tab = ""; shop_origin_contact_id = -1
     contact_search = ""; tag_search = ""; tag_people_search = ""; tag_selected_id = -1; contact_detail_origin_stage = "browse"
 }
-fn auth_lost(message){ clear_account_data(); auth_state = "signed_out"; auth_message = message; refresh() }
+fn auth_lost(message){ session_token = ""; fs.write("session.json", {token: ""}.to_json()); clear_account_data(); auth_state = "signed_out"; auth_message = message; refresh() }
 fn auth_ready(){ clear_account_data(); auth_state = "signed_in"; auth_message = ""; refresh(); load_all() }
 fn check_auth(){
-    host.request("liyu.status", {}, fn(r){
+    flush_revocations()
+    let generation = auth_generation
+    if session_token == "" { auth_lost("请登录或注册礼遇账号。"); return }
+    api_request({method: "GET", path: "/me"}, fn(r){
+        if generation != auth_generation { return }
         if !r.is_ok { auth_state = "error"; auth_message = r.error; refresh(); return }
-        if r.data.signed_in { auth_ready() }
-        else { auth_lost(if r.data.expired { "登录已过期，请重新登录。" } else { "请登录或注册 LIYU 账号。" }) }
+        if r.data.status == 401 { auth_lost("登录已过期，请重新登录。"); return }
+        if r.data.status != 200 { auth_state = "error"; auth_message = "无法检查账号，请重试。"; refresh(); return }
+        auth_ready()
     })
 }
-fn sign_in(){
+fn close_authorization(){
+    ui.auth_reader.close(); authorization = nil; account_busy = false; auth_flow_generation = auth_flow_generation + 1
+}
+fn cancel_authorization(){
+    if authorization == nil { return }
+    let flow = authorization
+    close_authorization()
+    api_request({method: "POST", path: "/browser-authorizations/" + flow.id + "/poll?cancel=true", body: {poll_key: flow.poll_key}}, |_r| {})
+    auth_message = "已取消授权。"; refresh()
+}
+fn poll_authorization(generation){
+    if generation != auth_flow_generation || authorization == nil { return }
+    let flow = authorization
+    api_request({method: "POST", path: "/browser-authorizations/" + flow.id + "/poll", body: {poll_key: flow.poll_key}}, fn(r){
+        if generation != auth_flow_generation || authorization == nil { return }
+        if !r.is_ok {
+            auth_message = r.error + "，正在重试。"; refresh()
+            start_timeout(3.0, || poll_authorization(generation)); return
+        }
+        if r.data.status != 200 { close_authorization(); auth_message = "授权请求失败，请重新开始。"; notice = auth_message; refresh(); return }
+        let data = r.data.body
+        if data.state == "pending" { start_timeout(3.0, || poll_authorization(generation)); return }
+        if data.state != "complete" { close_authorization(); auth_message = "授权已过期或已取消，请重新开始。"; notice = auth_message; refresh(); return }
+        let purpose = flow.purpose
+        close_authorization()
+        if purpose == "login" {
+            if data.token == nil || data.token == "" { auth_message = "授权结果无效，请重新登录。"; refresh(); return }
+            let previous = session_token
+            session_token = data.token; fs.write("session.json", {token: session_token}.to_json())
+            revoke_later(previous)
+            auth_ready()
+        } else { notice = if purpose == "email" {"邮箱已更新。"} else {"手机号已更新。"}; get("/me/profile", "profile"); get("/me", "me"); get("/gifts/inbox", "inbox"); refresh() }
+    })
+}
+fn open_authorization_page(){
+    if authorization == nil { return }
+    if !ui.auth_reader.open(service_origin + authorization.browser_path) { auth_message = "授权网页打开失败，请重试。"; refresh() }
+}
+fn begin_authorization(purpose){
     if account_busy { return }; account_busy = true
-    auth_message = "请在 LIYU 登录弹层中继续。"; refresh()
-    host.request("liyu.sign_in", {}, fn(r){
-        account_busy = false
-        if r.is_ok { auth_ready() }
-        else { auth_state = "signed_out"; auth_message = r.error; refresh() }
+    auth_message = "正在打开礼遇授权网页…"; notice = ""; refresh()
+    auth_flow_generation = auth_flow_generation + 1
+    let generation = auth_flow_generation
+    api_request({method: "POST", path: "/browser-authorizations", body: {purpose: purpose}}, fn(r){
+        if generation != auth_flow_generation { return }
+        if !r.is_ok || r.data.status != 200 {
+            account_busy = false; auth_message = if !r.is_ok {r.error} else {"暂时无法创建授权，请重试。"}; notice = auth_message; refresh(); return
+        }
+        let data = r.data.body
+        if data.id == nil || data.poll_key == nil || data.browser_path == nil { account_busy = false; auth_message = "授权响应无效。"; refresh(); return }
+        authorization = {id: data.id, poll_key: data.poll_key, browser_path: data.browser_path, purpose: purpose}
+        auth_message = "请在网页完成验证，结果将自动同步。"; refresh()
+        start_timeout(0.1, || open_authorization_page())
+        start_timeout(3.0, || poll_authorization(generation))
+        start_timeout(305.0, || { if generation == auth_flow_generation && authorization != nil { cancel_authorization(); auth_message = "授权已过期，请重新开始。"; notice = auth_message; refresh() } })
     })
 }
-fn switch_account(){
-    if account_busy { return }; account_busy = true; notice = ""; refresh()
-    host.request("liyu.sign_in", {}, fn(r){
-        account_busy = false
-        if r.is_ok { auth_ready() }
-        else { notice = if r.error == "已取消登录" {""} else {r.error}; refresh() }
-    })
-}
+fn sign_in(){ begin_authorization("login") }
+fn switch_account(){ begin_authorization("login") }
 fn logout(){
-    if account_busy { return }; account_busy = true
-    auth_lost("已退出 LIYU 账号。")
-    host.request("liyu.logout", {}, fn(r){ account_busy = false; if !r.is_ok { auth_message = r.error }; refresh() })
+    if account_busy { return }
+    let previous = session_token
+    auth_lost("已退出礼遇账号。")
+    revoke_later(previous)
 }
 fn get(path, kind){
     if auth_state != "signed_in" { return }
     if kind == "mine" { wish_lists_loading = true }
     let generation = auth_generation
-    host.request("liyu.request", {method: "GET", path: path}, fn(r){
+    api_request({method: "GET", path: path}, fn(r){
             if generation != auth_generation { return }
             if kind == "mine" { wish_lists_loading = false }
             if kind == "wish_detail" && path != "/wishlists/" + wish_detail_id { return }
@@ -344,7 +434,7 @@ fn get(path, kind){
 fn mutate(path, method, payload, done){
     if auth_state != "signed_in" { return }
     let generation = auth_generation
-    host.request("liyu.request", {method: method, path: path, body: payload}, fn(r){
+    api_request({method: method, path: path, body: payload}, fn(r){
         if generation != auth_generation { return }
         if !r.is_ok { notice = r.error; refresh(); return }
         if r.data.status == 401 { auth_lost("登录已过期，请重新登录。"); return }
@@ -475,7 +565,7 @@ fn account_write(path, method, body, done){
     if profile_busy || auth_state != "signed_in" { return }
     profile_busy = true; notice = ""; refresh()
     let generation = auth_generation
-    host.request("liyu.request", {method: method, path: path, body: body}, fn(r){
+    api_request({method: method, path: path, body: body}, fn(r){
         if generation != auth_generation { return }
         profile_busy = false
         if !r.is_ok { notice = r.error; refresh(); return }
@@ -497,17 +587,7 @@ fn save_display_name(){
 }
 fn edit_my_contact(kind){
     if profile == nil || profile_busy { return }
-    let current = if kind == "phone" {profile.phone} else {profile.email}
-    if current == nil { current = "" }
-    notice = ""; refresh()
-    let generation = auth_generation
-    host.request("liyu.edit_contact", {kind: kind, current: current}, fn(r){
-        if generation != auth_generation { return }
-        if !r.is_ok { notice = r.error; refresh(); return }
-        if r.data.cancelled { refresh(); return }
-        profile = r.data.profile; notice = if kind == "phone" {"手机号已更新。"} else {"邮箱已更新。"}
-        get("/me", "me"); get("/gifts/inbox", "inbox"); refresh()
-    })
+    begin_authorization(kind)
 }
 fn edit_address(id){
     if profile_busy { return }
@@ -550,7 +630,7 @@ fn wish_write(path, method, body, done){
     if wish_busy || auth_state != "signed_in" { return }
     wish_busy = true; notice = ""; refresh()
     let generation = auth_generation
-    host.request("liyu.request", {method: method, path: path, body: body}, fn(r){
+    api_request({method: method, path: path, body: body}, fn(r){
         if generation != auth_generation { return }
         wish_busy = false
         if !r.is_ok { notice = r.error; refresh(); return }
@@ -884,7 +964,7 @@ fn create_order(){
     if draft_error != "" { stage = "draft"; quote = nil; notice = ""; refresh(); return }
     let body = gift_checkout_body()
     let generation = auth_generation
-    host.request("liyu.request", {method: "POST", path: "/orders", body: body, idempotency_key: order_key}, fn(r){
+    api_request({method: "POST", path: "/orders", body: body, idempotency_key: order_key}, fn(r){
             if generation != auth_generation { return }
             if !r.is_ok { notice = r.error; refresh(); return }
             if r.data.status == 401 { auth_lost("登录已过期，请重新登录。"); return }
@@ -898,7 +978,7 @@ fn create_order(){
 }
 fn get_paid_order(id){
     let generation = auth_generation
-    host.request("liyu.request", {method: "GET", path: "/orders/" + id}, fn(r){
+    api_request({method: "GET", path: "/orders/" + id}, fn(r){
             if generation != auth_generation { return }
             if !r.is_ok { notice = r.error; refresh(); return }
             if r.data.status == 401 { auth_lost("登录已过期，请重新登录。"); return }
@@ -960,29 +1040,47 @@ start_timeout(0.05, || check_auth())
 
 View{width: Fill height: Fill flow: Down
     content := View{width: Fill height: Fill flow: Down on_render: || {
-    let ink = if appearance == "light" {#x2b2037} else {#xf2ecf8}
-    let muted = if appearance == "light" {#x6d5b7d} else {#xc4b4d4}
-    let faint = if appearance == "light" {#x81708f} else {#x9b8aab}
-    let accent = if appearance == "light" {#x936419} else {#xf0c883}
-    let blue = if appearance == "light" {#x7463cf} else {#x9d90f2}
-    let canvas = if appearance == "light" {#xf6f4fa} else {#x191021}
-    let bar = if appearance == "light" {#xf0ecf6} else {#x1c1228}
-    let well = if appearance == "light" {#xede7f4} else {#x1f142c}
-    let button_surface = if appearance == "light" {#xf7f4fb} else {#x211530}
-    let well_hover = if appearance == "light" {#xe7dff0} else {#x261a36}
-    let surface = if appearance == "light" {#xffffff} else {#x271a36}
-    let border = if appearance == "light" {#xe2dbea} else {#x3a294f}
-    let soft = if appearance == "light" {#xe9e1f3} else {#x352446}
-    let selected = if appearance == "light" {#xded4f0} else {#x3a2a58}
-    let pressed = if appearance == "light" {#xd1c3e9} else {#x463a75}
+    // ---- LIYU-MINI 主题 v2 (2026-10) ----
+    // 浅色：暖白底 + 暖紫金；暗色：深紫黑底 + 提亮描边 + 品牌紫
+    // 文字 4 级：ink > strong > muted > faint > disabled
+    // 状态语义：success / warn / danger / info
+    let ink       = if appearance == "light" {#x1f1530} else {#xf6f1fb}
+    let strong    = if appearance == "light" {#x2b2037} else {#xe7dcf3}
+    let muted     = if appearance == "light" {#x5a4b6e} else {#xb3a5c8}
+    let faint     = if appearance == "light" {#x857594} else {#x8d7ea3}
+    let disabled  = if appearance == "light" {#xa89cb8} else {#x6b5e7d}
+    let accent    = if appearance == "light" {#xb6781c} else {#xf3c982}
+    let accent_bg = if appearance == "light" {#xfbeed1} else {#x3a2a16}
+    // 主色从冷紫偏暖：更接近"礼物"的紫罗兰
+    let blue      = if appearance == "light" {#xa78bd9} else {#xb8a4f0}
+    let canvas    = if appearance == "light" {#xfaf6f2} else {#x14101c}
+    let bar       = if appearance == "light" {#xf2ebf5} else {#x1b1426}
+    let well      = if appearance == "light" {#xede5f3} else {#x20182e}
+    let button_surface = if appearance == "light" {#xf7f1fb} else {#x231934}
+    let well_hover = if appearance == "light" {#xe5dcef} else {#x2a1f3c}
+    let surface   = if appearance == "light" {#xfffffe} else {#x251a36}
+    // 暗色描边改为表面之上的 8% 白光，浅色保持极浅紫
+    let border    = if appearance == "light" {#xe6dfee} else {#x3d3252}
+    let border_strong = if appearance == "light" {#xcfc4dc} else {#x4d406a}
+    let soft      = if appearance == "light" {#xe9dff5} else {#x33234a}
+    let selected  = if appearance == "light" {#xdccef2} else {#x3e2c5e}
+    let pressed   = if appearance == "light" {#xc9b6ea} else {#x4a3a72}
     let border_hover = if appearance == "light" {#xa596bd} else {#x665184}
-    let primary_hover = if appearance == "light" {#x8574df} else {#xb3a8f5}
-    let primary_down = if appearance == "light" {#x6251bb} else {#x8a7ce8}
-    let primary_disabled = if appearance == "light" {#xb9afce} else {#x6b617f}
-    let on_primary = if appearance == "light" {#xffffff} else {#x0b0812}
-    let remove_hover = if appearance == "light" {#xddc3e7} else {#x5a3a6a}
-    let remove_down = if appearance == "light" {#xd2b2dc} else {#x6a3a6a}
-    let Card = RoundedView{width: Fill height: Fit flow: Down draw_bg +: {color: surface border_color: border border_size: 1.0 border_radius: 8.0}}
+    let primary_hover = if appearance == "light" {#x9882cc} else {#xcab8f5}
+    let primary_down  = if appearance == "light" {#x7c66b8} else {#xa18fd8}
+    let primary_disabled = if appearance == "light" {#xc4b8d6} else {#x594e74}
+    let on_primary = if appearance == "light" {#xfffffe} else {#x140e1f}
+    let remove_hover = if appearance == "light" {#xe2c7e8} else {#x5a3a6a}
+    let remove_down  = if appearance == "light" {#xd0b3d8} else {#x6a3a6a}
+    // 语义状态色
+    let success   = if appearance == "light" {#x3f8a5b} else {#x7fc99b}
+    let warn      = if appearance == "light" {#xb6781c} else {#xf3c982}
+    let danger    = if appearance == "light" {#xc24a55} else {#xf09aa1}
+    let info      = if appearance == "light" {#x6a7fc2} else {#xa3b3f1}
+    // 卡片内描边：浅色几乎不可见；暗色叠加白光，模拟"浮起"
+    let card_inner_stroke = if appearance == "light" {#xffffff00} else {#xffffff14}
+    let shadow_soft = if appearance == "light" {#x14101c14} else {#x00000066}
+    let Card = RoundedView{width: Fill height: Fit flow: Down draw_bg +: {color: surface border_color: border border_size: 1.0 border_radius: 12.0}}
     let Primary = ButtonFlat{height: 44 padding: Inset{left: 16 right: 16}
         draw_bg +: {color: blue color_hover: primary_hover color_down: primary_down color_focus: blue color_disabled: primary_disabled border_radius: 6.0 border_size: 0.0}
         draw_text +: {color: on_primary color_hover: on_primary color_down: on_primary color_focus: on_primary color_disabled: muted text_style: theme.font_bold{font_size: 14.5}}}
@@ -1039,7 +1137,17 @@ View{width: Fill height: Fill flow: Down
 
     SolidView{width: Fill height: Fill flow: Down draw_bg.color: canvas
 
-    if auth_state != "signed_in" {
+    if authorization != nil {
+        View{width: Fill height: Fill flow: Down spacing: 12 padding: 12
+            View{width: Fill height: 48 flow: Right align: Align{y: 0.5} spacing: 12
+                BackButton{on_click: || cancel_authorization()}
+                Label{text: if authorization.purpose == "login" {"账号授权"} else {if authorization.purpose == "email" {"修改邮箱"} else {"修改手机号"}} draw_text.color: ink draw_text.text_style.font_size: 17}
+            }
+            auth_reader := WebReader{width: Fill height: Fill on_error: || { auth_message = "授权网页加载失败，请检查连接后重试。"; refresh() }}
+            Label{width: Fill text: auth_message draw_text.color: muted draw_text.text_style.font_size: 12}
+            Secondary{text: "重新打开网页" on_click: || open_authorization_page()}
+        }
+    } else if auth_state != "signed_in" {
         ScrollYView{width: Fill height: Fill flow: Down padding: Inset{left: 16 right: 16 top: 80 bottom: 24} spacing: 14 align: Align{x: 0.5}
             Card{padding: 24 spacing: 12
                 Label{text: "欢迎来到礼遇" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 22}}

@@ -1,6 +1,6 @@
 # LIYU-MINI
 
-LIYU-MINI 是 [LIYU](https://github.com/chrislearn/OctoSense/tree/liyu/apps/liyu) 的 OctoScript / Splash 版本，用于与 `liyu-server` 进行本地联调。商品、分类、价格、库存、账号、熟人、心愿单和礼盒记录均通过宿主的 `liyu` 服务读取。应用使用真实用户登录及服务端会话。
+LIYU-MINI 是 [LIYU](https://github.com/chrislearn/OctoSense/tree/liyu/apps/liyu) 的 OctoScript / Splash 版本，用于与 `liyu-server` 进行本地联调。商品、分类、价格、库存、账号、熟人、心愿单和礼盒记录均通过标准 HTTPS 请求直接读取 `liyu-server`。无需专用 `liyu` 宿主服务。应用使用真实用户登录及服务端会话。
 
 ## 主要功能
 
@@ -15,13 +15,15 @@ LIYU-MINI 是 [LIYU](https://github.com/chrislearn/OctoSense/tree/liyu/apps/liyu
 
 ## 登录与数据
 
-密码和验证码在 **OctoSense 宿主提供的弹层**中输入。宿主将会话令牌保存在 `<app-data>/.host/liyu/liyu-mini/session.json`，限制为当前用户访问，并代理带认证的业务请求；应用不会收到密码、验证码或令牌。重启后恢复会话，退出登录或收到 HTTP 401 后返回登录入口。Caddy 不注入共享账号。
+密码和验证码在 **后端提供的授权网页**中输入，由标准 `WebReader` 展示。网页与 Splash 应用之间没有脚本桥。应用用独立密钥轮询授权状态，用户确认后领取一次性的应用会话；请求五分钟后过期，取消后不能继续授权。网页登录会话十分钟后过期，完成授权后立即撤销。
 
-邮箱和手机号修改由宿主的 `liyu.edit_contact` 方法完成验证，真实邮件、短信发送需要后端配置发送服务。新联系方式验证后用于资料展示；原有已验证身份和登录标识按服务端规则保留。熟人备注与资料属于当前账号，不会修改对方已验证的身份信息。
+应用把授权后的会话令牌保存在自己的隔离存储 `session.json`，并直接携带令牌请求业务接口。密码、验证码和网页登录令牌不会进入应用。重启后向服务端验证并恢复登录；切换账号成功后才替换原会话，取消切换会保留原账号。退出登录立即清除本地登录，撤销请求断网失败时保存到隔离存储并在下次启动或登录时重试。Caddy 不注入共享账号。
+
+邮箱和手机号修改也在后端网页完成，需验证当前账号并输入新联系方式的验证码。真实邮件、短信发送需要后端配置发送服务。原有已验证身份和登录标识按服务端规则保留。熟人备注与资料属于当前账号，不会修改对方已验证的身份信息。
 
 商品图片通过 `https://liyu.localhost:8443` 加载。此版本使用本地测试后端，测试支付不产生真实扣款；测试数据保存在服务端数据库中。应用没有内置虚构熟人或本地业务数据兜底。中文关键词输入可使用服务端返回的商品和熟人生成待确认内容，目前该页面由 Splash 实现。
 
-本地 App-Hub 已实现 `liyu` 能力。公开上架还需要提供正式 HTTPS 服务地址，并确认目标宿主支持所需能力。详情见[能力差异说明](CAPABILITY-GAP.md)和[隐私政策](PRIVACY.md)。
+应用只声明标准 `images`、`model`、`net`、`storage` 能力。公开上架还需要提供正式 HTTPS 服务地址，并将其写入应用的服务地址和网络允许列表。详情见[能力差异说明](CAPABILITY-GAP.md)和[隐私政策](PRIVACY.md)。
 
 ## 演示视频
 
@@ -59,7 +61,11 @@ LIYU-MINI 是 [LIYU](https://github.com/chrislearn/OctoSense/tree/liyu/apps/liyu
 
 可从任意目录用脚本绝对路径运行。后端固定监听 `127.0.0.1:8787`，反代为 `https://liyu.localhost:8443`，管理页面为 `/admin`。首次启动前需配置 `../liyu-server/.env` 并确保其中的 PostgreSQL 数据库可用；命令会增量编译后端，使用现有账号与数据库配置，不启用演示登录或额外开启测试验证码。已有健康的后端会复用；两项服务都就绪时重复执行直接返回。保持终端打开，`Ctrl+C` 只停止本次命令启动的进程。日志在 `build/local-services/`，CA 沿用 `build/local-caddy/data/pki/authorities/local/root.crt`。管理界面需预先在后端执行 `just build-admin`。
 
-如需分别启动后端与反代，可在一键脚本生成配置后执行以下命令。后端读取现有 `.env`；注册测试可显式设置 `LIYU_TEST_DELIVERY=true` 返回测试验证码，正常验证需要配置发送服务。宿主通过 `LIYU_SERVICE_CA_FILE` 使用本地 CA 校验证书。
+如需分别启动后端与反代，可在一键脚本生成配置后执行以下命令。后端读取现有 `.env`；注册测试可显式设置 `LIYU_TEST_DELIVERY=true` 返回测试验证码，正常验证需要配置发送服务。标准网络请求和授权网页使用系统证书信任。本地开发需将 Caddy 根证书加入当前用户钥匙串：
+
+```sh
+security add-trusted-cert -r trustRoot -p ssl -k "$HOME/Library/Keychains/login.keychain-db" build/local-caddy/data/pki/authorities/local/root.crt
+```
 
 ```sh
 cd ../liyu-server && LIYU_BIND=127.0.0.1:8787 target/debug/liyu-server
@@ -67,27 +73,25 @@ cd ../liyu-server && LIYU_BIND=127.0.0.1:8787 target/debug/liyu-server
 LIYU_CADDY_DATA="$PWD/build/local-caddy/data" caddy run --config build/local-services/Caddyfile --adapter caddyfile
 ```
 
-随后使用包含 `liyu` 服务的本地 App-Hub 工具启动应用：
+随后使用标准 App-Hub 工具启动应用：
 
 ```sh
 OCTO_HUB=../OctoSense-App-Hub/target/debug/hub \
 ../OctoScript-App-Design-Flow/tools/octo check bundle
-LIYU_SERVICE_URL=https://liyu.localhost:8443 \
-LIYU_SERVICE_CA_FILE="$PWD/build/local-caddy/data/pki/authorities/local/root.crt" \
 OCTO_CARD_HOST=../OctoSense-App-Hub/target/debug/card-host \
 ../OctoScript-App-Design-Flow/tools/octo run bundle --port 8141 --detach --app-data build/auth-app-data
 ```
 
 
-打开 `card-host` 窗口，选择「登录或注册」。也可通过 `127.0.0.1:8141` 的 `/snap`、`/click` 和 `/g` 接口查看和操作应用。使用期间保持 Caddy 和后端运行。
+打开 `card-host` 窗口，选择「登录或注册」，在授权网页输入自己的账号并确认。也可通过 `127.0.0.1:8141` 的 `/snap`、`/click` 和 `/g` 接口查看和操作应用。使用期间保持 Caddy 和后端运行。
 
-如需在 OctoSense 中打开本地安装的应用，使用包含 `liyu` 服务的宿主程序，并执行：
+如需在 OctoSense 中打开本地安装的应用，使用支持上述标准能力的宿主程序，并执行：
 
 ```sh
 ./run-octosense-local.sh
 ```
 
-该脚本使用 `build/` 下的本地签名目录和已安装应用，配置 HTTPS 服务及本地 CA，启动时打开 `hub:liyu-mini`。宿主远程操作端口默认为 `127.0.0.1:8399`。模型功能还需在宿主中完成模型配置。
+该脚本使用 `build/` 下的本地签名目录和已安装应用，启动时打开 `hub:liyu-mini`。宿主远程操作端口默认为 `127.0.0.1:8399`。模型功能还需在宿主中完成模型配置。
 
 ## 文件说明
 
