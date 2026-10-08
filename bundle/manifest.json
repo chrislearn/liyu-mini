@@ -7,7 +7,7 @@
   ],
   "id": "liyu-mini",
   "integrity": {
-    "bundle_blake3": "a19ba085451cb23a6a65fc7a08a6631fac6e1d77befcd95ebbea93e65564e8d7"
+    "bundle_blake3": "324f3c6b4f5628469dccc22207a463caac0683a77b3ec899a9f9d934ace2b754"
   },
   "name": "LIYU-MINI",
   "network": {
@@ -16,5 +16,5 @@
     ]
   },
   "schema": 1,
-  "version": "1.0.32"
+  "version": "1.0.33"
 }

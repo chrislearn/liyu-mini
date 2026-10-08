@@ -8,10 +8,176 @@ let revocations = []
 if fs.exists("revocations.json") { let saved = fs.read("revocations.json").parse_json(); for k v in saved { if k.to_string() == "tokens" { revocations = v } } }
 let authorization = nil
 let auth_flow_generation = 0
+let demo_mode = false
+let demo_data = nil
+fn demo_seed(){ return "{\"user\":{\"id\":9000,\"identifier\":\"demo@local.example\",\"display_name\":\"体验用户\",\"phone\":\"13800000000\",\"email\":\"demo@local.example\",\"phones\":[\"13800000000\"],\"emails\":[\"demo@local.example\"],\"phone_verified\":false,\"email_verified\":false,\"avatar_url\":\"/assets/ui/nav-me-on.png\"},\"products\":[{\"available\":true,\"brand\":\"星巴克\",\"category\":\"coffee\",\"description\":\"一杯中杯拿铁，想喝的时候去门店出示券码就行。\",\"id\":1,\"image_card_url\":\"/api/v1/media/products/1/card\",\"image_detail_url\":\"/api/v1/media/products/1/detail\",\"image_thumb_url\":\"/api/v1/media/products/1/thumb\",\"kind\":\"咖啡\",\"name\":\"星巴克中杯拿铁电子券\",\"physical\":false,\"price_cents\":3500,\"spec\":\"全国门店通用 · 30 天有效\",\"stock\":99,\"tags\":[\"电子券\",\"门店\"],\"demo_image\":\"/assets/p01.png\"},{\"available\":true,\"brand\":\"猫眼\",\"category\":\"movie\",\"description\":\"全国大部分影院 2D 场次通兑，挑一部想看的片子就好。\",\"id\":3,\"image_card_url\":\"/api/v1/media/products/3/card\",\"image_detail_url\":\"/api/v1/media/products/3/detail\",\"image_thumb_url\":\"/api/v1/media/products/3/thumb\",\"kind\":\"电影票\",\"name\":\"电影通兑票\",\"physical\":false,\"price_cents\":4900,\"spec\":\"2D 场次通兑 · 60 天有效\",\"stock\":99,\"tags\":[\"电子券\",\"2D\"],\"demo_image\":\"/assets/p03.png\"},{\"available\":true,\"brand\":\"栖木\",\"category\":\"trendy\",\"description\":\"无花果叶和一点木质调，点燃 40 小时。睡前点一会儿，房间是暖的。\",\"id\":6,\"image_card_url\":\"/api/v1/media/products/6/card\",\"image_detail_url\":\"/api/v1/media/products/6/detail\",\"image_thumb_url\":\"/api/v1/media/products/6/thumb\",\"kind\":\"香薰\",\"name\":\"香薰蜡烛\",\"physical\":true,\"price_cents\":8800,\"spec\":\"无花果香 · 200g · 包邮\",\"stock\":99,\"tags\":[\"无花果\",\"助眠\",\"200g\"],\"demo_image\":\"/assets/p06.png\"},{\"available\":true,\"brand\":\"纸上\",\"category\":\"blind\",\"description\":\"胶带、便签、印章、钢笔…… 随机 6 件，做手帐的人会喜欢。\",\"id\":9,\"image_card_url\":\"/api/v1/media/products/9/card\",\"image_detail_url\":\"/api/v1/media/products/9/detail\",\"image_thumb_url\":\"/api/v1/media/products/9/thumb\",\"kind\":\"盲盒\",\"name\":\"文具盲盒\",\"physical\":true,\"price_cents\":3900,\"spec\":\"6 件随机 · 包邮\",\"stock\":99,\"tags\":[\"文具\",\"手帐\"],\"demo_image\":\"/assets/p09.png\"},{\"available\":true,\"brand\":\"好利来\",\"category\":\"sweet\",\"description\":\"6 寸鲜奶蛋糕，提前一天在小程序预约，门店自提。\",\"id\":10,\"image_card_url\":\"/api/v1/media/products/10/card\",\"image_detail_url\":\"/api/v1/media/products/10/detail\",\"image_thumb_url\":\"/api/v1/media/products/10/thumb\",\"kind\":\"蛋糕\",\"name\":\"小蛋糕兑换券\",\"physical\":false,\"price_cents\":12800,\"spec\":\"6 寸 · 指定门店自提\",\"stock\":99,\"tags\":[\"电子券\",\"6寸\",\"生日\"],\"demo_image\":\"/assets/p10.png\"},{\"available\":true,\"brand\":\"声屿\",\"category\":\"digital\",\"description\":\"鹅卵石大小，扔进包里就走。防水，浴室和野餐都能放。\",\"id\":16,\"image_card_url\":\"/api/v1/media/products/16/card\",\"image_detail_url\":\"/api/v1/media/products/16/detail\",\"image_thumb_url\":\"/api/v1/media/products/16/thumb\",\"kind\":\"音箱\",\"name\":\"声屿 Pebble 蓝牙音箱\",\"physical\":true,\"price_cents\":39900,\"spec\":\"蓝牙 5.3 · IP67 防水 · 包邮\",\"stock\":99,\"tags\":[\"蓝牙\",\"便携\",\"防水\"],\"demo_image\":\"/assets/p16.png\"},{\"available\":true,\"brand\":\"栖木\",\"category\":\"home\",\"description\":\"暖白两色、三档亮度。沙发边放一盏，晚上就不想开大灯了。\",\"id\":23,\"image_card_url\":\"/api/v1/media/products/23/card\",\"image_detail_url\":\"/api/v1/media/products/23/detail\",\"image_thumb_url\":\"/api/v1/media/products/23/thumb\",\"kind\":\"灯\",\"name\":\"栖木 氛围落地灯\",\"physical\":true,\"price_cents\":23900,\"spec\":\"暖光 · 三档调光 · 包邮\",\"stock\":99,\"tags\":[\"暖光\",\"调光\",\"卧室\"],\"demo_image\":\"/assets/p23.png\"},{\"available\":true,\"brand\":\"小橡\",\"category\":\"baby\",\"description\":\"100 块榉木积木，水性漆，棱角都磨圆了。\",\"id\":28,\"image_card_url\":\"/api/v1/media/products/28/card\",\"image_detail_url\":\"/api/v1/media/products/28/detail\",\"image_thumb_url\":\"/api/v1/media/products/28/thumb\",\"kind\":\"玩具\",\"name\":\"木作益智积木\",\"physical\":true,\"price_cents\":19900,\"spec\":\"100 块 · 3 岁以上 · 包邮\",\"stock\":99,\"tags\":[\"3岁+\",\"益智\",\"木质\"],\"demo_image\":\"/assets/p28.png\"}],\"friends\":[{\"id\":9001,\"display_name\":\"林舟\",\"account_name\":\"林舟\",\"nickname\":\"林舟\",\"phone\":\"13800000001\",\"email\":\"friend0@local.example\",\"relationship\":\"好友\",\"birthday\":\"1995-10-15\",\"wedding_date\":\"\",\"note\":\"喜欢咖啡，周末一起打羽毛球。\"},{\"id\":9002,\"display_name\":\"陈晓\",\"account_name\":\"陈晓\",\"nickname\":\"陈晓\",\"phone\":\"13800000002\",\"email\":\"friend1@local.example\",\"relationship\":\"同事\",\"birthday\":\"1995-10-15\",\"wedding_date\":\"\",\"note\":\"喜欢电影和蓝色的小物。\"},{\"id\":9003,\"display_name\":\"周知夏\",\"account_name\":\"周知夏\",\"nickname\":\"周知夏\",\"phone\":\"13800000003\",\"email\":\"friend2@local.example\",\"relationship\":\"家人\",\"birthday\":\"1995-10-15\",\"wedding_date\":\"2021-10-08\",\"note\":\"最近在布置新家，喜欢温暖的灯光。\"}],\"categories\":[{\"id\":\"coffee\",\"name\":\"咖啡茶饮\"},{\"id\":\"movie\",\"name\":\"电影演出\"},{\"id\":\"trendy\",\"name\":\"潮流小物\"},{\"id\":\"blind\",\"name\":\"盲盒\"},{\"id\":\"sweet\",\"name\":\"甜点鲜花\"},{\"id\":\"digital\",\"name\":\"数码家电\"},{\"id\":\"home\",\"name\":\"家居生活\"},{\"id\":\"baby\",\"name\":\"母婴亲子\"}],\"gifts\":[{\"id\":501,\"product_id\":3,\"product\":{\"available\":true,\"brand\":\"猫眼\",\"category\":\"movie\",\"description\":\"全国大部分影院 2D 场次通兑，挑一部想看的片子就好。\",\"id\":3,\"image_card_url\":\"/api/v1/media/products/3/card\",\"image_detail_url\":\"/api/v1/media/products/3/detail\",\"image_thumb_url\":\"/api/v1/media/products/3/thumb\",\"kind\":\"电影票\",\"name\":\"电影通兑票\",\"physical\":false,\"price_cents\":4900,\"spec\":\"2D 场次通兑 · 60 天有效\",\"stock\":99,\"tags\":[\"电子券\",\"2D\"],\"demo_image\":\"/assets/p03.png\"},\"price_cents\":4900,\"physical\":false,\"state\":\"sealed\",\"unlock_kind\":\"free\",\"clue\":\"我最喜欢什么颜色？提示：天空的颜色。\",\"answer\":\"蓝色\",\"hidden_sender\":{\"id\":9001,\"display_name\":\"林舟\"},\"sender\":null,\"recipient\":{\"id\":9000,\"display_name\":\"体验用户\"},\"side\":\"inbox\",\"attempts_left\":3,\"expires_at\":2440000000,\"ready\":true,\"transfer_child_id\":null,\"transfer_child_state\":null,\"message\":\"愿每一天都有小小的惊喜。\",\"contract_text\":\"周末陪我看一场电影\",\"contract_status\":null,\"voucher_code\":\"DEMO-ONLY-NOT-REDEEMABLE\",\"can_withdraw\":false,\"carrier_delivered\":false,\"recipient_confirmed\":false},{\"id\":502,\"product_id\":1,\"product\":{\"available\":true,\"brand\":\"星巴克\",\"category\":\"coffee\",\"description\":\"一杯中杯拿铁，想喝的时候去门店出示券码就行。\",\"id\":1,\"image_card_url\":\"/api/v1/media/products/1/card\",\"image_detail_url\":\"/api/v1/media/products/1/detail\",\"image_thumb_url\":\"/api/v1/media/products/1/thumb\",\"kind\":\"咖啡\",\"name\":\"星巴克中杯拿铁电子券\",\"physical\":false,\"price_cents\":3500,\"spec\":\"全国门店通用 · 30 天有效\",\"stock\":99,\"tags\":[\"电子券\",\"门店\"],\"demo_image\":\"/assets/p01.png\"},\"price_cents\":3500,\"physical\":false,\"state\":\"sealed\",\"unlock_kind\":\"guess_who\",\"clue\":\"周末一起打羽毛球的那位。\",\"answer\":\"林舟\",\"hidden_sender\":{\"id\":9001,\"display_name\":\"林舟\"},\"sender\":null,\"recipient\":{\"id\":9000,\"display_name\":\"体验用户\"},\"side\":\"inbox\",\"attempts_left\":3,\"expires_at\":2440000000,\"ready\":true,\"transfer_child_id\":null,\"transfer_child_state\":null,\"message\":\"愿每一天都有小小的惊喜。\",\"contract_text\":\"周末陪我看一场电影\",\"contract_status\":null,\"voucher_code\":\"DEMO-ONLY-NOT-REDEEMABLE\",\"can_withdraw\":false,\"carrier_delivered\":false,\"recipient_confirmed\":false},{\"id\":503,\"product_id\":9,\"product\":{\"available\":true,\"brand\":\"纸上\",\"category\":\"blind\",\"description\":\"胶带、便签、印章、钢笔…… 随机 6 件，做手帐的人会喜欢。\",\"id\":9,\"image_card_url\":\"/api/v1/media/products/9/card\",\"image_detail_url\":\"/api/v1/media/products/9/detail\",\"image_thumb_url\":\"/api/v1/media/products/9/thumb\",\"kind\":\"盲盒\",\"name\":\"文具盲盒\",\"physical\":true,\"price_cents\":3900,\"spec\":\"6 件随机 · 包邮\",\"stock\":99,\"tags\":[\"文具\",\"手帐\"],\"demo_image\":\"/assets/p09.png\"},\"price_cents\":3900,\"physical\":true,\"state\":\"sealed\",\"unlock_kind\":\"question\",\"clue\":\"我最喜欢什么颜色？提示：天空的颜色。\",\"answer\":\"蓝色\",\"hidden_sender\":{\"id\":9002,\"display_name\":\"陈晓\"},\"sender\":null,\"recipient\":{\"id\":9000,\"display_name\":\"体验用户\"},\"side\":\"inbox\",\"attempts_left\":3,\"expires_at\":2440000000,\"ready\":true,\"transfer_child_id\":null,\"transfer_child_state\":null,\"message\":\"愿每一天都有小小的惊喜。\",\"contract_text\":\"周末陪我看一场电影\",\"contract_status\":null,\"voucher_code\":\"DEMO-ONLY-NOT-REDEEMABLE\",\"can_withdraw\":false,\"carrier_delivered\":false,\"recipient_confirmed\":false},{\"id\":504,\"product_id\":6,\"product\":{\"available\":true,\"brand\":\"栖木\",\"category\":\"trendy\",\"description\":\"无花果叶和一点木质调，点燃 40 小时。睡前点一会儿，房间是暖的。\",\"id\":6,\"image_card_url\":\"/api/v1/media/products/6/card\",\"image_detail_url\":\"/api/v1/media/products/6/detail\",\"image_thumb_url\":\"/api/v1/media/products/6/thumb\",\"kind\":\"香薰\",\"name\":\"香薰蜡烛\",\"physical\":true,\"price_cents\":8800,\"spec\":\"无花果香 · 200g · 包邮\",\"stock\":99,\"tags\":[\"无花果\",\"助眠\",\"200g\"],\"demo_image\":\"/assets/p06.png\"},\"price_cents\":8800,\"physical\":true,\"state\":\"accepted\",\"unlock_kind\":\"free\",\"clue\":\"我最喜欢什么颜色？提示：天空的颜色。\",\"answer\":\"蓝色\",\"hidden_sender\":{\"id\":9003,\"display_name\":\"周知夏\"},\"sender\":null,\"recipient\":{\"id\":9000,\"display_name\":\"体验用户\"},\"side\":\"inbox\",\"attempts_left\":3,\"expires_at\":2440000000,\"ready\":true,\"transfer_child_id\":null,\"transfer_child_state\":null,\"message\":\"愿每一天都有小小的惊喜。\",\"contract_text\":\"周末陪我看一场电影\",\"contract_status\":\"pending\",\"voucher_code\":\"DEMO-ONLY-NOT-REDEEMABLE\",\"can_withdraw\":false,\"carrier_delivered\":true,\"recipient_confirmed\":false},{\"id\":601,\"product_id\":23,\"product\":{\"available\":true,\"brand\":\"栖木\",\"category\":\"home\",\"description\":\"暖白两色、三档亮度。沙发边放一盏，晚上就不想开大灯了。\",\"id\":23,\"image_card_url\":\"/api/v1/media/products/23/card\",\"image_detail_url\":\"/api/v1/media/products/23/detail\",\"image_thumb_url\":\"/api/v1/media/products/23/thumb\",\"kind\":\"灯\",\"name\":\"栖木 氛围落地灯\",\"physical\":true,\"price_cents\":23900,\"spec\":\"暖光 · 三档调光 · 包邮\",\"stock\":99,\"tags\":[\"暖光\",\"调光\",\"卧室\"],\"demo_image\":\"/assets/p23.png\"},\"price_cents\":23900,\"physical\":true,\"state\":\"sealed\",\"unlock_kind\":\"free\",\"clue\":\"我最喜欢什么颜色？提示：天空的颜色。\",\"answer\":\"蓝色\",\"hidden_sender\":{\"id\":9000,\"display_name\":\"体验用户\"},\"sender\":null,\"recipient\":{\"id\":9003,\"display_name\":\"周知夏\"},\"side\":\"outbox\",\"attempts_left\":3,\"expires_at\":2440000000,\"ready\":true,\"transfer_child_id\":null,\"transfer_child_state\":null,\"message\":\"愿每一天都有小小的惊喜。\",\"contract_text\":\"周末陪我看一场电影\",\"contract_status\":null,\"voucher_code\":\"DEMO-ONLY-NOT-REDEEMABLE\",\"can_withdraw\":true,\"carrier_delivered\":false,\"recipient_confirmed\":false}],\"wishes\":[{\"id\":701,\"owner\":{\"id\":9000,\"display_name\":\"体验用户\"},\"title\":\"想给生活添点惊喜\",\"note\":\"一份小小心意，让相处更温暖。\",\"occasion\":\"birthday\",\"event_on\":\"2026-10-15\",\"is_open\":false,\"status\":\"draft\",\"item_count\":2,\"expires_at\":2440000000,\"items\":[{\"id\":7010,\"product_id\":1,\"kind\":\"\",\"max_price_cents\":0,\"wants\":\"\",\"status\":\"open\"},{\"id\":7011,\"product_id\":23,\"kind\":\"\",\"max_price_cents\":0,\"wants\":\"\",\"status\":\"open\"}],\"audience_user_ids\":[9001,9002,9003]},{\"id\":702,\"owner\":{\"id\":9001,\"display_name\":\"林舟\"},\"title\":\"生日的小期待\",\"note\":\"一份小小心意，让相处更温暖。\",\"occasion\":\"birthday\",\"event_on\":\"2026-10-15\",\"is_open\":true,\"status\":\"published\",\"item_count\":2,\"expires_at\":2440000000,\"items\":[{\"id\":7020,\"product_id\":1,\"kind\":\"\",\"max_price_cents\":0,\"wants\":\"\",\"status\":\"open\"},{\"id\":7021,\"product_id\":16,\"kind\":\"\",\"max_price_cents\":0,\"wants\":\"\",\"status\":\"open\"}],\"audience_user_ids\":[9001,9002,9003]},{\"id\":703,\"owner\":{\"id\":9002,\"display_name\":\"陈晓\"},\"title\":\"想一起去看电影\",\"note\":\"一份小小心意，让相处更温暖。\",\"occasion\":\"birthday\",\"event_on\":\"2026-10-15\",\"is_open\":true,\"status\":\"published\",\"item_count\":1,\"expires_at\":2440000000,\"items\":[{\"id\":7030,\"product_id\":3,\"kind\":\"\",\"max_price_cents\":0,\"wants\":\"\",\"status\":\"open\"}],\"audience_user_ids\":[9001,9002,9003]}],\"wallet\":{\"balance_cents\":6800,\"ledger\":[{\"id\":1,\"kind\":\"cash_out\",\"amount_cents\":6800,\"gift_id\":499,\"created_at_epoch\":1791388800}]},\"addresses\":[{\"id\":801,\"recipient_name\":\"体验用户\",\"phone\":\"13800000000\",\"address\":\"演示市示例区幸福路 8 号（虚构地址）\",\"is_default\":true}],\"tags\":[{\"id\":901,\"name\":\"一起玩\",\"member_count\":2,\"member_ids\":[9001,9002],\"member_names\":[\"林舟\",\"陈晓\"]}],\"notifications\":[{\"id\":1,\"type\":\"occasion\",\"title\":\"林舟的生日快到了\",\"body\":\"还有 7 天，挑一件商品表达心意吧。\",\"message\":\"林舟的生日还有 7 天\",\"created_at\":1791388800,\"read\":false}],\"templates\":[{\"id\":1,\"label\":\"看电影\",\"body\":\"周末陪我看一场电影\"},{\"id\":2,\"label\":\"喝咖啡\",\"body\":\"下次一起喝杯咖啡\"}],\"orders\":[],\"next_id\":1000}".parse_json() }
+fn demo_reply(code, body){ return {is_ok: true, error: "", data: {status: code, body: body.to_json().parse_json()}} }
+fn demo_fail(message){ return demo_reply(400, {error: message}) }
+fn demo_merge(target, patch){ for k v in patch { target[k] = v }; return target }
+fn demo_id(){ demo_data.next_id = demo_data.next_id + 1; return demo_data.next_id }
+fn demo_product(id){ for p in demo_data.products { if p.id == id { return p } }; return nil }
+fn demo_gift_view(g){
+    let v = g.to_json().parse_json()
+    let revealed = g.state != "sealed" && g.state != "opened"
+    v.sender = if revealed && g.side == "inbox" {g.hidden_sender} else {nil}
+    v.answer = nil; v.hidden_sender = nil
+    if !revealed { v.message = ""; v.contract_text = ""; v.voucher_code = nil }
+    if g.state != "opened" { v.clue = "" }
+    if g.side == "outbox" && (g.state == "accepted" || g.state == "cashed_out" || g.state == "exchanged") { v.state = "handled" }
+    return v
+}
+fn demo_gift_list(side){ let list = []; for g in demo_data.gifts { if g.side == side { list.push(demo_gift_view(g)) } }; return list }
+fn demo_contracts(){
+    let list = []; for g in demo_data.gifts { if g.state == "accepted" && g.contract_text != "" {
+        list.push({gift_id: g.id, text: g.contract_text, contract_text: g.contract_text, mine: g.side == "inbox", peer_name: if g.side == "inbox" {g.hidden_sender.display_name} else {g.recipient.display_name}, created_on: "本次演示", status: g.contract_status, side: if g.side == "inbox" {"promised_to_me"} else {"promised_by_me"}, sender: g.hidden_sender, recipient: g.recipient, other: if g.side == "inbox" {g.hidden_sender} else {g.recipient}})
+    } }; return list
+}
+fn demo_add_item(w, input){
+    let item = demo_merge({id: demo_id(), product_id: nil, kind: "", max_price_cents: 0, wants: "", status: "open"}, input)
+    if item.product_id != nil { for old in w.items { if old.product_id == item.product_id { return {id: old.id, already_present: true, error: ""} } } }
+    if w.items.len() >= 8 { return {id: -1, already_present: false, error: "最多添加 8 项商品或商品需求。"} }
+    w.items.push(item); w.item_count = w.items.len(); return {id: item.id, already_present: false, error: ""}
+}
+fn demo_new_gift(pid, recipient){
+    let p = demo_product(pid)
+    let g = {id: demo_id(), side: "outbox", product_id: pid, product: p, price_cents: p.price_cents, physical: p.physical, state: "sealed", unlock_kind: "free", clue: "", answer: "", hidden_sender: {id: 9000, display_name: demo_data.user.display_name}, sender: nil, recipient: {id: recipient, display_name: "熟人"}, ready: false, attempts_left: 3, expires_at: time_now() + 86400, transfer_child_id: nil, transfer_child_state: nil, message: "", contract_text: "", contract_status: nil, voucher_code: "DEMO-ONLY-NOT-REDEEMABLE", can_withdraw: true, carrier_delivered: false, recipient_confirmed: false}
+    for f in demo_data.friends { if f.id == recipient { g.recipient.display_name = f.display_name } }
+    demo_data.gifts.push(g); return g
+}
+fn demo_credit(g, amount, kind){
+    demo_data.wallet.balance_cents = demo_data.wallet.balance_cents + amount
+    demo_data.wallet.ledger.push({id: demo_id(), kind: kind, amount_cents: amount, gift_id: g.id, created_at_epoch: time_now()})
+}
+fn demo_tag_members(tag, ids){
+    tag.member_ids = ids; tag.member_count = ids.len(); tag.member_names = []
+    for id in ids { for f in demo_data.friends { if f.id == id { tag.member_names.push(f.display_name) } } }
+}
+fn demo_request(request){
+    let path = request.path.split("?")[0]; let method = request.method; let body = if request.body == nil {{}} else {request.body}
+    if path == "/catalog/categories" { return demo_reply(200, demo_data.categories) }
+    if path == "/catalog" { return demo_reply(200, {items: demo_data.products}) }
+    if path == "/me" || path == "/me/profile" {
+        if method == "PATCH" { demo_merge(demo_data.user, body) }
+        return demo_reply(200, demo_data.user)
+    }
+    if path == "/wallet" { return demo_reply(200, demo_data.wallet) }
+    if path == "/friends" { return demo_reply(200, demo_data.friends) }
+    if path == "/notifications" { return demo_reply(200, demo_data.notifications) }
+    if path == "/contract-templates" { return demo_reply(200, demo_data.templates) }
+    if path == "/contracts" { return demo_reply(200, demo_contracts()) }
+    if path == "/gifts/inbox" { return demo_reply(200, demo_gift_list("inbox")) }
+    if path == "/gifts/outbox" { return demo_reply(200, demo_gift_list("outbox")) }
+    if path == "/wishlists/mine" || path == "/wishlists/friends" {
+        let list = []; for w in demo_data.wishes { if (path == "/wishlists/mine" && w.owner.id == 9000) || (path == "/wishlists/friends" && w.owner.id != 9000 && w.status == "published") { list.push(w) } }; return demo_reply(200, list)
+    }
+    if path == "/wishlists/drafts" && method == "POST" {
+        let w = demo_merge({id: demo_id(), owner: {id: 9000, display_name: demo_data.user.display_name}, title: "新心愿单", note: "", occasion: "other", event_on: "", status: "draft", is_open: false, item_count: 0, items: [], audience_user_ids: [], expires_at: 2440000000}, body)
+        let pending = w.items; w.items = []; for item in pending { demo_add_item(w, item) }
+        demo_data.wishes.push(w); return demo_reply(200, {id: w.id})
+    }
+    if path == "/me/addresses" {
+        if method == "GET" { return demo_reply(200, demo_data.addresses) }
+        let a = demo_merge({id: demo_id(), recipient_name: "", phone: "", address: "", is_default: false}, body)
+        if a.is_default { for old in demo_data.addresses { old.is_default = false } }
+        demo_data.addresses.push(a); return demo_reply(200, a)
+    }
+    let parts = path.split("/"); let id = if parts.len() > 2 {parts[2].to_f64()} else {-1}
+    let action = if parts.len() > 3 {parts[3]} else {""}
+    if path.search("/me/addresses/") == 0 {
+        let aid = parts[3].to_f64(); let kept = []
+        for a in demo_data.addresses { if a.id == aid && method == "PUT" { demo_merge(a, body); if a.is_default { for other in demo_data.addresses { if other.id != aid { other.is_default = false } } } }; if a.id != aid || method != "DELETE" { kept.push(a) } }
+        demo_data.addresses = kept; return demo_reply(200, {id: aid})
+    }
+    if path.search("/wishlists/") == 0 {
+        for w in demo_data.wishes { if w.id == id {
+            if method == "GET" { return demo_reply(200, w) }
+            if w.owner.id != 9000 { return demo_fail("演示中请在自己的心愿单里编辑商品。") }
+            if action == "items" {
+                if w.status != "draft" { return demo_fail("已发布的心愿单不能修改商品。") }
+                if method == "POST" { let result = demo_add_item(w, body); if result.error != "" { return demo_fail(result.error) }; return demo_reply(200, result) }
+                let kept = []; for item in w.items { if item.id != parts[4].to_f64() { kept.push(item) } }; w.items = kept; w.item_count = kept.len(); return demo_reply(200, {id: id})
+            }
+            if method == "DELETE" { let kept = []; for old in demo_data.wishes { if old.id != id { kept.push(old) } }; demo_data.wishes = kept; return demo_reply(200, {id: id}) }
+            if action == "close" { w.status = "closed"; w.is_open = false }
+            else { demo_merge(w, body); if action == "publish" { w.status = "published"; w.is_open = true } }
+            return demo_reply(200, {id: id})
+        } }; return demo_fail("没有找到这张心愿单。")
+    }
+    if path == "/orders/quote" || path == "/orders" {
+        let input = demo_merge({product_id: -1, recipient_ids: [], recipient_id: -1, items: []}, body)
+        let items = input.items
+        if items.len() == 0 { for recipient in input.recipient_ids { items.push({product_id: input.product_id, recipient_id: recipient}) } }
+        if items.len() == 0 && input.recipient_id >= 0 { items.push({product_id: input.product_id, recipient_id: input.recipient_id}) }
+        let total = 0; for item in items { let p = demo_product(item.product_id); if p == nil { return demo_fail("请选择商品。") }; total = total + p.price_cents }
+        if items.len() == 0 { return demo_fail("请选择收礼人。") }
+        if path == "/orders/quote" { return demo_reply(200, {total_cents: total, count: items.len()}) }
+        for old in demo_data.orders { if old.request_key == request.idempotency_key { return demo_reply(200, old) } }
+        let order = {id: demo_id(), items: [], total_cents: total, request_key: request.idempotency_key}
+        for item in items { let g = demo_new_gift(item.product_id, item.recipient_id); order.items.push({gift_id: g.id, product_id: item.product_id, recipient_id: item.recipient_id}) }
+        demo_data.orders.push(order); return demo_reply(200, order)
+    }
+    if path.search("/orders/") == 0 { for order in demo_data.orders { if order.id == id { return demo_reply(200, order) } } }
+    if path.search("/contracts/") == 0 { for g in demo_data.gifts { if g.id == id { g.contract_status = body.status; return demo_reply(200, {status: body.status}) } } }
+    if path.search("/gifts/") == 0 {
+        for g in demo_data.gifts { if g.id == id {
+            if action == "" { return demo_reply(200, demo_gift_view(g)) }
+            if action == "recovery-quote" { return demo_reply(200, {recovery_cents: floor(g.price_cents * 0.8)}) }
+            if action == "puzzle" { demo_merge(g, body); g.ready = true; return demo_reply(200, {id: id}) }
+            if action == "withdraw" { if !g.can_withdraw { return demo_fail("只能撤回未打开的礼盒。") }; g.state = "withdrawn"; g.can_withdraw = false; demo_credit(g, g.price_cents, "withdraw"); return demo_reply(200, {id: id}) }
+            if g.side != "inbox" { return demo_fail("请在收到的礼盒中体验拆盒。") }
+            if action == "open" { if g.state == "sealed" { g.state = if g.unlock_kind == "free" {"revealed"} else {"opened"} }; return demo_reply(200, {id: id, state: g.state}) }
+            if action == "answer" {
+                if g.state != "opened" || g.attempts_left <= 0 { return demo_fail("请先打开礼盒；次数用尽后可重新进入本地演示。") }
+                let correct = body.answer.trim() == g.answer || (g.unlock_kind == "guess_who" && body.answer.trim() == g.hidden_sender.display_name)
+                g.attempts_left = g.attempts_left - 1; if correct { g.state = "revealed" }
+                return demo_reply(200, {correct: correct, state: g.state, attempts_left: g.attempts_left})
+            }
+            if g.state != "revealed" && g.state != "exchanged" { return demo_fail("请先答对问题并拆开礼盒。") }
+            if action == "accept" { g.state = "accepted"; g.contract_status = "pending"; return demo_reply(200, {id: id}) }
+            if action == "cash-out" { g.state = "cashed_out"; demo_credit(g, floor(g.price_cents * 0.8), "cash_out"); return demo_reply(200, {id: id}) }
+            if action == "exchange" {
+                let p = demo_product(body.product_id); if p == nil { return demo_fail("请选择商品。") }
+                if demo_data.wallet.balance_cents + floor(g.price_cents * 0.8) < p.price_cents { return demo_fail("演示钱包余额不足。") }; demo_credit(g, floor(g.price_cents * 0.8) - p.price_cents, "exchange")
+                g.product_id = p.id; g.product = p; g.price_cents = p.price_cents; g.physical = p.physical; g.state = "exchanged"; return demo_reply(200, {id: id})
+            }
+            if action == "transfer" { let child = demo_new_gift(g.product_id, body.recipient_id); demo_merge(child, body); child.ready = true; g.state = "transferred"; g.transfer_child_id = child.id; g.transfer_child_state = "sealed"; return demo_reply(200, {id: id}) }
+        } }
+    }
+    if path.search("/shipments/") == 0 { return demo_reply(200, {carrier: "演示物流", tracking_number: "DEMO0001", carrier_delivered: true, recipient_confirmed: action == "confirm-receipt", events: [{at: "今天", description: "演示包裹已送达，未产生真实发货。"}]}) }
+    if path == "/friend-tags" {
+        if method == "GET" { return demo_reply(200, demo_data.tags) }
+        let tag = {id: demo_id(), name: body.name, member_count: 0, member_ids: [], member_names: []}; demo_data.tags.push(tag); return demo_reply(200, tag)
+    }
+    if path.search("/friend-tags/") == 0 {
+        if method == "DELETE" { let kept = []; for tag in demo_data.tags { if tag.id != id { kept.push(tag) } }; demo_data.tags = kept; return demo_reply(200, {id: id}) }
+        for tag in demo_data.tags { if tag.id == id {
+            if action == "members" { demo_tag_members(tag, body.friend_ids) } else { tag.name = body.name }
+            return demo_reply(200, {id: id})
+        } }
+    }
+    if path.search("/friends/") == 0 {
+        for f in demo_data.friends { if f.id == id {
+            if action == "details" { demo_merge(f, body); f.display_name = if f.nickname == "" {f.account_name} else {f.nickname} }
+            if action == "tags" {
+                for tag in demo_data.tags {
+                    let ids = []; for member in tag.member_ids { if member != id { ids.push(member) } }
+                    for tid in body.tag_ids { if tid == tag.id { ids.push(id) } }
+                    demo_tag_members(tag, ids)
+                }
+            }
+            return demo_reply(200, {id: id})
+        } }
+    }
+    return demo_fail("此操作需要真实账号；可退出本地演示后登录体验。")
+}
 // Keep the established response shape so business actions share one transport.
 fn api_request(input, done){
     let request = {method: "GET", path: "", token: nil, body: nil, idempotency_key: nil}
     for k v in input { request[k] = v }
+    if demo_mode {
+        let response = demo_request(request)
+        start_timeout(0.01, || done(response)); return
+    }
     let headers = {"Content-Type": ["application/json"], "Accept": ["application/json"]}
     let token = if request.token != nil {request.token} else {session_token}
     if token != "" { headers["Authorization"] = ["Bearer " + token] }
@@ -30,6 +196,7 @@ fn api_request(input, done){
     start_timeout(20.0, || { if !settled { settled = true; done({is_ok: false, data: {status: 0, body: nil}, error: "礼遇服务响应超时，请重试。"}) } })
 }
 fn flush_revocations(){
+    if demo_mode { return }
     for token in revocations {
         api_request({method: "POST", path: "/auth/logout", token: token, body: {}}, fn(r){
             if r.is_ok && (r.data.status == 204 || r.data.status == 401) {
@@ -217,7 +384,8 @@ fn product_for_item(item){
 }
 fn open_wish_count(w){ let n = 0; for item in w.items { if item.status == "open" { n = n + 1 } } return n }
 fn wish_state_name(state){ if state == "open" { return "还没人送" }; if state == "by_me" { return "由我送出" }; return "已有人送" }
-fn product_image(p){ return "https://liyu.localhost:8443" + p.image_detail_url }
+fn product_image(p){ if demo_mode { return assets + p.demo_image }; return service_origin + p.image_detail_url }
+fn profile_image(){ if demo_mode { return assets + demo_data.user.avatar_url }; return service_origin + profile.avatar_url }
 fn category_name(id){ for c in categories { if c.id == id { return c.name } } return id }
 fn product_meta(p){
     let result = category_name(p.category) + " · " + p.brand
@@ -301,6 +469,21 @@ fn clear_account_data(){
 }
 fn auth_lost(message){ session_token = ""; fs.write("session.json", {token: ""}.to_json()); clear_account_data(); auth_state = "signed_out"; auth_message = message; refresh() }
 fn auth_ready(){ clear_account_data(); auth_state = "signed_in"; auth_message = ""; refresh(); load_all() }
+fn enter_demo(){
+    if account_busy { return }
+    auth_flow_generation = auth_flow_generation + 1
+    clear_account_data(); demo_mode = true; demo_data = demo_seed()
+    for g in demo_data.gifts { g.expires_at = time_now() + 7 * 86400 }
+    for w in demo_data.wishes { w.expires_at = time_now() + 7 * 86400 }
+    for entry in demo_data.wallet.ledger { entry.created_at_epoch = time_now() - 86400 }
+    auth_state = "signed_in"; auth_message = ""; account_busy = false
+    category_index = 0; product_search = ""; shop_side = "shop"; gift_side = "inbox"
+    status = "本地演示 · 8 件商品"; refresh(); load_all()
+}
+fn leave_demo(){
+    demo_mode = false; demo_data = nil; clear_account_data()
+    auth_state = "signed_out"; auth_message = "请登录真实账号，或重新进入本地演示。"; account_busy = false; refresh()
+}
 fn check_auth(){
     flush_revocations()
     let generation = auth_generation
@@ -371,8 +554,9 @@ fn begin_authorization(purpose){
     })
 }
 fn sign_in(){ begin_authorization("login") }
-fn switch_account(){ begin_authorization("login") }
+fn switch_account(){ if demo_mode { leave_demo(); return }; begin_authorization("login") }
 fn logout(){
+    if demo_mode { leave_demo(); return }
     if account_busy { return }
     let previous = session_token
     auth_lost("已退出礼遇账号。")
@@ -396,7 +580,7 @@ fn get(path, kind){
             }
             let data = r.data.body
             if data == nil { status = "LIYU 服务响应无法解析（" + kind + "）"; if kind == "gift_detail" { gift_detail_error = "礼盒加载失败：服务响应无法解析" }; refresh(); return }
-            if kind == "catalog" { products = data.items; status = "已连接 LIYU 服务 · " + products.len() + " 件商品" }
+            if kind == "catalog" { products = data.items; status = (if demo_mode {"本地演示 · "} else {"已连接 LIYU 服务 · "}) + products.len() + " 件商品" }
             if kind == "categories" { categories = [{id: "", name: "全部"}]; for c in data { categories.push(c) } }
             if kind == "friends" {
                 friends = data
@@ -586,6 +770,7 @@ fn save_display_name(){
     })
 }
 fn edit_my_contact(kind){
+    if demo_mode { notice = "演示联系方式为虚构数据；请登录真实账号后验证修改。"; refresh(); return }
     if profile == nil || profile_busy { return }
     begin_authorization(kind)
 }
@@ -672,6 +857,10 @@ fn choose_gift(id){ gift_from_contact = false; gift_from_pact = false; gift_deta
 fn choose_contact(i){ contact_detail_origin_stage = stage; contact_index = i; contact_id = friends[i].id; notice = ""; ai_context = ai_context + 1; ai_text = ""; ai_busy = false; stage = "contact_detail"; refresh() }
 
 fn ask_ai(task, input){
+    if demo_mode {
+        ai_text = if task.search("送礼人") >= 0 {"演示建议（非实时 AI）：先结合提示回想共同经历，再从熟人中判断；例如一起运动、看电影或喝咖啡的人。最终答案仍需自己确认。"} else {"演示建议（非实时 AI）：咖啡适合日常分享，电影票适合一起度过周末，氛围灯适合喜欢布置新家的熟人。结合对方爱好与预算再挑选。"}
+        ai_busy = false; refresh(); return
+    }
     if ai_busy { return }
     ai_busy = true; ai_text = "正在分析…"; refresh()
     let generation = auth_generation
@@ -954,7 +1143,7 @@ fn quote_gift(){
     draft_error = gift_form_error()
     if draft_error != "" { notice = ""; refresh(); return }
     let body = gift_checkout_body()
-    mutate("/orders/quote", "POST", body, |data| { quote = data; stage = "checkout"; notice = "价格已由 LIYU 服务端核算。"; refresh() })
+    mutate("/orders/quote", "POST", body, |data| { quote = data; stage = "checkout"; notice = if demo_mode {"演示报价，不产生真实订单或扣款。"} else {"价格已由 LIYU 服务端核算。"}; refresh() })
 }
 fn create_order(){
     if expiry_hours() < 1 { stage = "draft"; draft_error = "有效期请输入 1–720 小时（最多 30 天）。"; refresh(); return }
@@ -990,7 +1179,7 @@ fn get_paid_order(id){
 }
 fn configure_paid_gifts(items, index){
     if index >= items.len() {
-        notice = items.len() + " 个测试礼盒已保存到 LIYU 服务。"
+        notice = items.len() + if demo_mode {" 个礼盒已保存在本次演示中。"} else {" 个测试礼盒已保存到 LIYU 服务。"}
         tab = "box"; stage = "browse"; gift_side = "outbox"
         get("/gifts/outbox", "outbox"); get("/gifts/inbox", "inbox"); refresh()
         return
@@ -1137,6 +1326,12 @@ View{width: Fill height: Fill flow: Down
 
     SolidView{width: Fill height: Fill flow: Down draw_bg.color: canvas
 
+    if demo_mode {
+        View{width: Fill height: 34 flow: Right align: Align{y: 0.5} padding: Inset{left: 14 right: 14} spacing: 8 draw_bg.color: soft
+            Label{width: Fill text: "本地演示 · 虚构数据，退出后重置" draw_text.color: accent draw_text.text_style.font_size: 11}
+            Link{text: "退出演示" on_click: || leave_demo()}
+        }
+    }
     if authorization != nil {
         View{width: Fill height: Fill flow: Down spacing: 12 padding: 12
             View{width: Fill height: 48 flow: Right align: Align{y: 0.5} spacing: 12
@@ -1155,6 +1350,8 @@ View{width: Fill height: Fill flow: Down
                 Label{width: Fill text: auth_message draw_text.color: accent draw_text.text_style.font_size: 12}
                 if auth_state == "signed_out" { Primary{width: Fill text: if account_busy {"请稍候…"} else {"登录或注册"} on_click: || sign_in()} }
                 if auth_state == "error" { Secondary{width: Fill text: "重试连接" on_click: || check_auth()} }
+                Secondary{width: Fill text: "本地演示" on_click: || enter_demo()}
+                Label{width: Fill text: "无需服务器 · 使用虚构用户与数据" draw_text.color: faint draw_text.text_style.font_size: 11}
             }
         }
     } else {
@@ -1321,7 +1518,7 @@ View{width: Fill height: Fill flow: Down
         if tab == "discover" && stage == "detail" && selected_product >= 0 {
             let p = products[selected_product]
             ScrollYView{width: Fill height: Fill flow: Down padding: Inset{left: 16 right: 16 top: 10 bottom: 16} spacing: 14
-                Image{width: Fill height: 360 src: http_resource("https://liyu.localhost:8443" + p.image_detail_url) fit: ImageFit.CropToFill}
+                Image{width: Fill height: 360 src: http_resource(product_image(p)) fit: ImageFit.CropToFill}
                 View{width: Fill height: Fit flow: Down spacing: 5
                     Label{width: Fill max_lines: 1 text_overflow: Ellipsis text: p.name draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 18}}
                     View{width: Fill height: Fit flow: Right align: Align{x: 0.0 y: 0.0} padding: Inset{bottom: 6} spacing: 9
@@ -2293,7 +2490,7 @@ View{width: Fill height: Fill flow: Down
                 View{width: Fill height: Fit flow: Overlay
                     Card{padding: 16 spacing: 0
                         View{width: Fill height: Fit flow: Right align: Align{x: 0.0 y: 0.5} spacing: 14
-                            if profile != nil { Image{width: 56 height: 56 src: http_resource("https://liyu.localhost:8443" + profile.avatar_url) fit: ImageFit.CropToFill} }
+                            if profile != nil { Image{width: 56 height: 56 src: http_resource(profile_image()) fit: ImageFit.CropToFill} }
                             else { RoundedView{width: 56 height: 56 align: Align{x: 0.5 y: 0.5} draw_bg +: {color: soft border_radius: 28.0}
                                 Label{text: if account == nil {"?"} else {initial(account.display_name)} draw_text.color: accent draw_text.text_style.font_size: 23}
                             } }
@@ -2345,8 +2542,8 @@ View{width: Fill height: Fill flow: Down
                     }
                 }
                 View{width: Fill height: Fit flow: Down spacing: 10 padding: Inset{top: 10 bottom: 10}
-                    Secondary{width: Fill text: "切换账号" on_click: || switch_account()}
-                    Secondary{width: Fill text: "退出登录" on_click: || logout()}
+                    Secondary{width: Fill text: if demo_mode {"登录真实账号"} else {"切换账号"} on_click: || switch_account()}
+                    Secondary{width: Fill text: if demo_mode {"退出本地演示"} else {"退出登录"} on_click: || logout()}
                 }
             }
         }
@@ -2364,7 +2561,7 @@ View{width: Fill height: Fill flow: Down
                     }
                     View{width: Fill height: 88 flow: Right align: Align{x: 0.0 y: 0.5} padding: Inset{left: 18 right: 18} spacing: 14
                         Label{width: Fill text: "头像" draw_text.color: ink draw_text.text_style.font_size: 14}
-                        if profile != nil { Image{width: 56 height: 56 src: http_resource("https://liyu.localhost:8443" + profile.avatar_url) fit: ImageFit.CropToFill} }
+                        if profile != nil { Image{width: 56 height: 56 src: http_resource(profile_image()) fit: ImageFit.CropToFill} }
                     }
                 }
                 Card{padding: 0 spacing: 0
@@ -2479,7 +2676,7 @@ View{width: Fill height: Fill flow: Down
                 Label{text: "数据" draw_text.color: muted draw_text.text_style: theme.font_bold{font_size: 13}}
                 Card{padding: 14 spacing: 8
                     Label{width: Fill text: status draw_text.color: muted draw_text.text_style.font_size: 13}
-                    Secondary{text: "刷新服务端数据" on_click: || load_all()}
+                    Secondary{text: if demo_mode {"刷新演示数据"} else {"刷新服务端数据"} on_click: || load_all()}
                 }
             }
         }

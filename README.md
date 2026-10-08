@@ -1,6 +1,8 @@
 # LIYU-MINI
 
-LIYU-MINI 是 [LIYU](https://github.com/chrislearn/OctoSense/tree/liyu/apps/liyu) 的 OctoScript / Splash 版本，用于与 `liyu-server` 进行本地联调。商品、分类、价格、库存、账号、熟人、心愿单和礼盒记录均通过标准 HTTPS 请求直接读取 `liyu-server`。无需专用 `liyu` 宿主服务。应用使用真实用户登录及服务端会话。
+礼遇是一种围绕熟人关系的社交电商形态：通过心愿单了解需求，用礼盒与解谜让送礼变得有趣，用纪念日提醒和附带约定延续交流。目标是让朋友、伴侣和家人更容易表达关心，增进人与人之间的关系。完整的使用场景、需求、验收标准与未来方向见[产品需求与价值](docs/product-requirements.md)。
+
+LIYU-MINI 是礼遇的 OctoScript / Splash 小程序，使用标准 HTTPS 直接连接 [liyu-server](https://github.com/chrislearn/liyu-server)，无需专用 `liyu` 宿主服务，也无需安装原生 LIYU。支持真实用户登录，以及无需服务器的本地演示。当前支付、物流和折现为测试流程，不产生真实扣款或提现。
 
 ## 主要功能
 
@@ -21,9 +23,21 @@ LIYU-MINI 是 [LIYU](https://github.com/chrislearn/OctoSense/tree/liyu/apps/liyu
 
 邮箱和手机号修改也在后端网页完成，需验证当前账号并输入新联系方式的验证码。真实邮件、短信发送需要后端配置发送服务。原有已验证身份和登录标识按服务端规则保留。熟人备注与资料属于当前账号，不会修改对方已验证的身份信息。
 
-商品图片通过 `https://liyu.localhost:8443` 加载。此版本使用本地测试后端，测试支付不产生真实扣款；测试数据保存在服务端数据库中。应用没有内置虚构熟人或本地业务数据兜底。中文关键词输入可使用服务端返回的商品和熟人生成待确认内容，目前该页面由 Splash 实现。
+商品图片通过 `https://liyu.localhost:8443` 加载。此版本使用本地测试后端，测试支付不产生真实扣款；测试数据保存在服务端数据库中。真实账号模式只使用服务端数据；本地演示使用独立的虚构用户和数据。中文关键词输入可使用服务端返回的商品和熟人生成待确认内容，目前该页面由 Splash 实现。
 
 应用只声明标准 `images`、`model`、`net`、`storage` 能力。公开上架还需要提供正式 HTTPS 服务地址，并将其写入应用的服务地址和网络允许列表。详情见[能力差异说明](CAPABILITY-GAP.md)和[隐私政策](PRIVACY.md)。
+
+## 本地演示
+
+登录入口下方点击「本地演示」，无需启动 `liyu-server`、Caddy，也无需账号或模型配置。演示使用虚构用户、三位熟人、八件商品及内置商品图片，可以体验挑礼、设置并送出礼盒、手动拆盒、猜送礼人和回答问题、礼物折现与钱包流水、多商品心愿单、个人约定状态和收货地址。
+
+页面顶部始终标注「本地演示」。AI 建议是明确标注的固定示例，不调用真实模型；联系方式验证需退出演示后登录真实账号。演示操作仅保存在本次运行的内存中，退出或重新进入会重置，不会写入真实账号的业务数据或替换登录会话。
+
+包内只保留 8 张轻量商品插画，商品图合计约 137 KB；应用包总大小约 1.44 MB，低于 8 MB。可重复验证资源和演示流程：
+
+```sh
+python3 scripts/check-local-demo.py
+```
 
 ## 演示视频
 
@@ -109,3 +123,16 @@ OCTO_CARD_HOST=../OctoSense-App-Hub/target/debug/card-host \
 送出记录统一使用「礼盒」；收到记录同时包含未拆和已拆的礼盒。收礼详情按状态显示「礼盒详情」或「礼物详情」，解谜中仍属于未拆开的礼盒。商品名称、用户自填标题及历史寄语保持原文。
 
 送礼入口直接进入「挑礼」商品目录，选中商品并点击「送给TA」后才进入「设置礼盒」。设置中的「换一件」也使用同一商品目录；重新选商品或取消更换时保留收礼人、寄语和拆盒设置。
+
+## 配置自己的 HTTPS 服务
+
+服务端的 Compose、本地证书、线上域名及镜像部署见[服务端部署指南](https://github.com/chrislearn/liyu-server/blob/main/docs/deployment.md)。后端上线后，在本仓库执行：
+
+```sh
+python3 scripts/configure-backend.py https://liyu.example.com
+../OctoScript-App-Design-Flow/tools/octo check bundle
+```
+
+替换成自己的域名。脚本同时更新请求地址和网络允许列表，之后必须重新校验打包。恢复本地联调使用 `https://liyu.localhost:8443`。本地演示始终无需后端。
+
+`net` 是实际使用的标准能力：真实账号的授权状态轮询、商品、心愿单、礼盒、钱包等请求均通过 `net.http_request` 发往上述 HTTPS 地址，并携带当前用户的会话。网络失败明确提示错误，不切换为演示账号。调用依据和复现方法见[能力差异说明](CAPABILITY-GAP.md)。

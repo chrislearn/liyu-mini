@@ -37,3 +37,9 @@ Add this app's own requirements, data sources and tests below.
 - 礼盒: the object a user sends, including its product and opening settings. Unopened and solving states remain 礼盒; product information is visible before unwrapping, while sender identity stays hidden.
 - 礼物: the product a recipient receives from another user after successfully unwrapping the box.
 - Sent history uses 礼盒. Incoming history includes unopened boxes and uses 礼盒; recipient detail becomes 礼物详情 after successful unwrapping. Do not call these objects 礼卡. Preserve product names and user-authored titles/messages.
+
+## Local demo
+
+- The explicitly selected 本地演示 mode is fully local: fictional account/data and bundled images, no backend or model requests. Never silently fall back to it in real-account mode.
+- Demo writes stay in memory, reset on re-entry/exit, and must preserve any real account session and revocation queue.
+- Keep exactly eight compact product illustrations and the complete bundle below 8,000,000 bytes. Run `python3 scripts/check-local-demo.py` when changing demo behavior or assets.
