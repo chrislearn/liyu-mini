@@ -16,7 +16,7 @@ cd liyu-mini
 # 使用 Actions 记录中的 source_revision 替换下列值
 git checkout <小程序提交SHA>
 python3 -m venv build/verify-venv
-build/verify-venv/bin/python -m pip install --only-binary=:all: -r scripts/ci-requirements.txt
+build/verify-venv/bin/python -m pip install --require-hashes --only-binary=:all: -r scripts/ci-requirements.txt
 build/verify-venv/bin/python scripts/check-bundle.py
 ```
 
@@ -34,3 +34,5 @@ Windows 的虚拟环境 Python 为 `build/verify-venv/Scripts/python.exe`。获�
 **现有图形截图和运行检查来自作者机器，且其 App Hub 源码有未提交修改。**这些结果不证明官方运行器干净检出或其他平台兼容。现有网页授权测试为 HTTP/API 自动化；完整图形跨账号流程仍应按上面的清单独立复核，不能与 API 结果混算。本仓库未声称双环独立审查通过、苹果公证通过或 Windows/Linux 图形运行通过。
 
 本轮包 CI 与 API CI 提供独立机器的检查记录，但图形运行、平台认证、真实供应商／支付仍各有自己的验证范围。复现后附提交 SHA、运行环境、命令、结果和实际截图，不引用其他项目的测试结果。
+
+校验工具的 Python 包固定版本及 PyPI wheel SHA256，安装使用 `--require-hashes --only-binary`，不构建源码安装包。CI Actions 也固定到提交 SHA。小程序自身不下载或执行 agent 程序，不需要其进程启动权限。
