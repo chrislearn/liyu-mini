@@ -27,7 +27,7 @@
     "support": "https://github.com/chrislearn/liyu-mini/issues",
     "privacy_policy_url": "https://github.com/chrislearn/liyu-mini/blob/main/PRIVACY.md"
   },
-  "release_notes": "默认后端配置为 liyu.taidge.com；采用 GitHub 身份证明发布流程，补充网页登录凭据与会话存储说明。",
+  "release_notes": "新增双方确认约定日期与已确认日期的 .ics 手动导出；AI 按预算与场合推荐目录内商品、购买注意事项和寄语，可采用为待确认草稿；下单核验确认价格、幂等请求及礼盒配置读回。支付仍为测试流程。",
   "age_rating": "all",
   "license": "Apache-2.0"
 }
