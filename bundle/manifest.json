@@ -7,14 +7,14 @@
   ],
   "id": "liyu-mini",
   "integrity": {
-    "bundle_blake3": "89902b53bfbc996aeeeff7d68d334dcd47e5141866a2d09dd1293bd0e7285f18"
+    "bundle_blake3": "dc89a8a7b94a60fe16cf015944081a242c6001201de78b84ce247e5e41fe3a15"
   },
   "name": "LIYU-MINI",
   "network": {
     "hosts": [
-      "liyu.localhost"
+      "liyu.taidge.com"
     ]
   },
   "schema": 1,
-  "version": "1.0.35"
+  "version": "1.0.36"
 }

@@ -1,7 +1,7 @@
 // LIYU-MINI: credentials stay in a server-owned WebReader page.
 // App sessions and business requests use the standard HTTPS capability.
 let assets = "{{assets}}"
-let service_origin = "https://liyu.localhost:8443"
+let service_origin = "https://liyu.taidge.com"
 let session_token = ""
 if fs.exists("session.json") { let saved = fs.read("session.json").parse_json(); for k v in saved { if k.to_string() == "token" { session_token = v } } }
 let revocations = []

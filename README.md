@@ -19,13 +19,15 @@ LIYU-MINI 是礼遇的 OctoScript / Splash 小程序，使用标准 HTTPS 直接
 
 密码和验证码在 **后端提供的授权网页**中输入，由标准 `WebReader` 展示。网页与 Splash 应用之间没有脚本桥。应用用独立密钥轮询授权状态，用户确认后领取一次性的应用会话；请求五分钟后过期，取消后不能继续授权。网页登录会话十分钟后过期，完成授权后立即撤销。
 
+凭据流转、有效期及存储限制见[网页登录与凭据说明](docs/authentication.md)。隔离存储不是系统钥匙串，当前标准接口未提供安全凭据保险库。
+
 应用把授权后的会话令牌保存在自己的隔离存储 `session.json`，并直接携带令牌请求业务接口。密码、验证码和网页登录令牌不会进入应用。重启后向服务端验证并恢复登录；切换账号成功后才替换原会话，取消切换会保留原账号。退出登录立即清除本地登录，撤销请求断网失败时保存到隔离存储并在下次启动或登录时重试。Caddy 不注入共享账号。
 
 邮箱和手机号修改也在后端网页完成，需验证当前账号并输入新联系方式的验证码。真实邮件、短信发送需要后端配置发送服务。原有已验证身份和登录标识按服务端规则保留。熟人备注与资料属于当前账号，不会修改对方已验证的身份信息。
 
-商品图片通过 `https://liyu.localhost:8443` 加载。此版本使用本地测试后端，测试支付不产生真实扣款；测试数据保存在服务端数据库中。真实账号模式只使用服务端数据；本地演示使用独立的虚构用户和数据。中文关键词输入可使用服务端返回的商品和熟人生成待确认内容，目前该页面由 Splash 实现。
+正式后端及商品图片地址为 `https://liyu.taidge.com`。服务需由运营者部署，域名配置不代表服务已经上线；服务不可用时会明确报错，可手动选择本地演示。支付、物流和折现仍为测试业务，不产生真实扣款或提现；真实账号数据保存在服务端数据库中。真实账号模式只使用服务端数据；本地演示使用独立的虚构用户和数据。中文关键词输入可使用服务端返回的商品和熟人生成待确认内容，目前该页面由 Splash 实现。
 
-应用只声明标准 `images`、`model`、`net`、`storage` 能力。公开上架还需要提供正式 HTTPS 服务地址，并将其写入应用的服务地址和网络允许列表。详情见[能力差异说明](CAPABILITY-GAP.md)和[隐私政策](PRIVACY.md)。
+应用只声明标准 `images`、`model`、`net`、`storage` 能力。服务地址和网络允许列表均已配置为 `liyu.taidge.com`；不同时申请 localhost 或第三方 API 主机。详情见[能力差异说明](CAPABILITY-GAP.md)和[隐私政策](PRIVACY.md)。
 
 ## 本地演示
 
@@ -68,6 +70,8 @@ python3 scripts/check-local-demo.py
 | <img src="screenshots/contacts.png" alt="熟人列表：搜索、关系和标签入口" width="300"> | <img src="screenshots/wishlist-audience.png" alt="心愿单可见范围：按熟人或标签选择" width="300"> |
 
 ## 本地运行
+
+发布包默认连接正式域名。本地联调先执行 `python3 scripts/configure-backend.py https://liyu.localhost:8443`，然后重新运行 `octo check`；不要把这个开发配置作为正式版本发布。只体验本地演示无需更改地址。
 
 一键启动本地后端和 Caddy HTTPS 反代：
 
@@ -135,7 +139,7 @@ python3 scripts/configure-backend.py https://liyu.example.com
 ../OctoScript-App-Design-Flow/tools/octo check bundle
 ```
 
-替换成自己的域名。脚本同时更新请求地址和网络允许列表，之后必须重新校验打包；已签名的发布包还需重新签名。恢复本地联调使用 `https://liyu.localhost:8443`。本地演示始终无需后端。
+替换成自己的域名。脚本同时更新请求地址和网络允许列表，之后必须重新校验打包；GitHub 已证明的发布包不得修改；配置变化必须从可编辑源码生成新版本并重新发布。恢复本地联调使用 `https://liyu.localhost:8443`。本地演示始终无需后端。
 
 `net` 是实际使用的标准能力：真实账号的授权状态轮询、商品、心愿单、礼盒、钱包等请求均通过 `net.http_request` 发往上述 HTTPS 地址，并携带当前用户的会话。网络失败明确提示错误，不切换为演示账号。调用依据和复现方法见[能力差异说明](CAPABILITY-GAP.md)。
 
@@ -145,6 +149,8 @@ python3 scripts/configure-backend.py https://liyu.example.com
 
 ## 版本包下载与自动发布
 
-在 [GitHub Releases](https://github.com/chrislearn/liyu-mini/releases) 下载 `liyu-mini-版本号.zip`，附有验证报告和 SHA256SUMS，无需从 Actions 寻找临时产物。该包未经 App Hub 发布者签名。
+[GitHub Releases](https://github.com/chrislearn/liyu-mini/releases) 中，1.0.36 起通过官方 `tools/octo publish-github` 安装的工作流发布：`app.bundle.pack.json` 是经过 GitHub 身份证明的应用包，另附 `octosense-app-manifest.json` 和 `release-receipt.json`。无需发布者私钥。旧版本 1.0.35 的 ZIP 是未证明的开发包。
 
-发布流程：先更新 `bundle/manifest.json` 的版本并重新校验包，再提交到 main，推送一致的标签（如 `git tag v1.0.35 && git push origin v1.0.35`）。标签 CI 通过三个平台的包验证且确认 ZIP 摘要一致后，自动创建对应的 Release。标签与 manifest 版本不一致时拒绝发布；普通 main CI 只产出验证材料。
+发布前更新 manifest 版本、测试可编辑的 bundle、运行 octo check 并提交；推送新的 `v<manifest.version>` 标签。官方工作流使用固定 App Hub 工具链完成 prepare、attest、attach、verify、pack，成功后创建 Release。三个平台的独立包 CI 继续校验源码包并提供开发 ZIP，不再抢建 Release。
+
+发布包需要支持 `publisher-github-v1` 的兼容 Store 宿主；旧版 card-host 只能验证和运行未封装的源码包。工作流成功不代表商店已收录，安装及准入需分别核验。正式域名的实际上线由后端运营者完成。

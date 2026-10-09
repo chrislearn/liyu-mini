@@ -7,3 +7,6 @@
 *.mp4 binary
 *.ttf binary
 *.otf binary
+
+# Publisher proof covers exact source bytes; Git must not normalize the bundle.
+bundle/** -text
