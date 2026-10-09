@@ -1,0 +1,44 @@
+{
+  "timestamp": "2026-10-09T14:47:50.157662+00:00",
+  "source_commit": "ed178e1",
+  "host": "official desktop-v0.1.0-rc.2",
+  "provider": "MiniMax (China), user configured in native host",
+  "data_source": "Isolated liyu-server v0.1.4 PostgreSQL test database; /friends and /catalog?limit=50 read through real PKCE host endpoints",
+  "friend_count": 2,
+  "catalog_count": 33,
+  "live_method": "Production generate_gift_ideas function in signed native probe; actual model.complete, no model adapter",
+  "budget_cents": 10000,
+  "occasion": "生日，喜欢咖啡",
+  "response": {
+    "text": "AI 挑礼方案 · 尚未下单",
+    "plan": {
+      "recommendations": [
+        {
+          "buying_tip": "确认电子券有效期、适用门店及APP兑换流程;核对收礼人咖啡糖度/温度/杯型偏好,避免杯型或口味不合。",
+          "message": "生日快乐,愿这杯咖啡带来好心情!",
+          "product_id": 1,
+          "reason": "寿星明确喜欢咖啡,星巴克中杯拿铁电子券直接契合其偏好,价位友好,适合作为生日小礼。"
+        },
+        {
+          "buying_tip": "确认通兑票支持的影院范围、场次与有效期,提前与寿星协调观影时间与座位需求。",
+          "message": "祝你生日快乐,和朋友们一起放松一下!",
+          "product_id": 3,
+          "reason": "咖啡搭配电影是经典生日组合,通兑票可在生日当天共度观影时光,营造轻松仪式感。"
+        },
+        {
+          "buying_tip": "提前预约配送时间确保生日当天送达,核对收花地址、联系方式与花束规格/保鲜期。",
+          "message": "愿你的生日阳光灿烂,幸福常在!",
+          "product_id": 11,
+          "reason": "向日葵象征阳光与活力,生日赠花束温馨且有仪式感,价位接近预算上限但仍合规。"
+        }
+      ]
+    }
+  },
+  "checked": "3 returned product IDs in server catalog, within per-item budget; production validation accepted",
+  "limits": [
+    "Probe uses captured real server API data; authenticated in-app HTTPS/login UI flow not yet verified",
+    "No order or payment executed",
+    "Native AI provider window remains open for user"
+  ],
+  "tests": "19 synthetic adapter flow checks with captured server responses; 22 AI/purchase guards; 23 demo checks"
+}
