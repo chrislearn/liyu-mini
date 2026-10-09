@@ -1,28 +1,42 @@
 #!/usr/bin/env bash
-# Start the production backend behind the operator's existing HTTPS proxy.
+# Run only the mini client, connected to the production HTTPS backend.
 set -euo pipefail
 
 app_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-server_root="${LIYU_SERVER_DIR:-$app_root/../liyu-server}"
-env_file="${LIYU_PROD_ENV_FILE:-deploy/production.env}"
+octo="${OCTO:-$app_root/../OctoScript-App-Design-Flow/tools/octo}"
+runtime_dir="$app_root/build/prod-client"
 
-command -v docker >/dev/null || { echo "请先安装 Docker。" >&2; exit 1; }
-docker compose version >/dev/null
-[[ -d "$server_root" ]] || { echo "找不到 liyu-server，请通过 LIYU_SERVER_DIR 设置目录。" >&2; exit 1; }
-cd -- "$server_root"
-[[ -f compose.deploy.yaml ]] || { echo "找不到 compose.deploy.yaml，请更新 liyu-server。" >&2; exit 1; }
-[[ -f "$env_file" ]] || {
-    echo "请先复制 deploy/production.env.example 为 deploy/production.env，并填写密码及发送服务配置。" >&2
-    echo "使用其他配置文件时，请设置 LIYU_PROD_ENV_FILE。" >&2
+[[ -x "$octo" ]] || {
+    echo "找不到标准 OctoScript 启动工具，请通过 OCTO 指定 tools/octo 路径。" >&2
     exit 1
 }
+command -v python3 >/dev/null || { echo "请先安装 Python 3。" >&2; exit 1; }
 
-compose=(docker compose --env-file "$env_file" -f compose.deploy.yaml)
-"${compose[@]}" config --quiet
-"${compose[@]}" pull
-"${compose[@]}" up -d --wait --wait-timeout 120
-"${compose[@]}" ps
+# Use a separate editable copy so local-development configuration stays intact.
+python3 - "$app_root" "$runtime_dir" <<'PY'
+from pathlib import Path
+import shutil
+import sys
+root, runtime = map(Path, sys.argv[1:])
+runtime.mkdir(parents=True, exist_ok=True)
+bundle = runtime / 'bundle'
+if bundle.exists():
+    shutil.rmtree(bundle)
+shutil.copytree(root / 'bundle', bundle)
+PY
+python3 "$app_root/scripts/configure-backend.py" https://liyu.taidge.com --bundle "$runtime_dir/bundle"
 
-echo "生产后端已启动，容器健康检查通过。"
-echo "默认由你现有的宿主机 Caddy 将 liyu.taidge.com 反代到 127.0.0.1:8787。"
-echo "公网 HTTPS 和登录流程仍需单独核验。"
+# Reuse the verified standard runtime if it is present; otherwise use octo discovery.
+for entry in 'OCTO_HUB:hub' 'OCTO_CARD_HOST:card-host'; do
+    variable="${entry%%:*}"
+    binary="$app_root/build/official-runtime/OctoSense-App-Hub/target/debug/${entry#*:}"
+    if [[ -z "${!variable:-}" && -x "$binary" ]]; then
+        export "$variable=$binary"
+    fi
+done
+
+"$octo" check "$runtime_dir/bundle"
+echo "启动 LIYU-MINI，连接 https://liyu.taidge.com"
+exec "$octo" run "$runtime_dir/bundle" \
+    --port "${LIYU_MINI_PORT:-8146}" --detach --no-stamp \
+    --app-data "$runtime_dir/app-data" "$@"

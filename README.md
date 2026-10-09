@@ -69,17 +69,15 @@ python3 scripts/check-local-demo.py
 | --- | --- |
 | <img src="screenshots/contacts.png" alt="熟人列表：搜索、关系和标签入口" width="300"> | <img src="screenshots/wishlist-audience.png" alt="心愿单可见范围：按熟人或标签选择" width="300"> |
 
-## 启动生产后端
-
-将两个仓库放在同级目录，在 liyu-server 中复制 `deploy/production.env.example` 为 `deploy/production.env` 并填写配置，然后执行：
+## 启动客户端并连接线上服务
 
 ```sh
 ./start-prod-services.sh
 ```
 
-脚本可从任意目录调用，会校验生产 Compose 配置、拉取镜像，再后台启动数据库和后端，最多等待 120 秒通过健康检查。使用 `compose.deploy.yaml`，HTTPS 由你已有的 Caddy 提供；默认反代目标为 `127.0.0.1:8787`。退出脚本不会停止容器。镜像版本必须已发布，配置或拉取失败会停止执行。
+只启动 LIYU-MINI 客户端，默认直连 `https://liyu.taidge.com`。无需 liyu-server 仓库、Docker、Caddy 或服务器环境变量。需要标准 OctoScript 运行环境；脚本默认使用同级 App Flow 的 tools/octo，也可通过 OCTO 指定工具路径。
 
-后端仓库不在同级目录时使用 `LIYU_SERVER_DIR=/你的路径/liyu-server ./start-prod-services.sh`。可通过 `LIYU_PROD_ENV_FILE` 指定其他环境文件；相对路径以 liyu-server 目录为基准。
+脚本在 build/prod-client 中生成独立的运行副本并配置正式域名，不改动本地开发用的 bundle。线上客户端会话保存在该目录的独立应用存储中；不会自动登录演示用户。默认调试端口 8146，可通过 LIYU_MINI_PORT 修改。服务端不可用时仍可启动客户端，页面显示错误，可手动选择本地演示。
 
 ## 本地运行
 
