@@ -1130,7 +1130,7 @@ fn budget_cents(){
 fn gift_ideas_input(){
     if contact_index < 0 || contact_index >= friends.len() { return nil }
     let f = friends[contact_index]; let catalog = []; let budget = budget_cents()
-    for p in products { if catalog.len() < 50 && (budget == 0 || p.price_cents <= budget) { catalog.push({product_id: p.id, name: p.name, kind: p.kind, price_cents: p.price_cents}) } }
+    for p in products { if p.available && p.stock > 0 && catalog.len() < 50 && (budget == 0 || p.price_cents <= budget) { catalog.push({product_id: p.id, name: p.name, kind: p.kind, price_cents: p.price_cents}) } }
     return {recipient_id: f.id, relationship: f.relationship, birthday: f.birthday, wedding_date: f.wedding_date, note: f.note, occasion: ai_occasion.trim(), budget_cents: budget, products: catalog}
 }
 fn valid_gift_plan(plan, input){
@@ -1146,7 +1146,39 @@ fn valid_gift_plan(plan, input){
     }
     return true
 }
+fn gift_ai_error(error){
+    if error.search("no_provider") >= 0 { return "尚未配置模型，请在 OctoSense 的 AI providers 添加供应商后重试。" }
+    if error.search("no service answers") >= 0 { return "当前运行器不提供 AI 服务，请使用原生 OctoSense 宿主。" }
+    if error.search("budget:") >= 0 { return "今日 AI 额度已用完，请稍后重试或手动挑礼。" }
+    if error.search("rate:") >= 0 { return "AI 请求过于频繁，请稍后重试。" }
+    if error.search("provider:") >= 0 { return "模型服务请求失败，请在宿主 AI providers 检查密钥、网络和模型配置。" }
+    if error.search("invalid_output:") >= 0 { return "模型返回未通过格式校验，请重试或手动挑礼。" }
+    return "AI 请求失败：" + error
+}
 fn ask_gift_ideas(){
+    if ai_busy { return }
+    if demo_mode { generate_gift_ideas(); return }
+    if auth_state != "signed_in" || contact_index < 0 || contact_index >= friends.len() { return }
+    if budget_cents() < 0 { notice = "预算请输入金额，最多两位小数。"; refresh(); return }
+    ai_context = ai_context + 1; let context = ai_context; let generation = auth_generation
+    let recipient = friends[contact_index].id
+    ai_plan = nil; ai_busy = true; ai_text = "正在读取最新熟人资料与在售商品…"; refresh()
+    api_request({method: "GET", path: "/friends"}, fn(r){
+        if generation != auth_generation || context != ai_context || stage != "contact_detail" || contact_id != recipient { return }
+        if !r.is_ok || r.data.status != 200 || r.data.body == nil { ai_busy = false; ai_text = "未能读取最新熟人资料，未发送模型请求。请刷新或重新登录。"; refresh(); return }
+        let latest_friends = r.data.body
+        api_request({method: "GET", path: "/catalog?limit=50"}, fn(c){
+            if generation != auth_generation || context != ai_context || stage != "contact_detail" || contact_id != recipient { return }
+            ai_busy = false
+            if !c.is_ok || c.data.status != 200 || c.data.body == nil || c.data.body.items == nil { ai_text = "未能读取最新商品目录，未发送模型请求。请刷新或重新登录。"; refresh(); return }
+            let selected = -1; for i in latest_friends.len() { if latest_friends[i].id == recipient { selected = i } }
+            if selected < 0 { ai_text = "这位熟人已不在服务端列表中，未发送模型请求。"; refresh(); return }
+            friends = latest_friends; products = c.data.body.items; contact_index = selected
+            generate_gift_ideas()
+        })
+    })
+}
+fn generate_gift_ideas(){
     let input = gift_ideas_input()
     if input == nil { return }
     if input.budget_cents < 0 { notice = "预算请输入金额，最多两位小数。"; refresh(); return }
@@ -1163,10 +1195,11 @@ fn ask_gift_ideas(){
         let current = gift_ideas_input()
         if current == nil || current.to_json() != snapshot || stage != "contact_detail" { ai_text = "条件已变化，旧建议已丢弃。"; refresh(); return }
         if r.is_ok && valid_gift_plan(r.data.output, input) { ai_plan = r.data.output; ai_plan_snapshot = snapshot; ai_plan_friend = input.recipient_id; ai_text = "AI 挑礼方案 · 尚未下单" }
+        else if !r.is_ok { ai_text = gift_ai_error(r.error) }
         else { ai_text = "AI 未能提供可核验的方案，请手动挑礼或稍后重试。" }
         refresh()
     })
-    start_timeout(60.0, || { if context == ai_context && ai_busy { ai_context = ai_context + 1; ai_busy = false; ai_text = "AI 超时，未生成订单；可以重新尝试。"; refresh() } })
+    start_timeout(300.0, || { if context == ai_context && ai_busy { ai_context = ai_context + 1; ai_busy = false; ai_text = "AI 超时，未生成订单；可以重新尝试。"; refresh() } })
 }
 fn adopt_gift_idea(item){
     let input = gift_ideas_input()
@@ -2334,7 +2367,7 @@ View{width: Fill height: Fill flow: Down
                     Entry{empty_text: "单件预算（元，可留空）" text: ai_budget on_change: |v| {ai_budget = v; ai_plan = nil; ai_context = ai_context + 1; ai_busy = false; refresh()}}
                     Entry{empty_text: "送礼场景与偏好，例如生日、喜欢咖啡" text: ai_occasion on_change: |v| {ai_occasion = v; ai_plan = nil; ai_context = ai_context + 1; ai_busy = false; refresh()}}
                     Secondary{width: Fill text: if ai_busy {"AI 正在挑选…"} else {"AI 帮我挑礼"} on_click: || ask_gift_ideas()}
-                    Label{width: Fill text: "点击后会把这位熟人的关系、纪念日、备注和部分在售商品发送给你配置的模型；输出是待确认的挑礼与购买方案，不会自动下单。" draw_text.color: faint draw_text.text_style.font_size: 11}
+                    Label{width: Fill text: "点击后会重新读取服务端资料，将这位熟人的内部编号、关系、生日、结婚纪念日、备注，以及预算、场景和最多 50 件候选商品发送给宿主配置的模型；输出是待确认的挑礼与购买方案，不会自动下单。" draw_text.color: faint draw_text.text_style.font_size: 11}
                     if ai_text != "" { Label{width: Fill text: ai_text draw_text.color: muted draw_text.text_style.font_size: 13} }
                     if ai_plan != nil { for idea in ai_plan.recommendations {
                         let product = product_by_id(idea.product_id)

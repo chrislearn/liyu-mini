@@ -12,3 +12,11 @@
 重新安装改动时使用新的隔离目录，避免覆盖已有宿主凭据或业务数据。临时目录和 .local-state/runtime.env 均被 Git 忽略；不要上传宿主数据。生产发布仍走 GitHub 证明和 App Hub 人工审批，此工具不执行发布。
 
 自动检查：check-local-demo.py（内存演示）、check-ai-purchase.py（AI/报价/日期守卫）、check-net.py（宿主传输合成适配器）、check-host-calendar.py（日历合成控制流）。后端 tests/run_ci.py 使用独立临时数据库。个人日历实际写入、线上登录和真实模型质量必须分别记录，不能由合成检查推定。
+
+## 真实 AI 挑礼
+
+入口：熟人 → 熟人详情 → AI 帮我挑礼。真实账号点击时，通过宿主 auth.backend.request 重新读取 `/friends` 与 `/catalog?limit=50`；两次读取成功后，将所选熟人的内部编号、关系、生日、结婚纪念日、备注及预算、场景、最多 50 件有库存商品的编号/名称/类型/价格交给 `model.complete`。宿主负责供应商、模型和密钥；应用仅接收 `output.recommendations`，校验目录成员、预算和重复项，再允许人工采纳。没有自动下单。模型/后端错误不会切换演示。
+
+在同一个宿主数据目录中打开 AI providers → Add model；MiniMax 国内与国际账号分别选 MiniMax (China) 或 MiniMax，按宿主表单完成路由、模型、密钥和保存。密钥在宿主 Keychain 中，不应提交给应用或写进本仓库。供应商配置是每个宿主配置目录独立的；其他测试窗口的配置不一定适用于当前实例。
+
+`python3 scripts/check-real-ai-flow.py` 执行生产 Splash 控制流，模型适配器明确为合成测试。可用 `LIYU_AI_SERVER_CAPTURE=/absolute/server-data.json` 提供通过真实服务端 PKCE 接口读回的 `{friends:{status:200,body:[...]},catalog:{status:200,body:{items:[...]}}}`。这验证真实数据形状和传递，不证明真实外部模型推理。外部推理验收需真实宿主、已保存的供应商、受信 HTTPS 后端和登录账号，并记录人工点击后的推荐结果。
