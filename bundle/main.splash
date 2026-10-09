@@ -1,11 +1,11 @@
-// LIYU-MINI: credentials stay in a server-owned WebReader page.
-// App sessions and business requests use the standard HTTPS capability.
+// LIYU-MINI: backend credentials are owned by the OctoSense host.
+// The app holds an opaque account handle, never an access or refresh token.
 let assets = "{{assets}}"
 let service_origin = "https://liyu.taidge.com"
-let session_token = ""
-if fs.exists("session.json") { let saved = fs.read("session.json").parse_json(); for k v in saved { if k.to_string() == "token" { session_token = v } } }
-let revocations = []
-if fs.exists("revocations.json") { let saved = fs.read("revocations.json").parse_json(); for k v in saved { if k.to_string() == "tokens" { revocations = v } } }
+let connection = ""
+// Remove legacy credential files without loading their contents.
+if fs.exists("session.json") { fs.remove("session.json") }
+if fs.exists("revocations.json") { fs.remove("revocations.json") }
 let authorization = nil
 let auth_flow_generation = 0
 let demo_mode = false
@@ -206,38 +206,23 @@ fn api_request(input, done){
         let response = demo_request(request)
         start_timeout(0.01, || done(response)); return
     }
-    let headers = {"Content-Type": ["application/json"], "Accept": ["application/json"]}
-    let token = if request.token != nil {request.token} else {session_token}
-    if token != "" { headers["Authorization"] = ["Bearer " + token] }
-    if request.idempotency_key != nil { headers["Idempotency-Key"] = [request.idempotency_key] }
-    if request.expected_total != nil { headers["X-Expected-Total-Cents"] = ["" + request.expected_total] }
-    let method = net.HttpMethod.GET
-    if request.method == "POST" { method = net.HttpMethod.POST }
-    if request.method == "PUT" { method = net.HttpMethod.PUT }
-    if request.method == "PATCH" { method = net.HttpMethod.PATCH }
-    if request.method == "DELETE" { method = net.HttpMethod.DELETE }
-    let body = if request.body != nil {request.body.to_json().to_bytes()} else {nil}
+    let args = {connection: connection, operation: "liyu.read", query: {path: request.path}}
+    if request.method != "GET" {
+        args = {connection: connection, operation: "liyu." + (if request.method == "POST" {"post"} else if request.method == "PUT" {"put"} else if request.method == "PATCH" {"patch"} else {"delete"}), body: {path: request.path, body: request.body, idempotency_key: request.idempotency_key, expected_total: request.expected_total}}
+    }
+    if request.path.search("/browser-authorizations/") == 0 && regex("/poll$", "").test(request.path) {
+        args = {connection: connection, operation: "liyu.contact_status", query: {path: request.path, poll_key: request.body.poll_key}}
+    }
     let settled = false
-    net.http_request(net.HttpRequest{url: service_origin + "/api/v1" + request.path method: method headers: headers body: body}) do net.HttpEvents{
-        on_response: |res| { if settled { return }; settled = true; done({is_ok: true, error: "", data: {status: res.status_code, body: if res.body == nil {nil} else {res.body.to_string().parse_json()}}}) }
-        on_error: |_err| { if settled { return }; settled = true; done({is_ok: false, data: {status: 0, body: nil}, error: "无法连接礼遇服务，请检查网络和证书。"}) }
-    }
-    start_timeout(20.0, || { if !settled { settled = true; done({is_ok: false, data: {status: 0, body: nil}, error: "礼遇服务响应超时，请重试。"}) } })
-}
-fn flush_revocations(){
-    if demo_mode { return }
-    for token in revocations {
-        api_request({method: "POST", path: "/auth/logout", token: token, body: {}}, fn(r){
-            if r.is_ok && (r.data.status == 204 || r.data.status == 401) {
-                let remaining = []; for value in revocations { if value != token { remaining.push(value) } }
-                revocations = remaining; fs.write("revocations.json", {tokens: revocations}.to_json())
-            }
-        })
-    }
-}
-fn revoke_later(token){
-    if token == "" { return }
-    revocations.push(token); fs.write("revocations.json", {tokens: revocations}.to_json()); flush_revocations()
+    let generation = auth_generation
+    host.request("auth.backend.request", args, fn(r){
+        if settled || generation != auth_generation { return }
+        settled = true
+        if r.is_ok { done({is_ok: true, error: "", data: r.data}) }
+        else { done({is_ok: false, error: r.error, data: {status: 0, body: nil}}) }
+    })
+    // Native write review can take five minutes before the network call starts.
+    start_timeout(340.0, || { if !settled && generation == auth_generation { settled = true; done({is_ok: false, data: {status: 0, body: nil}, error: "请求尚未确认完成，请先重新读取，勿重复提交。"}) } })
 }
 let appearance = if fs.exists("appearance.txt") {fs.read("appearance.txt").trim()} else {"dark"}
 let account_busy = false
@@ -290,6 +275,12 @@ let contract_date = ""
 let contract_date_saved = ""
 let contract_date_loading = false
 let contract_schedule = nil
+let device_calendars = []
+let device_calendar_handle = ""
+let device_calendar_name = ""
+let device_calendar_busy = false
+let device_calendar_generation = 0
+let device_calendar_links = {}
 let calendar_page = ""
 let contract_date_request = ""
 let contract_date_proposal = nil
@@ -509,6 +500,9 @@ fn valid_plan_date(value){
     return day >= 1 && day <= days[month - 1]
 }
 fn load_contract_date(id){
+    device_calendar_generation = device_calendar_generation + 1; device_calendar_busy = false; device_calendars = []
+    device_calendar_handle = ""; device_calendar_name = ""
+    for k v in device_calendar_links { if k.to_string() == "" + id { device_calendar_handle = v.handle; device_calendar_name = "已关联日历" } }
     let generation = auth_generation
     api_request({path: "/contracts/" + id + "/schedule"}, fn(r){
         if generation != auth_generation || contract_edit_id != id || stage != "contract_status" { return }
@@ -544,6 +538,121 @@ fn change_contract_date(action, body, message){
         })
     })
 }
+fn calendar_notice(message){ device_calendar_busy = false; notice = message; refresh() }
+fn calendar_context(generation, id){ return generation == auth_generation * 100000 + device_calendar_generation && id == contract_edit_id && stage == "contract_status" && !demo_mode }
+fn list_device_calendars(generation, id){
+    host.request("device_calendar.calendars.list", {}, fn(r){
+        if !calendar_context(generation, id) { return }
+        if !r.is_ok { calendar_notice(r.error + "；仍可导出 .ics。"); return }
+        device_calendars = []; for value in r.data.calendars { if value.writable { device_calendars.push(value) } }
+        calendar_notice(if device_calendars.len() == 0 {"没有可写日历，请使用 .ics。"} else {"请选择要写入的设备日历。"})
+    })
+}
+fn open_device_calendars(){
+    if device_calendar_busy { return }
+    if demo_mode { notice = "本地演示不会访问设备日历。"; refresh(); return }
+    device_calendar_busy = true; device_calendars = []; refresh()
+    let generation = auth_generation * 100000 + device_calendar_generation; let id = contract_edit_id
+    host.request("runtime.describe", {method: "device_calendar.events.create"}, fn(discovery){
+        if !calendar_context(generation, id) { return }
+        if !discovery.is_ok || !discovery.data.supported { calendar_notice("当前宿主没有设备日历接口，请导出 .ics。"); return }
+        host.request("device_calendar.permission.status", {}, fn(status){
+            if !calendar_context(generation, id) { return }
+            if !status.is_ok || !status.data.supported { calendar_notice("设备日历不可用，请导出 .ics。"); return }
+            if status.data.app_consent && status.data.os_permission == "granted" { list_device_calendars(generation, id); return }
+            host.request("device_calendar.permission.request", {}, fn(permission){
+                if !calendar_context(generation, id) { return }
+                if !permission.is_ok { calendar_notice(permission.error + "；仍可导出 .ics。"); return }
+                list_device_calendars(generation, id)
+            })
+        })
+    })
+}
+fn select_device_calendar(value){
+    if device_calendar_busy { return }
+    device_calendar_busy = true; refresh()
+    let generation = auth_generation * 100000 + device_calendar_generation; let id = contract_edit_id
+    host.request("device_calendar.calendars.select", {calendar_id: value.id}, fn(r){
+        if !calendar_context(generation, id) { return }
+        if !r.is_ok { calendar_notice(r.error); return }
+        device_calendar_handle = r.data.handle; device_calendar_name = r.data.calendar.name; device_calendars = []
+        calendar_notice("已选择日历；添加或更新事件仍需你在宿主确认。")
+    })
+}
+fn persist_calendar_links(){ fs.write("calendar-links.json", device_calendar_links.to_json()) }
+fn verify_calendar_event(generation, id, handle, event_id, event, planned_on){
+    host.request("device_calendar.events.get", {handle: handle, event_id: event_id}, fn(read){
+        if !calendar_context(generation, id) { return }
+        if !read.is_ok || read.data.title != event.title || read.data.start_ms != event.start_ms || read.data.end_ms != event.end_ms || read.data.notes != event.notes || !read.data.all_day || read.data.timezone != "UTC" {
+            calendar_notice("写入结果尚未核验，请重新读取后再尝试；不会自动创建第二个事件。"); return
+        }
+        device_calendar_links["" + id] = {handle: handle, event_id: event_id, revision: read.data.revision, planned_on: planned_on, start_ms: event.start_ms, end_ms: event.end_ms, pending: false}
+        persist_calendar_links()
+        api_request({path: "/contracts/" + id + "/schedule"}, fn(current){
+            if !calendar_context(generation, id) { return }
+            if !current.is_ok || current.data.status != 200 || current.data.body.planned_on != planned_on { calendar_notice("事件已写入，但约定日期随后变化，请重新读取日期后手动更新事件。"); return }
+            calendar_notice("已写入日历并回读核验。改期后请再次点更新；不会自动修改你的日历。")
+        })
+    })
+}
+fn write_calendar_event(generation, id, handle, event, date, previous){
+    let args = {handle: handle, event: event}
+    let method = "device_calendar.events.create"
+    if previous != nil {
+        method = "device_calendar.events.update"; args += {event_id: previous.id, revision: previous.revision}
+    }
+    device_calendar_links["" + id] = {handle: handle, event_id: if previous == nil {""} else {previous.id}, revision: if previous == nil {""} else {previous.revision}, planned_on: date, start_ms: event.start_ms, end_ms: event.end_ms, pending: true}
+    persist_calendar_links()
+    host.request(method, args, fn(r){
+        if !calendar_context(generation, id) { return }
+        if !r.is_ok { calendar_notice(r.error + "；结果可能尚未确认，重试前会先查找现有事件。"); return }
+        let event_id = r.data.event.id
+        device_calendar_links["" + id].event_id = event_id; persist_calendar_links()
+        verify_calendar_event(generation, id, handle, event_id, event, date)
+    })
+}
+fn sync_device_calendar(){
+    if device_calendar_busy || contract_date_loading || contract_schedule == nil || device_calendar_handle == "" { return }
+    if demo_mode { notice = "本地演示不会写入设备日历。"; refresh(); return }
+    device_calendar_busy = true; refresh()
+    let generation = auth_generation * 100000 + device_calendar_generation; let id = contract_edit_id; let handle = device_calendar_handle
+    host.request("device_calendar.permission.status", {}, fn(permission){
+        if !calendar_context(generation, id) { return }
+        if !permission.is_ok || !permission.data.supported || !permission.data.app_consent || permission.data.os_permission != "granted" { calendar_notice("日历权限不可用，请先选择设备日历，或使用 .ics。"); return }
+        sync_device_calendar_ready(generation, id, handle)
+    })
+}
+fn sync_device_calendar_ready(generation, id, handle){
+    api_request({path: "/contracts/" + id + "/schedule"}, fn(r){
+        if !calendar_context(generation, id) { return }
+        if !r.is_ok || r.data.status != 200 || r.data.body.planned_on == "" { calendar_notice("请先由双方确认日期。未确认提议不会写入日历。"); return }
+        let schedule = r.data.body
+        if !(schedule.start_ms >= 0 && schedule.end_ms <= 4102444800000 && schedule.end_ms > schedule.start_ms) { calendar_notice("设备日历只支持 1970–2100 年范围，请使用 .ics。"); return }
+        let marker = "LIYU agreement #" + id
+        let event = {title: "礼遇约定：" + schedule.title, start_ms: schedule.start_ms, end_ms: schedule.end_ms, timezone: "UTC", all_day: true, notes: marker, location: ""}
+        let previous = nil; for k v in device_calendar_links { if k.to_string() == "" + id { previous = v } }
+        if previous != nil && previous.handle != handle { calendar_notice("此约定已关联其他日历，请先选择原日历，避免重复添加。"); return }
+        if previous != nil && previous.event_id != "" {
+            host.request("device_calendar.events.get", {handle: handle, event_id: previous.event_id}, fn(read){
+                if !calendar_context(generation, id) { return }
+                if !read.is_ok || read.data.notes != marker { calendar_notice("原事件无法安全读取，请在日历检查后再操作。"); return }
+                if read.data.title == event.title && read.data.start_ms == event.start_ms && read.data.end_ms == event.end_ms { verify_calendar_event(generation, id, handle, previous.event_id, event, schedule.planned_on); return }
+                if read.data.revision != previous.revision { calendar_notice("事件已在日历被修改，礼遇不会覆盖你的修改。"); return }
+                write_calendar_event(generation, id, handle, event, schedule.planned_on, read.data)
+            }); return
+        }
+        if previous != nil && previous.planned_on != schedule.planned_on { calendar_notice("上次写入结果未确定且日期已变化，请先在日历检查原日期，避免重复事件。"); return }
+        host.request("device_calendar.events.list", {handle: handle, start_ms: schedule.start_ms, end_ms: schedule.end_ms, limit: 200}, fn(list){
+            if !calendar_context(generation, id) { return }
+            if !list.is_ok || list.data.truncated { calendar_notice("未能完整检查已有事件，请缩小日历内容后重试。"); return }
+            let found = nil; let count = 0
+            for item in list.data.events { if item.notes == marker { found = item; count = count + 1 } }
+            if count > 1 { calendar_notice("发现多个同一约定事件，请先在日历整理，礼遇不会再创建。"); return }
+            if found != nil { verify_calendar_event(generation, id, handle, found.id, event, schedule.planned_on); return }
+            write_calendar_event(generation, id, handle, event, schedule.planned_on, nil)
+        })
+    })
+}
 fn open_calendar_export(){
     if contract_date_saved == "" || contract_date_loading || contract_busy_id >= 0 { notice = "请先由双方确认日期，再导出日历。"; refresh(); return }
     if demo_mode { notice = "本地演示只模拟双方确认；日历导出需要真实账号。"; refresh(); return }
@@ -570,7 +679,7 @@ fn ask_contract_date(){
 }
 fn clear_account_data(){
     auth_generation = auth_generation + 1
-    calendar_page = ""; ai_plan = nil; ai_plan_snapshot = ""; ai_plan_friend = -1; purchase_busy = false; purchase_pending = -1; purchase_settings = nil; contract_date_loading = false
+    calendar_page = ""; device_calendars = []; device_calendar_handle = ""; device_calendar_name = ""; device_calendar_busy = false; device_calendar_links = {}; ai_plan = nil; ai_plan_snapshot = ""; ai_plan_friend = -1; purchase_busy = false; purchase_pending = -1; purchase_settings = nil; purchase_request = nil; purchase_expected = -1; purchase_recipient_ids = []; contract_date_loading = false
     products = []; categories = [{id: "", name: "全部"}]; friends = []; friend_tags = []
     my_wishes = []; friend_wishes = []; inbox = []; outbox = []; contracts = []; contract_templates = []; reminders = []
     draft_recipient_ids = []; gift_replacing_product = false; contract_busy_id = -1
@@ -587,8 +696,8 @@ fn clear_account_data(){
     box_origin_tab = ""; wishes_origin_tab = ""; wish_detail_from_discover = false; command_origin_tab = ""; command_browse_origin_tab = ""; shop_origin_contact_id = -1
     contact_search = ""; tag_search = ""; tag_people_search = ""; tag_selected_id = -1; contact_detail_origin_stage = "browse"
 }
-fn auth_lost(message){ session_token = ""; fs.write("session.json", {token: ""}.to_json()); clear_account_data(); auth_state = "signed_out"; auth_message = message; refresh() }
-fn auth_ready(){ clear_account_data(); auth_state = "signed_in"; auth_message = ""; refresh(); load_all() }
+fn auth_lost(message){ connection = ""; clear_account_data(); auth_state = "signed_out"; auth_message = message; refresh() }
+fn auth_ready(){ clear_account_data(); if fs.exists("calendar-links.json") { device_calendar_links = fs.read("calendar-links.json").parse_json() }; auth_state = "signed_in"; auth_message = ""; refresh(); load_all() }
 fn enter_demo(){
     if account_busy { return }
     auth_flow_generation = auth_flow_generation + 1
@@ -605,15 +714,17 @@ fn leave_demo(){
     auth_state = "signed_out"; auth_message = "请登录真实账号，或重新进入本地演示。"; account_busy = false; refresh()
 }
 fn check_auth(){
-    flush_revocations()
     let generation = auth_generation
-    if session_token == "" { auth_lost("请登录或注册礼遇账号。"); return }
-    api_request({method: "GET", path: "/me"}, fn(r){
-        if generation != auth_generation { return }
+    host.request("auth.active", {}, fn(r){
+        if generation != auth_generation || demo_mode { return }
         if !r.is_ok { auth_state = "error"; auth_message = r.error; refresh(); return }
-        if r.data.status == 401 { auth_lost("登录已过期，请重新登录。"); return }
-        if r.data.status != 200 { auth_state = "error"; auth_message = "无法检查账号，请重试。"; refresh(); return }
-        auth_ready()
+        if r.data == nil { auth_lost("请通过宿主登录礼遇账号；旧版登录需要重新连接。"); return }
+        connection = r.data.handle
+        host.request("auth.backend.me", {connection: connection}, fn(identity){
+            if generation != auth_generation || demo_mode { return }
+            if !identity.is_ok { auth_lost(identity.error); return }
+            auth_ready()
+        })
     })
 }
 fn close_authorization(){
@@ -641,13 +752,7 @@ fn poll_authorization(generation){
         if data.state != "complete" { close_authorization(); auth_message = "授权已过期或已取消，请重新开始。"; notice = auth_message; refresh(); return }
         let purpose = flow.purpose
         close_authorization()
-        if purpose == "login" {
-            if data.token == nil || data.token == "" { auth_message = "授权结果无效，请重新登录。"; refresh(); return }
-            let previous = session_token
-            session_token = data.token; fs.write("session.json", {token: session_token}.to_json())
-            revoke_later(previous)
-            auth_ready()
-        } else { notice = if purpose == "email" {"邮箱已更新。"} else {"手机号已更新。"}; get("/me/profile", "profile"); get("/me", "me"); get("/gifts/inbox", "inbox"); refresh() }
+        if purpose == "login" { auth_message = "请使用宿主登录。"; refresh(); return } else { notice = if purpose == "email" {"邮箱已更新。"} else {"手机号已更新。"}; get("/me/profile", "profile"); get("/me", "me"); get("/gifts/inbox", "inbox"); refresh() }
     })
 }
 fn open_authorization_page(){
@@ -655,6 +760,7 @@ fn open_authorization_page(){
     if !ui.auth_reader.open(service_origin + authorization.browser_path) { auth_message = "授权网页打开失败，请重试。"; refresh() }
 }
 fn begin_authorization(purpose){
+    if purpose == "login" { sign_in(); return }
     if account_busy { return }; account_busy = true
     auth_message = "正在打开礼遇授权网页…"; notice = ""; refresh()
     auth_flow_generation = auth_flow_generation + 1
@@ -673,14 +779,26 @@ fn begin_authorization(purpose){
         start_timeout(305.0, || { if generation == auth_flow_generation && authorization != nil { cancel_authorization(); auth_message = "授权已过期，请重新开始。"; notice = auth_message; refresh() } })
     })
 }
-fn sign_in(){ begin_authorization("login") }
-fn switch_account(){ if demo_mode { leave_demo(); return }; begin_authorization("login") }
-fn logout(){
-    if demo_mode { leave_demo(); return }
+fn sign_in(){
     if account_busy { return }
-    let previous = session_token
+    account_busy = true; auth_message = "请在宿主窗口完成登录。"; refresh()
+    let generation = auth_generation
+    host.request("auth.connect", {provider: "backend", scopes: ["app.session"]}, fn(r){
+        if generation != auth_generation || demo_mode { return }
+        account_busy = false
+        if !r.is_ok { auth_message = r.error; notice = r.error; refresh(); return }
+        connection = r.data.handle; auth_ready()
+    })
+}
+fn switch_account(){ if demo_mode { leave_demo(); check_auth(); return }; sign_in() }
+fn logout(){
+    if demo_mode { leave_demo(); check_auth(); return }
+    if account_busy { return }
+    let previous = connection
     auth_lost("已退出礼遇账号。")
-    revoke_later(previous)
+    host.request("auth.disconnect", {connection: previous}, fn(r){
+        if !r.is_ok { auth_message = r.error; refresh() }
+    })
 }
 fn get(path, kind){
     if auth_state != "signed_in" { return }
@@ -2105,6 +2223,10 @@ View{width: Fill height: Fill flow: Down
                             } else {Primary{width: Fill text: "确认对方提出的日期" on_click: || decide_contract_date("confirm", false)}}
                         }
                         Secondary{width: Fill text: "重新读取日期" on_click: || {contract_date_loading = true; load_contract_date(contract_edit_id)}}
+                        Secondary{width: Fill text: if device_calendar_busy {"日历请求处理中…"} else {"选择设备日历"} on_click: || open_device_calendars()}
+                        for value in device_calendars { Secondary{width: Fill text: value.name + " · " + value.account_name on_click: || select_device_calendar(value)} }
+                        if device_calendar_handle != "" { Secondary{width: Fill text: "添加 / 更新到 " + device_calendar_name on_click: || sync_device_calendar()} }
+                        Label{width: Fill text: "只写入双方已确认日期；权限与写入需在宿主确认。" draw_text.color: muted draw_text.text_style.font_size: 12}
                         Secondary{width: Fill text: "导出到日历（.ics）" on_click: || open_calendar_export()}
                         Entry{empty_text: "日期表达，例如下周六" text: contract_date_request on_change: |v| {contract_date_request = v; contract_date_proposal = nil; ai_context = ai_context + 1; ai_busy = false; refresh()}}
                         Secondary{width: Fill text: if ai_busy {"AI 正在理解日期…"} else {"AI 帮我整理日期"} on_click: || ask_contract_date()}

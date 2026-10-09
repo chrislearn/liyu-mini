@@ -1,0 +1,48 @@
+{
+  "captured_on": "2026-10-09",
+  "platform": "Darwin arm64",
+  "app_version": "1.0.38",
+  "server_revision": "bdb841b754b218169b61114855a1b2aaee84e8b3",
+  "bundle_blake3": "22fb57477513b1cb29a1be8b4eca40ec859c7934c24fc8df1acd43153e4840ce",
+  "upstream_sources": {
+    "OctoSense": "d2194bdfd350ebbcd6f70a3dc4496f351bf27244",
+    "OctoSense-App-Hub": "18cd41d91b326db199fbed4129484a9ba1a8c63d",
+    "OctoScript-App-Design-Flow": "049bc6b4010aa3660bab4ad632857d6ed4612151",
+    "Octoscript": "53d1d397981efea355696f3cca1dd412f37b7264",
+    "octoscript-makepad": "33dea2f1f3ad3f1346a219aa8cf6e91b31361e23",
+    "makepad": "d955125e9e79083fee939bf5188630ae41823251"
+  },
+  "compatible_source_pins": {
+    "octoscript-makepad": "33dea2f1f3ad3f1346a219aa8cf6e91b31361e23",
+    "makepad": "32d6415fb7476345ad36ee4f98d6f844d1f07fd2",
+    "octoscript": "2e37d9e657a246f16718d9a475e167ccd2d5b5fa"
+  },
+  "host": {
+    "release": "desktop-v0.1.0-rc.2",
+    "release_commit": "4ccf8e068399b1da139771a9ed94cef05fa6ae60",
+    "binary_sha256": "5917555da411ec149309b249aeb5755512f78e29f0a0ca20b447ed998b9902ba",
+    "release_zip_sha256": "d1362a21f9ccb7d31561f54526ab257f5a31c7ab912d1f4e94efdd090c32a1f2",
+    "codesign_verification": "passed"
+  },
+  "tools": {
+    "hub": "e1bf8d419e0cebca0d614bd466630b6bcfe681b5a527cf86d418701991869a05",
+    "card-host": "322586147ad9b0425d857240086d6d205f0b3fbdc020c1607c426eae7467de66"
+  },
+  "checks": {
+    "upstream_harness_doctor": "passed",
+    "hub_gate": "passed unsigned development bundle",
+    "signed_isolated_install": "passed; ephemeral test keys in memory only",
+    "official_rc2_launch": "passed for current main.splash; screenshot in screenshots/native-host-login.png",
+    "official_rc2_login_review": "host-owned origin and secure-store explanation displayed; Cancel returns signed out",
+    "native_calendar_discovery": "events.create supported=true implemented=true on official RC2",
+    "native_calendar_account_boundary": "permission.status refused with account_unavailable before login",
+    "server_independent_verification": "41 Rust; 363 HTTP assertions plus code/refresh concurrency and two delivery-fallback suites; disposable DBs",
+    "splash_checks": "23 demo, 22 AI/purchase/date, 11 host transport, 14 calendar control-flow checks; explicit synthetic adapters for host transport/calendar"
+  },
+  "limitations": [
+    "No live deployed OAuth login, personal-calendar permission/write or real-model quality claim.",
+    "One RC2 startup exceeded its script time budget during parallel release compilation; a fresh idle run loaded the same source without errors.",
+    "Old source edits were preserved in archive worktrees and stashes. Source libraries use latest heads; compatible builds use upstream immutable pins.",
+    "Original OctoSense setup consumer scan encountered an unrelated stale nested worktree; clean latest isolated setup passed."
+  ]
+}

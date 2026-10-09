@@ -74,6 +74,8 @@ folder.mkdir(parents=True, exist_ok=True)
 (folder / 'main.splash').write_text(transport + '\n' + guards + '\n' + checks)
 manifest = json.loads((root / 'bundle/manifest.json').read_text())
 manifest.pop('integrity', None)
+for field in ('requires','backend','host_api','storage'): manifest.pop(field,None)
+manifest['capabilities']=['images','model','net','storage']
 (folder / 'manifest.json').write_text(json.dumps(manifest))
 harness = root.parent / 'OctoScript-App-Design-Flow/tools/octo'
 env = dict(os.environ)

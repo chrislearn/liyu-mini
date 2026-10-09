@@ -2,7 +2,7 @@
 
 礼遇是一种围绕熟人关系的社交电商形态：通过心愿单了解需求，用礼盒与解谜让送礼变得有趣，用纪念日提醒和附带约定延续交流。目标是让朋友、伴侣和家人更容易表达关心，增进人与人之间的关系。完整的使用场景、需求、验收标准与未来方向见[产品需求与价值](docs/product-requirements.md)。
 
-LIYU-MINI 是礼遇的 OctoScript / Splash 小程序，使用标准 HTTPS 直接连接 [liyu-server](https://github.com/chrislearn/liyu-server)，无需专用 `liyu` 宿主服务，也无需安装原生 LIYU。支持真实用户登录，以及无需服务器的本地演示。当前支付、物流和折现为测试流程，不产生真实扣款或提现。
+LIYU-MINI 是礼遇的 OctoScript / Splash 小程序，使用标准宿主后端连接访问 [liyu-server](https://github.com/chrislearn/liyu-server)，无需专用 `liyu` 宿主服务，也无需安装原生 LIYU。需要兼容 `backend-api-v1` 的宿主，支持真实用户登录，以及无需服务器的本地演示。当前支付、物流和折现为测试流程，不产生真实扣款或提现。
 
 ## 主要功能
 
@@ -11,23 +11,21 @@ LIYU-MINI 是礼遇的 OctoScript / Splash 小程序，使用标准 HTTPS 直接
 - **心愿单**：新建心愿单后逐件加入商品，最多 8 项，也可填写商品种类、预算等需求。发布前仅自己可见，发布时设置可见范围和有效期；发布后商品清单固定。重复加入同一商品不会增加重复项。
 - **熟人资料与提醒**：保存仅自己可见的昵称、联系方式、关系、生日、结婚日期和备注。生日及结婚纪念日在提前七天和当天产生站内提醒。
 - **AI 建议**：按预算、场合和熟人资料，通过设备配置的模型推荐目录内商品、购买注意事项和寄语；可将推荐采用为待确认的送礼草稿，未知商品和超预算推荐会被拒绝。也可分析适合赠送的商品，或根据可见线索推测送礼人。AI 无法读取真正答案，也不能替用户拆盒或下单；宿主未提供模型服务时会提示不可用。
-- **约定记录**：双方分别记录待兑现、已兑现状态。点击「附带的约定」进入状态页面，修改只影响当前账号的记录。旧版共享状态保留为历史数据。约定日期由一方提出、另一方确认后生效；改期和清除也需确认，等待期间保留原日期。可导出已确认日期为 .ics，手动导入 Apple、Google 或 Outlook 日历；目前没有自动同步或系统日历写入。
+- **约定记录**：双方分别记录待兑现、已兑现状态。点击「附带的约定」进入状态页面，修改只影响当前账号的记录。旧版共享状态保留为历史数据。约定日期由一方提出、另一方确认后生效；改期和清除也需确认，等待期间保留原日期。可导出已确认日期为 .ics，手动导入 Apple、Google 或 Outlook 日历；兼容宿主下可选择设备日历，经原生权限与写入确认添加/更新事件，并回读核验；改期需手动更新，不自动同步或删除。
 - **账号与地址**：支持修改显示名、验证邮箱或手机号，保存多个收货地址，设置默认地址，以及编辑和删除地址。「我」页面底部提供切换账号和退出登录。
 - **外观与布局**：支持深色、浅色主题并保存偏好。手机布局使用底部导航、双栏商品卡片；桌面布局包含左侧导航、中间内容区和右侧信息栏。具体对应关系见[界面实现说明](UI-PARITY.md)。
 
 ## 登录与数据
 
-密码和验证码在 **后端提供的授权网页**中输入，由标准 `WebReader` 展示。网页与 Splash 应用之间没有脚本桥。应用用独立密钥轮询授权状态，用户确认后领取一次性的应用会话；请求五分钟后过期，取消后不能继续授权。网页登录会话十分钟后过期，完成授权后立即撤销。
+账号密码和验证码在宿主拥有的后端登录 WebView 中输入。宿主使用 S256 PKCE 领取并保管访问/刷新令牌；应用仅持有不透明的连接句柄，通过声明的标准 `auth.backend.request` 执行业务请求。macOS 凭据由 Keychain 保管，不再写入 `session.json` 或 `revocations.json`；升级需要重新连接旧账号。业务写入由前台宿主审阅确认。
 
-凭据流转、有效期及存储限制见[网页登录与凭据说明](docs/authentication.md)。隔离存储不是系统钥匙串，当前标准接口未提供安全凭据保险库。
-
-应用把授权后的会话令牌保存在自己的隔离存储 `session.json`，并直接携带令牌请求业务接口。密码、验证码和网页登录令牌不会进入应用。重启后向服务端验证并恢复登录；切换账号成功后才替换原会话，取消切换会保留原账号。退出登录立即清除本地登录，撤销请求断网失败时保存到隔离存储并在下次启动或登录时重试。Caddy 不注入共享账号。
+凭据流转、轮换、旧版本迁移及平台限制见[宿主登录与凭据说明](docs/authentication.md)。账号数据和日历关联按 `storage.accounts` 隔离；退出、切换或连接失效时清除界面中的旧业务数据。
 
 邮箱和手机号修改也在后端网页完成，需验证当前账号并输入新联系方式的验证码。真实邮件、短信发送需要后端配置发送服务。运营者启用 LIYU_TEST_MODE=true 且发送桥地址或令牌任一缺失时，网页显示固定测试验证码 123456，仍需先获取验证码；这属于测试验证，不证明实际持有该联系方式。原有已验证身份和登录标识按服务端规则保留。熟人备注与资料属于当前账号，不会修改对方已验证的身份信息。
 
 正式后端及商品图片地址为 `https://liyu.taidge.com`。当前服务已部署到该域名；2026-10-09 核验 `/health` 返回 HTTP 200 和 `{"status":"ok"}`，该检查仅确认后端健康，不代表所有业务已验收。服务不可用时会明确报错，可手动选择本地演示。支付、物流和折现仍为测试业务，不产生真实扣款或提现；真实账号数据保存在服务端数据库中。真实账号模式只使用服务端数据；本地演示使用独立的虚构用户和数据。中文关键词输入可使用服务端返回的商品和熟人生成待确认内容，目前该页面由 Splash 实现。
 
-应用只声明标准 `images`、`model`、`net`、`storage` 能力。服务地址和网络允许列表均已配置为 `liyu.taidge.com`；不同时申请 localhost 或第三方 API 主机。详情见[能力差异说明](CAPABILITY-GAP.md)和[隐私政策](PRIVACY.md)。
+应用声明标准 `images`、`model`、`net`、`storage`、`auth`、`runtime`、`device_calendar` 能力；日历 API 为可选，保留 .ics 备用入口。服务地址和网络允许列表均已配置为 `liyu.taidge.com`；不同时申请 localhost 或第三方 API 主机。详情见[能力差异说明](CAPABILITY-GAP.md)和[隐私政策](PRIVACY.md)。
 
 ## 本地演示
 
@@ -84,53 +82,15 @@ python3 scripts/check-local-demo.py
 ./start-prod-services.sh
 ```
 
-只启动 LIYU-MINI 客户端，默认直连 `https://liyu.taidge.com`。无需 liyu-server 仓库、Docker、Caddy 或服务器环境变量。需要标准 OctoScript 运行环境；脚本默认使用同级 App Flow 的 tools/octo，也可通过 OCTO 指定工具路径。
-
-脚本在 build/prod-client 中生成独立的运行副本并配置正式域名，不改动本地开发用的 bundle。线上客户端会话保存在该目录的独立应用存储中；不会自动登录演示用户。默认调试端口 8146，可通过 LIYU_MINI_PORT 修改。服务端不可用时仍可启动客户端，页面显示错误，可手动选择本地演示。
+脚本使用兼容的原生 OctoSense 宿主打开已安装的小程序。账号凭据由宿主管理，card-host 不再用于真实账号登录。首次需按[原生开发步骤](docs/native-development.md)创建隔离测试安装；模型功能需在该宿主配置模型。当前线上服务是否已部署新版 OAuth 接口需运营者另行核验，本地改动不等于线上已升级。
 
 ## 本地运行
 
-发布包默认连接正式域名。本地联调先执行 `python3 scripts/configure-backend.py https://liyu.localhost:8443`，然后重新运行 `octo check`；不要把这个开发配置作为正式版本发布。只体验本地演示无需更改地址。
+官方 macOS desktop-v0.1.0-rc.2 提供宿主登录与设备日历接口。源码准入用 `tools/octo check bundle`，完整运行使用原生宿主及隔离测试安装。`python3 scripts/check-local-demo.py`、`check-ai-purchase.py`、`check-net.py` 和 `check-host-calendar.py` 使用 card-host 验证演示或显式合成适配器，不代表真实账号或个人日历写入。
 
-一键启动本地后端和 Caddy HTTPS 反代：
+本地后端与 Caddy 可用 `./start-local-services.sh` 启动。宿主后端协议要求同来源 HTTPS 443，本地地址为 `https://liyu.localhost`；首次需配置后端 `.env` 与数据库，并为开发证书建立系统信任。此脚本会使用配置的业务数据库，自动测试应使用独立数据库。后端服务不可用时显示错误，可主动进入本地演示。
 
-```sh
-./start-local-services.sh
-```
-
-可从任意目录用脚本绝对路径运行。后端固定监听 `127.0.0.1:8787`，反代为 `https://liyu.localhost:8443`，管理页面为 `/admin`。首次启动前需配置 `../liyu-server/.env` 并确保其中的 PostgreSQL 数据库可用；命令会增量编译后端，使用现有账号与数据库配置，不启用演示登录或额外开启测试验证码。已有健康的后端会复用；两项服务都就绪时重复执行直接返回。保持终端打开，`Ctrl+C` 只停止本次命令启动的进程。日志在 `build/local-services/`，CA 沿用 `build/local-caddy/data/pki/authorities/local/root.crt`。管理界面需预先在后端执行 `just build-admin`。
-
-如需分别启动后端与反代，可在一键脚本生成配置后执行以下命令。后端读取现有 `.env`；注册测试可显式设置 `LIYU_TEST_DELIVERY=true` 返回测试验证码，正常验证需要配置发送服务。标准网络请求和授权网页使用系统证书信任。本地开发需将 Caddy 根证书加入当前用户钥匙串：
-
-```sh
-security add-trusted-cert -r trustRoot -p ssl -k "$HOME/Library/Keychains/login.keychain-db" build/local-caddy/data/pki/authorities/local/root.crt
-```
-
-```sh
-cd ../liyu-server && LIYU_BIND=127.0.0.1:8787 target/debug/liyu-server
-# 在另一个终端中进入 liyu-mini 后执行：
-LIYU_CADDY_DATA="$PWD/build/local-caddy/data" caddy run --config build/local-services/Caddyfile --adapter caddyfile
-```
-
-随后使用标准 App-Hub 工具启动应用：
-
-```sh
-OCTO_HUB=../OctoSense-App-Hub/target/debug/hub \
-../OctoScript-App-Design-Flow/tools/octo check bundle
-OCTO_CARD_HOST=../OctoSense-App-Hub/target/debug/card-host \
-../OctoScript-App-Design-Flow/tools/octo run bundle --port 8141 --detach --app-data build/auth-app-data
-```
-
-
-打开 `card-host` 窗口，选择「登录或注册」，在授权网页输入自己的账号并确认。也可通过 `127.0.0.1:8141` 的 `/snap`、`/click` 和 `/g` 接口查看和操作应用。使用期间保持 Caddy 和后端运行。
-
-如需在 OctoSense 中打开本地安装的应用，使用支持上述标准能力的宿主程序，并执行：
-
-```sh
-./run-octosense-local.sh
-```
-
-该脚本使用 `build/` 下的本地签名目录和已安装应用，启动时打开 `hub:liyu-mini`。宿主远程操作端口默认为 `127.0.0.1:8399`。模型功能还需在宿主中完成模型配置。
+更换地址用 `python3 scripts/configure-backend.py https://liyu.localhost`，重新校验并生成独立测试安装；不要修改已证明的发布包。各平台限制见[凭据说明](docs/authentication.md)。
 
 ## 文件说明
 
@@ -158,7 +118,7 @@ python3 scripts/configure-backend.py https://liyu.example.com
 ../OctoScript-App-Design-Flow/tools/octo check bundle
 ```
 
-替换成自己的域名。脚本同时更新请求地址和网络允许列表，之后必须重新校验打包；GitHub 已证明的发布包不得修改；配置变化必须从可编辑源码生成新版本并重新发布。恢复本地联调使用 `https://liyu.localhost:8443`。本地演示始终无需后端。
+替换成自己的域名。脚本同时更新请求地址和网络允许列表，之后必须重新校验打包；GitHub 已证明的发布包不得修改；配置变化必须从可编辑源码生成新版本并重新发布。恢复本地联调使用 `https://liyu.localhost`。本地演示始终无需后端。
 
 `net` 是实际使用的标准能力：真实账号的授权状态轮询、商品、心愿单、礼盒、钱包等请求均通过 `net.http_request` 发往上述 HTTPS 地址，并携带当前用户的会话。网络失败明确提示错误，不切换为演示账号。调用依据和复现方法见[能力差异说明](CAPABILITY-GAP.md)。
 
@@ -173,3 +133,7 @@ python3 scripts/configure-backend.py https://liyu.example.com
 发布前更新 manifest 版本、测试可编辑的 bundle、运行 octo check 并提交；推送新的 `v<manifest.version>` 标签。官方工作流使用固定 App Hub 工具链完成 prepare、attest、attach、verify、pack，成功后创建 Release。三个平台的独立包 CI 继续校验源码包并提供开发 ZIP，不再抢建 Release。
 
 发布包需要支持 `publisher-github-v1` 的兼容 Store 宿主；旧版 card-host 只能验证和运行未封装的源码包。工作流成功不代表商店已收录，安装及准入需分别核验。正式域名的实际上线由后端运营者完成。
+
+新版宿主登录入口的实际捕获：
+
+![原生宿主登录确认](screenshots/native-host-login.png)

@@ -1,13 +1,75 @@
 {
+  "backend": {
+    "authorization_url": "https://liyu.taidge.com/oauth/authorize",
+    "client_id": "liyu-mini-host-v1",
+    "id": "liyu",
+    "logout_url": "https://liyu.taidge.com/oauth/logout",
+    "me_url": "https://liyu.taidge.com/oauth/me",
+    "operations": {
+      "liyu.contact_status": {
+        "method": "GET",
+        "path": "/api/v1/host/contact-status",
+        "query_keys": [
+          "path",
+          "poll_key"
+        ]
+      },
+      "liyu.delete": {
+        "method": "POST",
+        "path": "/api/v1/host/delete"
+      },
+      "liyu.patch": {
+        "method": "POST",
+        "path": "/api/v1/host/patch"
+      },
+      "liyu.post": {
+        "method": "POST",
+        "path": "/api/v1/host/post"
+      },
+      "liyu.put": {
+        "method": "POST",
+        "path": "/api/v1/host/put"
+      },
+      "liyu.read": {
+        "method": "GET",
+        "path": "/api/v1/host/read",
+        "query_keys": [
+          "path"
+        ]
+      }
+    },
+    "scopes": [
+      "app.session"
+    ],
+    "token_url": "https://liyu.taidge.com/oauth/token"
+  },
   "capabilities": [
     "images",
     "model",
     "net",
-    "storage"
+    "storage",
+    "auth",
+    "runtime",
+    "device_calendar"
   ],
+  "host_api": {
+    "optional": {
+      "device_calendar.calendars.list": 1,
+      "device_calendar.calendars.select": 1,
+      "device_calendar.events.create": 1,
+      "device_calendar.events.get": 1,
+      "device_calendar.events.list": 1,
+      "device_calendar.events.update": 1,
+      "device_calendar.permission.request": 1,
+      "device_calendar.permission.status": 1
+    },
+    "required": {
+      "auth.backend.request": 1
+    }
+  },
   "id": "liyu-mini",
   "integrity": {
-    "bundle_blake3": "345595e39de441f575b7d41760781b140a4c6f05bfd270100ab0444be4751781"
+    "bundle_blake3": "22fb57477513b1cb29a1be8b4eca40ec859c7934c24fc8df1acd43153e4840ce"
   },
   "name": "LIYU-MINI",
   "network": {
@@ -15,6 +77,13 @@
       "liyu.taidge.com"
     ]
   },
+  "requires": [
+    "backend-api-v1",
+    "host-api-v1"
+  ],
   "schema": 1,
-  "version": "1.0.37"
+  "storage": {
+    "accounts": true
+  },
+  "version": "1.0.38"
 }

@@ -22,7 +22,7 @@ Rules:
 
 - Ask only for capabilities a screen uses; declare every `https://` host in
   `network.hosts`; never `http://`.
-- Never collect a password, PIN or code; accounts use a server-owned authorization page in the standard WebReader. The app may retain the resulting revocable app session in its isolated storage.
+- Never collect a password, PIN or code. Login uses host-managed auth.connect and backend PKCE; only opaque handles may enter app memory. Never persist access/refresh tokens or bypass native write review. Contact verification uses the server-owned WebReader.
 - Screenshots are real captures you looked at. Never a dummy.
 - Restamp after every edit (`tools/octo check` does it). After signing, any
   edit needs a new stamp and signature.
@@ -41,5 +41,5 @@ Add this app's own requirements, data sources and tests below.
 ## Local demo
 
 - The explicitly selected 本地演示 mode is fully local: fictional account/data and bundled images, no backend or model requests. Never silently fall back to it in real-account mode.
-- Demo writes stay in memory, reset on re-entry/exit, and must preserve any real account session and revocation queue.
+- Demo writes stay in memory, reset on re-entry/exit, and must preserve the real host connection.
 - Keep exactly eight compact product illustrations and the complete bundle below 8,000,000 bytes. Run `python3 scripts/check-local-demo.py` when changing demo behavior or assets.

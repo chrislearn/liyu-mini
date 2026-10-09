@@ -63,7 +63,7 @@ View{width: Fill height: Fill flow: Down Label{text: "DEMO_CHECKS=" + checks + "
 '''
 folder=root/'build/demo-flow-check';folder.mkdir(parents=True,exist_ok=True)
 (folder/'main.splash').write_text(transport+checks)
-manifest=json.loads((root/'bundle/manifest.json').read_text());manifest.pop('integrity',None)
+manifest=json.loads((root/'bundle/manifest.json').read_text());manifest.pop('integrity',None);manifest.pop('requires',None);manifest.pop('backend',None);manifest.pop('host_api',None);manifest['capabilities']=['images','model','net','storage'];manifest.pop('storage',None)
 (folder/'manifest.json').write_text(json.dumps(manifest))
 harness=root.parent/'OctoScript-App-Design-Flow/tools/octo'
 env = dict(os.environ)

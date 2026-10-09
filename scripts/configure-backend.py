@@ -21,7 +21,7 @@ if (url.scheme != 'https' or not url.hostname or url.username or url.password
         or any(not re.fullmatch(r'[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?', label)
                for label in url.hostname.split('.'))
         or url.netloc.endswith(':')
-        or (port is not None and not 1 <= port <= 65535)):
+        or (port is not None and port != 443)):
     parser.error('必须提供不含账号、路径、查询或片段的 HTTPS 域名地址')
 origin = 'https://' + url.hostname.lower() + (f':{port}' if port else '')
 source_path = args.bundle / 'main.splash'
@@ -33,6 +33,8 @@ if count != 1:
     parser.error('服务地址声明缺失或重复，未修改文件')
 manifest = json.loads(manifest_path.read_text(encoding='utf-8'))
 manifest['network']['hosts'] = [url.hostname.lower()]
+for field, endpoint in [('authorization_url','authorize'),('token_url','token'),('me_url','me'),('logout_url','logout')]:
+    manifest['backend'][field] = origin + '/oauth/' + endpoint
 # Existing integrity is no longer valid after editing the source.
 manifest.pop('integrity', None)
 source_path.write_text(updated, encoding='utf-8')

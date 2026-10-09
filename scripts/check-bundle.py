@@ -24,13 +24,17 @@ assert all(p.suffix.lower() in allowed for p in files), 'Unexpected package cont
 manifest = json.loads((bundle / 'manifest.json').read_text(encoding='utf-8'))
 listing = json.loads((bundle / 'listing.json').read_text(encoding='utf-8'))
 source = (bundle / 'main.splash').read_text(encoding='utf-8')
-assert manifest['capabilities'] == ['images', 'model', 'net', 'storage']
+assert manifest['capabilities'] == ['images', 'model', 'net', 'storage', 'auth', 'runtime', 'device_calendar']
 assert 'host.request("liyu.' not in source and 'services.liyu' not in source
 origin = json.loads(re.search(r'^let service_origin = ("[^"]+")$', source, re.M)[1])
 from urllib.parse import urlsplit
 assert urlsplit(origin).scheme == 'https'
 assert manifest['network']['hosts'] == [urlsplit(origin).hostname]
-assert 'net.http_request' in source and '本地演示' in source
+assert 'host.request("auth.backend.request"' in source and '本地演示' in source
+assert 'session_token' not in source and 'revocations.push' not in source
+assert manifest['storage']['accounts'] and 'backend-api-v1' in manifest['requires']
+for field, endpoint in [('authorization_url','authorize'),('token_url','token'),('me_url','me'),('logout_url','logout')]:
+    assert manifest['backend'][field] == origin + '/oauth/' + endpoint
 assert not re.search(r'is_password\s*:\s*true|TextInputContentType\.(Password|NewPassword|OneTimeCode)', source)
 for name in [listing['icon'], *listing['screenshots']]:
     path = Path(name)

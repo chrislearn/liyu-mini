@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "subtitle": "让熟人之间的送礼更有趣",
-  "description": "礼遇通过心愿单了解需求，用礼盒与解谜让送礼更有趣，用纪念日提醒和个人约定记录延续交流。商品在拆盒前可见，送礼人隐藏；每个礼盒必须主动打开，谜题答对后才揭晓。支持无需服务器的本地演示，虚构数据和图片随包分发。真实账号通过 https://liyu.taidge.com 的标准 HTTPS 连接 liyu-server，并在后端网页授权登录，无需专用 LIYU 宿主。AI 仅辅助挑礼和分析可见线索，不知道真正答案，不替用户拆盒或下单。支付、物流及折现均为测试流程。需要标准 OctoScript 运行环境；真实账号模式另需 HTTPS 后端及验证码发送服务。",
+  "description": "礼遇通过心愿单了解需求，用礼盒与解谜让送礼更有趣，用双方约定日期与各自兑现记录延续交流。商品在拆盒前可见，送礼人隐藏；每个礼盒需主动打开。真实账号使用兼容 OctoSense 宿主管理的 PKCE 登录与后端操作，凭据由宿主安全存储保管。双方确认日期后，可选择设备日历，经原生确认添加或更新事件并回读核验；保留 .ics 导出。AI 按预算推荐目录内商品、购买注意事项和寄语，仅填入待确认草稿，不拆盒或下单。本地演示使用包内虚构数据和图片。支付、物流及折现均为测试流程。需兼容 backend-api-v1 的宿主和新版 HTTPS 后端；已验证 macOS 官方 desktop-v0.1.0-rc.2 加载与登录审阅入口，实际日历写入需用户授权。",
   "category": "lifestyle",
   "keywords": [
     "礼物",
@@ -11,6 +11,7 @@
     "指令演示"
   ],
   "screenshots": [
+    "screenshots/17-host-auth.png",
     "screenshots/10-desktop.png",
     "screenshots/15-contacts.png",
     "screenshots/13-tags.png",
@@ -27,7 +28,7 @@
     "support": "https://github.com/chrislearn/liyu-mini/issues",
     "privacy_policy_url": "https://github.com/chrislearn/liyu-mini/blob/main/PRIVACY.md"
   },
-  "release_notes": "新增双方确认约定日期与已确认日期的 .ics 手动导出；AI 按预算与场合推荐目录内商品、购买注意事项和寄语，可采用为待确认草稿；下单核验确认价格、幂等请求及礼盒配置读回。支付仍为测试流程。",
+  "release_notes": "使用最新上游标准 auth 后端协议：宿主管理 PKCE 登录及凭据，小程序仅持有账号句柄；新增可选 device_calendar 设备日历选择、已确认约定事件添加/更新及读回，保留 .ics 导出。修复账号切换时旧购买请求残留，保留目录 AI 推荐与人工核对。支付仍为测试流程。",
   "age_rating": "all",
   "license": "Apache-2.0"
 }

@@ -1,16 +1,7 @@
-# From LIYU-MINI's local card to a real AppCard flow
+# AI 与宿主集成
 
-The current command field lives inside LIYU-MINI. It uses literal keyword matching, not a model. The draft card is a Splash view in the app, not a system-generated AppCard card. The AppCard module in OctoSense can route requests to native modules, while the published contained-app agent manifest is not yet loaded by the shell. A third-party app therefore cannot currently register product/contact/draft tools that AppCard will call end to end.
+当前小程序使用标准 model.complete 推荐目录内商品、购买注意事项和寄语，按预算及商品 ID 校验结果。采用推荐只填入待确认草稿，报价、下单和测试支付继续由用户核对，原生后端写入必须经宿主审阅。猜礼只发送可见线索，不发送隐藏身份或答案。
 
-An actual integration needs an AppCard-to-contained-app tool bridge and a narrow contract. A possible contract is:
+命令输入仍是本地关键词匹配；草稿卡仍是应用自身 Splash 界面。最新上游已提供 contained-app agent 与 script-tools-v1/app_tools.dispatch 支持，不能再据旧版断言宿主缺少桥接。当前 LIYU-MINI 未声明这些 agent/tools，因此尚未把商品、熟人、草稿暴露给系统助手。
 
-| Tool | Input | Output | Boundary |
-| --- | --- | --- | --- |
-| `liyu_mini.search_products` | query, category | public product IDs, names, variants, price source and availability | Read-only; never expose private user data. |
-| `liyu_mini.find_contact_candidates` | name fragment | only the user's consenting local matching contact labels and opaque IDs | Scoped to this app, with explicit contact access/consent; do not export the address book to the model. |
-| `liyu_mini.prepare_wishlist_draft` | product ID, suggested title | short-lived draft handle / app route | Does not create a purchase or persist until user confirms inside the app. |
-| `liyu_mini.prepare_gift_draft` | recipient ID, product/variant ID, suggested greeting | short-lived draft handle / app route | Opens the app's own review screen; never sends, pays, or reveals an answer. |
-
-The AppCard orchestrator should ask for missing recipient or variant and render a short-lived review card. Selection should carry opaque IDs and explicit source freshness, not a guessed product name or invented current price. Tapping the card opens LIYU-MINI at the draft handle. The app itself shows recipient, exact variant, price/availability source, reveal mode, question, and greeting, then requires a final user action. Reveal answers stay inside the app and are not returned to AppCard or a model. The backend browser authorization flow now provides the app account/session; a real purchase still needs production inventory, payment, and delivery.
-
-Until that bridge exists, the local parser and card are a UX prototype. `model.complete` and contained-app agent manifests do not currently provide an on-device AppCard integration. The current local build uses standard HTTPS for account-bound API requests and images, with browser authorization through WebReader. The 8 MiB bundle limit can be met by bundling compact core thumbnails and loading larger photos from a trusted HTTPS image origin on demand, with offline placeholders and an appropriate privacy description.
+后续工具接入应限制为目录查询和待确认草稿，不直接发送礼盒、支付或揭示答案；联系人查询只返回当前账号允许的候选。现有 AI 推荐已可在配置了模型的兼容宿主中使用。真实模型质量需设备实际模型验证，自动测试只核验目录、预算、陈旧结果和用户确认边界。

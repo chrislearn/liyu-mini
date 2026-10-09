@@ -34,14 +34,14 @@ if curl --silent --fail --max-time 2 http://127.0.0.1:8787/health >/dev/null; th
     echo "Using the existing backend on 127.0.0.1:8787."
 fi
 ca_file="$LIYU_CADDY_DATA/pki/authorities/local/root.crt"
-if [[ "$backend_ready" == true ]] && curl --silent --fail --max-time 2 --cacert "$ca_file" https://liyu.localhost:8443/health >/dev/null; then
-    echo "Backend and HTTPS proxy are already ready: https://liyu.localhost:8443"
+if [[ "$backend_ready" == true ]] && curl --silent --fail --max-time 2 --cacert "$ca_file" https://liyu.localhost/health >/dev/null; then
+    echo "Backend and HTTPS proxy are already ready: https://liyu.localhost"
     exit 0
 fi
 export LIYU_BACKEND_READY="$backend_ready"
 python3 - <<'PY'
 import os, socket
-ports = (8443,) if os.environ['LIYU_BACKEND_READY'] == 'true' else (8787, 8443)
+ports = (443,) if os.environ['LIYU_BACKEND_READY'] == 'true' else (8787, 443)
 for port in ports:
     with socket.socket() as sock:
         try:
@@ -58,7 +58,7 @@ cat > "$runtime_dir/Caddyfile" <<'CADDY'
     skip_install_trust
     storage file_system {$LIYU_CADDY_DATA}
 }
-https://liyu.local:8443, https://liyu.localhost:8443 {
+https://liyu.local, https://liyu.localhost {
     bind 127.0.0.1
     tls internal
     reverse_proxy 127.0.0.1:8787
@@ -90,11 +90,11 @@ if [[ -n "$backend_pid" ]]; then
 fi
 caddy run --config "$runtime_dir/Caddyfile" --adapter caddyfile > "$runtime_dir/caddy.log" 2>&1 &
 proxy_pid=$!
-wait_ready https://liyu.localhost:8443/health "$proxy_pid" "$runtime_dir/caddy.log" --cacert "$ca_file"
+wait_ready https://liyu.localhost/health "$proxy_pid" "$runtime_dir/caddy.log" --cacert "$ca_file"
 
 echo "LIYU backend: http://127.0.0.1:8787"
-echo "HTTPS proxy:  https://liyu.localhost:8443"
-echo "Admin:        https://liyu.localhost:8443/admin"
+echo "HTTPS proxy:  https://liyu.localhost"
+echo "Admin:        https://liyu.localhost/admin"
 echo "Logs:         $runtime_dir"
 echo "Host CA:      $ca_file"
 echo "Ready. Keep this terminal open; Ctrl+C stops services started by this command."
