@@ -69,6 +69,18 @@ python3 scripts/check-local-demo.py
 | --- | --- |
 | <img src="screenshots/contacts.png" alt="熟人列表：搜索、关系和标签入口" width="300"> | <img src="screenshots/wishlist-audience.png" alt="心愿单可见范围：按熟人或标签选择" width="300"> |
 
+## 启动生产后端
+
+将两个仓库放在同级目录，在 liyu-server 中复制 `deploy/production.env.example` 为 `deploy/production.env` 并填写配置，然后执行：
+
+```sh
+./start-prod-services.sh
+```
+
+脚本可从任意目录调用，会校验生产 Compose 配置、拉取镜像，再后台启动数据库和后端，最多等待 120 秒通过健康检查。使用 `compose.deploy.yaml`，HTTPS 由你已有的 Caddy 提供；默认反代目标为 `127.0.0.1:8787`。退出脚本不会停止容器。镜像版本必须已发布，配置或拉取失败会停止执行。
+
+后端仓库不在同级目录时使用 `LIYU_SERVER_DIR=/你的路径/liyu-server ./start-prod-services.sh`。可通过 `LIYU_PROD_ENV_FILE` 指定其他环境文件；相对路径以 liyu-server 目录为基准。
+
 ## 本地运行
 
 发布包默认连接正式域名。本地联调先执行 `python3 scripts/configure-backend.py https://liyu.localhost:8443`，然后重新运行 `octo check`；不要把这个开发配置作为正式版本发布。只体验本地演示无需更改地址。
