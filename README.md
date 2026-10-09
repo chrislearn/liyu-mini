@@ -137,3 +137,5 @@ python3 scripts/configure-backend.py https://liyu.example.com
 新版宿主登录入口的实际捕获：
 
 ![原生宿主登录确认](screenshots/native-host-login.png)
+
+AI 挑礼入口：挑礼 → AI 帮我挑礼 → 选择熟人 → 填预算与场景 → 预览 → 确认发送。默认不发送关系、日期、熟人编号和备注；预览中可选择加入关系或备注。返回取消不会调用模型。推荐为独立备选商品，预算按单件校验。

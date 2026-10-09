@@ -77,7 +77,7 @@ manifest.pop('integrity', None)
 for field in ('requires','backend','host_api','storage'): manifest.pop(field,None)
 manifest['capabilities']=['images','model','net','storage']
 (folder / 'manifest.json').write_text(json.dumps(manifest))
-harness = root.parent / 'OctoScript-App-Design-Flow/tools/octo'
+harness = Path(os.environ.get('OCTO', str(root.parent / 'OctoScript-App-Design-Flow/tools/octo')))
 env = dict(os.environ)
 port = '8144'
 subprocess.run([str(harness), 'run', str(folder), '--port', port, '--detach', '--app-data', str(root / 'build/ai-purchase-check-data')], env=env, check=True, capture_output=True)

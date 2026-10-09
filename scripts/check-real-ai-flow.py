@@ -10,7 +10,7 @@ s=(root/'bundle/main.splash').read_text()
 def function(name):
  start=s.index('fn '+name+'(');end=s.index('\nfn ',start+1)
  return s[start:end].replace('host.request(', 'model_adapter(')
-names=['budget_cents','gift_ideas_input','valid_gift_plan','gift_ai_error','ask_gift_ideas','generate_gift_ideas']
+names=['budget_cents','gift_ideas_input','gift_model_input','review_gift_ideas','cancel_gift_review','confirm_gift_review','valid_gift_plan','gift_ai_error','ask_gift_ideas','generate_gift_ideas']
 seed=json.loads(json.loads(s.split('fn demo_seed(){ return ',1)[1].split('.parse_json()',1)[0].strip()))
 capture_path=os.environ.get('LIYU_AI_SERVER_CAPTURE')
 capture=json.loads(Path(capture_path).read_text()) if capture_path else {'friends':{'status':200,'body':seed['friends']},'catalog':{'status':200,'body':{'items':seed['products']}}}
@@ -24,6 +24,10 @@ let stage="contact_detail"
 let auth_state="signed_in"
 let auth_generation=1
 let ai_context=0
+let ai_share_relationship=false
+let ai_share_note=false
+let ai_review_generation=-1
+let ai_review_snapshot=""
 let ai_budget="100"
 let ai_occasion="生日，喜欢咖啡"
 let demo_mode=false
@@ -66,9 +70,14 @@ fn check(value,label){checks=checks+1;if !value {failures=failures+label+";"}}
 friends[0].note="local stale"
 products=[]
 ask_gift_ideas()
-check(backend_calls==2 && model_calls==1,"backend reads then model")
-check(sent.input.recipient_id==contact_id,"selected server recipient")
-check(sent.input.birthday==server.friends.body[0].birthday && sent.input.note==server.friends.body[0].note,"server details forwarded")
+check(backend_calls==2 && model_calls==0 && stage=="ai_review","fresh data preview before inference")
+check(gift_ideas_input().note==server.friends.body[0].note,"preview uses refreshed server details")
+let default_payload=gift_model_input(gift_ideas_input()).to_json()
+for field in ["recipient_id","birthday","wedding_date","relationship","note","phone","email","display_name"] {check(default_payload.search("\""+field+"\":")<0,"default excludes "+field)}
+cancel_gift_review();check(model_calls==0 && stage=="contact_detail","cancel zero inference")
+ask_gift_ideas();confirm_gift_review()
+check(model_calls==1 && ai_plan_friend==contact_id,"local recipient binding retained")
+check(sent.input.to_json()==default_payload,"exact preview payload sent")
 check(sent.input.budget_cents==10000 && sent.input.occasion==ai_occasion,"user preferences forwarded")
 check(sent.input.products.len()>0 && sent.input.products.len()<=50,"bounded server catalog")
 check(sent.input.to_json().search("\"phone\":")<0 && sent.input.to_json().search("\"email\":")<0 && sent.input.to_json().search("\"display_name\":")<0,"no contact fields")
@@ -77,13 +86,26 @@ check(ai_plan!=nil && ai_text=="AI 挑礼方案 · 尚未下单","output accepte
 check(sent.class=="fast" && sent.schema.required[0]=="recommendations","host contract")
 fail_path="/friends";ask_gift_ideas();check(model_calls==1 && ai_plan==nil && !ai_busy,"friends failure no inference")
 fail_path="/catalog?limit=50";ask_gift_ideas();check(model_calls==1 && !ai_busy,"catalog failure no inference")
-fail_path="";model_error="no_provider: No usable provider";ask_gift_ideas();check(ai_text.search("AI providers")>=0 && ai_plan==nil,"missing provider actionable")
-model_error="provider: network failed";ask_gift_ideas();check(ai_text.search("密钥")>=0 && ai_plan==nil,"provider error actionable")
-model_error="";malformed=true;ask_gift_ideas();check(ai_plan==nil,"unknown product refused")
-malformed=false;delayed=true;ask_gift_ideas();let calls=model_calls;ask_gift_ideas();check(model_calls==calls,"duplicate click no inference")
+fail_path="";model_error="no_provider: No usable provider";ask_gift_ideas();confirm_gift_review();check(ai_text.search("AI providers")>=0 && ai_plan==nil,"missing provider actionable")
+model_error="provider: network failed";ask_gift_ideas();confirm_gift_review();check(ai_text.search("密钥")>=0 && ai_plan==nil,"provider error actionable")
+model_error="";malformed=true;ask_gift_ideas();confirm_gift_review();check(ai_plan==nil,"unknown product refused")
+malformed=false;delayed=true;ask_gift_ideas();confirm_gift_review();let calls=model_calls;ask_gift_ideas();check(model_calls==calls,"duplicate click no inference")
 ai_context=ai_context+1;ai_busy=false;pending({is_ok:true,data:{output:{recommendations:[]}}});check(ai_plan==nil,"stale callback ignored")
-delayed=false;changed=true;ask_gift_ideas();check(ai_plan==nil,"account change ignored");changed=false;ai_busy=false
-let before=model_calls;demo_mode=true;ask_gift_ideas();check(model_calls==before && ai_text.search("非实时 AI")>=0,"demo no model request")
+delayed=false;changed=true;ask_gift_ideas();confirm_gift_review();check(ai_plan==nil,"account change ignored");changed=false;ai_busy=false
+let before=model_calls;demo_mode=true;ask_gift_ideas();confirm_gift_review();check(model_calls==before && ai_text.search("非实时 AI")>=0,"demo no model request")
+demo_mode=false;ai_busy=false;stage="contact_detail";ask_gift_ideas()
+ai_share_relationship=true;ai_share_note=true
+let optin=gift_model_input(gift_ideas_input())
+let optin_before=model_calls;confirm_gift_review()
+check(sent.input.to_json()==optin.to_json() && model_calls==optin_before+1,"explicit optional fields match preview")
+check(sent.input.relationship==server.friends.body[0].relationship && sent.input.note==server.friends.body[0].note,"optional server fields")
+check(sent.input.to_json().search("\"recipient_id\":")<0 && sent.input.to_json().search("\"birthday\":")<0,"optin still excludes id and dates")
+ask_gift_ideas();let stale_before=model_calls;ai_occasion="条件已变";confirm_gift_review()
+check(model_calls==stale_before && stage=="contact_detail","stale preview refuses sending")
+ask_gift_ideas();auth_generation=auth_generation+1;confirm_gift_review()
+check(model_calls==stale_before,"account generation change refuses confirmation")
+ask_gift_ideas();auth_state="signed_out";confirm_gift_review()
+check(model_calls==stale_before,"expired auth refuses preview confirmation")
 check(gift_ai_error("rate: limited").search("频繁")>=0 && gift_ai_error("budget: spent").search("额度")>=0,"quota errors")
 View{width: Fill height: Fill Label{text:"REAL_AI_FLOW_CHECKS="+checks+";FAILURES="+failures}}
 '''

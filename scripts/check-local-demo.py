@@ -65,7 +65,7 @@ folder=root/'build/demo-flow-check';folder.mkdir(parents=True,exist_ok=True)
 (folder/'main.splash').write_text(transport+checks)
 manifest=json.loads((root/'bundle/manifest.json').read_text());manifest.pop('integrity',None);manifest.pop('requires',None);manifest.pop('backend',None);manifest.pop('host_api',None);manifest['capabilities']=['images','model','net','storage'];manifest.pop('storage',None)
 (folder/'manifest.json').write_text(json.dumps(manifest))
-harness=root.parent/'OctoScript-App-Design-Flow/tools/octo'
+harness=pathlib.Path(os.environ.get('OCTO',str(root.parent/'OctoScript-App-Design-Flow/tools/octo')))
 env = dict(os.environ)
 # Respect configured runtime paths; otherwise let the harness discover releases.
 for key, binary in [('OCTO_HUB', 'hub'), ('OCTO_CARD_HOST', 'card-host')]:
