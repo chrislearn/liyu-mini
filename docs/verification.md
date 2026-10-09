@@ -1,6 +1,6 @@
 ## 1.0.36 发布更新（2026-10-09）
 
-正式后端配置为 `https://liyu.taidge.com`，唯一允许主机为 `liyu.taidge.com`。检查源码 bundle 使用先前锁定的标准运行器，关卡通过且本地演示 23 项检查通过，8 张商品图，源码包仍低于 8 MB。公网 `/health` 检查当前返回 523，运营者尚需部署后端；此版本没有把公网注册/登录标记为已验证。
+正式后端配置为 `https://liyu.taidge.com`，唯一允许主机为 `liyu.taidge.com`。检查源码 bundle 使用先前锁定的标准运行器，关卡通过且本地演示 23 项检查通过，8 张商品图，源码包仍低于 8 MB。首次发布核查时公网 `/health` 返回 523；随后运营者完成部署，2026-10-09 再次核查返回 HTTP 200 和 status=ok。该补充只验证健康接口，不把完整公网注册/登录流程标记为已验证。
 
 发布工作流由 App Flow `049bc6b4010aa3660bab4ad632857d6ed4612151` 的 `tools/octo publish-github` 生成，发布工具链固定 App Hub `655114c4943cd2490daaefa2173e7b5aaa20669f`。这与下面记录的源码运行器基线是两套不同用途的版本。工作流通过后下载 Release 中的 `app.bundle.pack.json`；安装封装包需要支持 publisher-github-v1 的宿主。未完成兼容 Store 的本应用安装核验前，不声明已经入库或完整商店安装验证。
 
