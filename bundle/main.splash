@@ -1589,7 +1589,7 @@ View{width: Fill height: Fill flow: Down
     }
     View{width: Fill height: Fill flow: Down
     View{width: Fill height: 58 flow: Right align: Align{x: 0.5 y: 0.5} padding: Inset{left: 12 right: 12} draw_bg.color: bar
-        View{width: if desktop_mode {140} else {54} height: Fill align: Align{x: 0.0 y: 0.5}
+        View{width: if desktop_mode {140} else {if tab == "discover" && stage == "browse" && shop_side == "wish" {96} else {54}} height: Fill align: Align{x: 0.0 y: 0.5}
             if stage != "browse" || (tab == "discover" && (shop_origin_contact_id >= 0 || wish_shop_id >= 0 || gift_replacing_product)) || (tab == "box" && box_origin_tab != "") || (tab == "command" && command_browse_origin_tab != "") {
                 BackButton{on_click: || back()}
             }
@@ -1641,7 +1641,7 @@ View{width: Fill height: Fill flow: Down
             if tab == "command" && stage == "recipient" { Label{text: "选择熟人" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 17}} }
             if tab == "command" && stage == "checkout" { Label{text: "确认订单" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 17}} }
         }
-        View{width: if desktop_mode {140} else {54} height: Fill flow: Right align: Align{x: 1.0 y: 0.5} spacing: 4
+        View{width: if desktop_mode {140} else {if tab == "discover" && stage == "browse" && shop_side == "wish" {96} else {54}} height: Fill flow: Right align: Align{x: 1.0 y: 0.5} spacing: 4
             if tab == "discover" && stage == "browse" && shop_side == "wish" { Link{height: 34 text: "新建心愿单" draw_text.text_style.font_size: 12 on_click: || begin("wish", -1)} }
             if tab == "box" && stage == "browse" { Link{height: 34 text: "挑礼" draw_text.text_style.font_size: 12 on_click: || begin("gift", -1)} }
             if tab == "wishes" && stage == "browse" { Link{height: 34 text: "＋ 新建" draw_text.text_style.font_size: 12 on_click: || begin("wish", -1)} }
