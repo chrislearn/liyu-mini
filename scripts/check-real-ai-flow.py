@@ -31,6 +31,7 @@ let failure_path=""
 let model_error=""
 let delayed=false
 let pending=nil
+let timeouts=[]
 let changed=false
 let source_friend=nil
 let planner=nil
@@ -42,7 +43,7 @@ let coffee=seed.products[0]
 let options={version:1,kinds:["咖啡","奶茶","电影票"],tool:{name:"catalog_search"}}
 let candidate={product_id:coffee.id,reason:"符合硬条件",buying_tip:"核对有效期",message:"祝你开心"}
 fn refresh(){}
-fn start_timeout(seconds,done){}
+fn start_timeout(seconds,done){timeouts.push({seconds:seconds,done:done})}
 fn begin(kind,index){draft_calls=draft_calls+1}
 fn api_request(args,done){
  backend_paths.push(args.path)
@@ -66,7 +67,7 @@ fn page(items,eligible,total,next,revision){return {items:items,eligible_total:e
 fn reset(){
  ai_context=ai_context+1;auth_generation=1;auth_state="signed_in";stage="contact_detail";demo_mode=false;contact_index=0;friends=seed.friends.to_json().parse_json();products=seed.products.to_json().parse_json();source_friend=friends[0];contact_id=friends[0].id
  ai_budget="35";ai_occasion="只要咖啡，不要奶茶";ai_share_relationship=false;ai_share_note=false;ai_busy=false;ai_plan=nil;ai_constraints=nil;ai_search_options=nil;ai_query_history=[];ai_constraint_plan=nil;ai_text="";notice="";ai_locked_json="";ai_query_snapshot="";ai_plan_snapshot="";ai_plan_friend=-1
- query_calls=0;model_calls=0;draft_calls=0;backend_paths=[];sent=[];failure_path="";model_error="";delayed=false;changed=false;api_index=0;step_index=0
+ timeouts=[];query_calls=0;model_calls=0;draft_calls=0;backend_paths=[];sent=[];failure_path="";model_error="";delayed=false;changed=false;api_index=0;step_index=0
  planner={allowed_kinds:["咖啡"],excluded_kinds:["奶茶"],delivery:"any",summary:"只要咖啡，排除奶茶",unverified_requirements:[]}
  steps=[search_step("",-1),recommend()];pages=[page([coffee],1,1,nil,"r1")]
 }
@@ -98,6 +99,12 @@ reset();planner.unverified_requirements=["必须无糖，目录无成分信息"]
 reset();planner.allowed_kinds=["编造种类"];parse();check(ai_constraint_plan==nil && query_calls==0,"unknown kind refused")
 reset();planner.excluded_kinds=["咖啡"];parse();check(ai_constraint_plan==nil,"contradictory constraints refused")
 reset();planner.allowed_kinds=["咖啡","咖啡"];parse();check(ai_constraint_plan==nil,"duplicate kinds refused")
+// Completed requests cannot time out a later query or adoption operation.
+reset();delayed=true;parse();let planner_done=pending;planner_done({is_ok:true,data:{output:planner}});let current_context=ai_context;timeouts[0].done();check(ai_busy && ai_context==current_context,"completed planner timeout cannot cancel active query")
+let query_done=pending;query_done({is_ok:true,data:{output:search_step("",-1)}});timeouts[1].done();check(ai_busy && ai_context==current_context,"completed query timeout cannot cancel next round")
+pending({is_ok:true,data:{output:recommend()}});ai_busy=true;timeouts[2].done();check(ai_plan!=nil && ai_busy,"completed model timeout cannot cancel later adoption")
+reset();delayed=true;parse();let late_planner=pending;timeouts[0].done();late_planner({is_ok:true,data:{output:planner}});check(ai_plan==nil && query_calls==0 && !ai_busy && ai_text.search("超时")>=0,"late planner response after timeout ignored")
+reset();delayed=true;parse();pending({is_ok:true,data:{output:planner}});let late_step=pending;timeouts[1].done();late_step({is_ok:true,data:{output:search_step("",-1)}});check(ai_plan==nil && query_calls==0 && !ai_busy,"late query response after timeout ignored")
 reset();let broad=page([coffee],1,1,nil,"r1");broad.applied={max_price_cents:0,allowed_kinds:[],excluded_kinds:[],delivery:"any"};steps=[search_step("",-1),search_step("",-1),recommend()];pages=[page([],0,0,nil,"r1"),broad];run();check(ai_plan!=nil && query_calls==2 && ai_exact_zero && ai_plan.match_quality=="alternative" && ai_text.search("没有找到完全符合")>=0,"full zero starts separately labelled alternative query")
 check(sent[2].input.history.len()==0 && sent[2].input.eligible_total==-1 && sent[2].input.original_scope_empty,"alternative model sees only current-scope history")
 check(ai_original_constraints.max_price_cents==3500 && ai_constraints.max_price_cents==0,"original conditions preserved when searching alternatives")
