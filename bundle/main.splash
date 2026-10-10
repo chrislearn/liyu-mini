@@ -584,12 +584,29 @@ fn select_device_calendar(value){
     })
 }
 fn persist_calendar_links(){ fs.write("calendar-links.json", device_calendar_links.to_json()) }
+fn calendar_event_matches(value, event){
+    return value.title == event.title && value.start_ms == event.start_ms && value.end_ms == event.end_ms && value.notes == event.notes && value.all_day && (value.timezone == "UTC" || value.timezone == "GMT") && value.location == event.location && !value.recurring && !value.has_attendees
+}
+fn recover_calendar_event(generation, id, handle, event, schedule, previous){
+    // A lost identifier or reselected handle never authorizes another creation.
+    host.request("device_calendar.events.list", {handle: handle, start_ms: previous.start_ms, end_ms: previous.end_ms, limit: 200}, fn(list){
+        if !calendar_context(generation, id) { return }
+        if !list.is_ok { calendar_notice("原事件查找失败：" + list.error + "。请重新选择原日历后重试；不会创建新事件。"); return }
+        if list.data.truncated { calendar_notice("原日期的日历结果不完整，无法安全恢复；不会创建新事件。"); return }
+        let found = nil; let count = 0
+        for item in list.data.events { if item.notes == event.notes { found = item; count = count + 1 } }
+        if count != 1 { calendar_notice(if count == 0 {"原日历及原日期未找到约定事件，请在系统日历检查；不会重新创建。"} else {"发现多个同一约定事件，请在系统日历整理后重试。"}); return }
+        if !calendar_event_matches(found, event) { calendar_notice("找到原事件，但日期或内容与当前约定不同。请在系统日历核对；不会覆盖修改或创建新事件。"); return }
+        verify_calendar_event(generation, id, handle, found.id, event, schedule.planned_on)
+    })
+}
 fn verify_calendar_event(generation, id, handle, event_id, event, planned_on){
     host.request("device_calendar.events.get", {handle: handle, event_id: event_id}, fn(read){
         if !calendar_context(generation, id) { return }
-        if !read.is_ok || read.data.title != event.title || read.data.start_ms != event.start_ms || read.data.end_ms != event.end_ms || read.data.notes != event.notes || !read.data.all_day || read.data.timezone != "UTC" {
-            calendar_notice("写入结果尚未核验，请重新读取后再尝试；不会自动创建第二个事件。"); return
+        if !read.is_ok {
+            calendar_notice("写入结果尚未核验：" + read.error + "。请重新选择原日历并重试；不会自动创建第二个事件。"); return
         }
+        if !calendar_event_matches(read.data, event) { calendar_notice("事件内容与约定不一致，未完成核验；不会覆盖外部修改或自动创建第二个事件。"); return }
         device_calendar_links["" + id] = {handle: handle, event_id: event_id, revision: read.data.revision, planned_on: planned_on, start_ms: event.start_ms, end_ms: event.end_ms, pending: false}
         persist_calendar_links()
         api_request({path: "/contracts/" + id + "/schedule"}, fn(current){
@@ -635,11 +652,15 @@ fn sync_device_calendar_ready(generation, id, handle){
         let marker = "LIYU agreement #" + id
         let event = {title: "礼遇约定：" + schedule.title, start_ms: schedule.start_ms, end_ms: schedule.end_ms, timezone: "UTC", all_day: true, notes: marker, location: ""}
         let previous = nil; for k v in device_calendar_links { if k.to_string() == "" + id { previous = v } }
-        if previous != nil && previous.handle != handle { calendar_notice("此约定已关联其他日历，请先选择原日历，避免重复添加。"); return }
+        if previous != nil && previous.handle != handle { recover_calendar_event(generation, id, handle, event, schedule, previous); return }
         if previous != nil && previous.event_id != "" {
             host.request("device_calendar.events.get", {handle: handle, event_id: previous.event_id}, fn(read){
                 if !calendar_context(generation, id) { return }
-                if !read.is_ok || read.data.notes != marker { calendar_notice("原事件无法安全读取，请在日历检查后再操作。"); return }
+                if !read.is_ok {
+                    if read.error.search("event_missing:") == 0 { recover_calendar_event(generation, id, handle, event, schedule, previous); return }
+                    calendar_notice("原事件读取失败：" + read.error + "。请重新选择原日历后重试；不会创建新事件。"); return
+                }
+                if read.data.notes != marker { calendar_notice("原事件标记已改变，请在系统日历检查；不会覆盖或创建新事件。"); return }
                 if read.data.title == event.title && read.data.start_ms == event.start_ms && read.data.end_ms == event.end_ms { verify_calendar_event(generation, id, handle, previous.event_id, event, schedule.planned_on); return }
                 if read.data.revision != previous.revision { calendar_notice("事件已在日历被修改，礼遇不会覆盖你的修改。"); return }
                 write_calendar_event(generation, id, handle, event, schedule.planned_on, read.data)

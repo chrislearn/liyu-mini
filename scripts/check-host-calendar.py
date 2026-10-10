@@ -32,6 +32,9 @@ let consent=false
 let uncertain=false
 let truncated=false
 let stale=false
+let missing_id=false
+let read_denied=false
+let duplicate=false
 fn refresh(){}
 fn api_request(input,done){done({is_ok:true,data:{status:200,body:schedule}})}
 fn fixture_request(method,args,done){
@@ -40,10 +43,10 @@ fn fixture_request(method,args,done){
     if method=="device_calendar.permission.status" {done({is_ok:true,data:{supported:true,app_consent:consent,os_permission:if consent {"granted"} else {"not_determined"}}});return}
     if method=="device_calendar.permission.request" {permission_calls=permission_calls+1;if !denied {consent=true};done({is_ok:!denied,error:"fixture denial",data:{}});return}
     if method=="device_calendar.calendars.list" {done({is_ok:true,data:{calendars:[{id:"c1",name:"Fixture",account_name:"Synthetic",writable:true}]}});return}
-    if method=="device_calendar.events.list" {done({is_ok:true,data:{events:if native_event==nil {[]} else {[native_event]},truncated:truncated}});return}
-    if method=="device_calendar.events.get" {done({is_ok:native_event!=nil,error:"fixture absent",data:native_event});return}
+    if method=="device_calendar.events.list" {done({is_ok:!read_denied,error:"authorization_required: fixture",data:{events:if native_event==nil {[]} else {if duplicate {[native_event,native_event]} else {[native_event]}},truncated:truncated}});return}
+    if method=="device_calendar.events.get" {done({is_ok:native_event!=nil && !read_denied && !(missing_id && args.event_id=="old-id"),error:if read_denied {"authorization_required: fixture"} else {"event_missing: fixture absent"},data:native_event});return}
     if method=="device_calendar.events.create" || method=="device_calendar.events.update" {
-        writes=writes+1;native_event=args.event;native_event += {id:"event-one",revision:"r"+writes}
+        writes=writes+1;native_event=args.event;native_event += {id:"event-one",revision:"r"+writes,recurring:false,has_attendees:false}
         if stale {auth_generation=auth_generation+1;device_calendar_links={}}
         if uncertain {done({is_ok:false,error:"fixture unknown result",data:nil});return}
         done({is_ok:true,data:{event:native_event}});return
@@ -64,9 +67,18 @@ schedule.planned_on="2028-02-29";schedule.start_ms=-1;sync_device_calendar();che
 uncertain=true;sync_device_calendar();check(writes==1 && device_calendar_links["503"].pending,"unknown save tracked")
 uncertain=false;sync_device_calendar();check(writes==1 && !device_calendar_links["503"].pending,"retry recovers without duplicate")
 sync_device_calendar();check(writes==1,"same event no second write")
+native_event.timezone="GMT";sync_device_calendar();check(writes==1 && !device_calendar_links["503"].pending,"equivalent GMT readback")
+device_calendar_links["503"].event_id="old-id";missing_id=true;sync_device_calendar();check(writes==1 && device_calendar_links["503"].event_id=="event-one","lost ID recovers by bounded marker lookup")
+device_calendar_handle="reselected";sync_device_calendar();check(writes==1 && device_calendar_links["503"].handle=="reselected","reselected handle recovers existing event only")
+device_calendar_links["503"].event_id="old-id";duplicate=true;sync_device_calendar();check(writes==1 && device_calendar_links["503"].event_id=="old-id","duplicate recovery blocked")
+duplicate=false;read_denied=true;sync_device_calendar();check(writes==1 && notice.search("authorization_required") >= 0,"read denial explains error without write")
+read_denied=false;truncated=true;sync_device_calendar();check(writes==1 && device_calendar_links["503"].event_id=="old-id","truncated recovery blocked")
+truncated=false;native_event.location="external";sync_device_calendar();check(writes==1 && device_calendar_links["503"].event_id=="old-id","external location recovery blocked")
+native_event.location="";native_event.has_attendees=true;sync_device_calendar();check(writes==1 && device_calendar_links["503"].event_id=="old-id","invitation recovery blocked")
+native_event.has_attendees=false;sync_device_calendar();device_calendar_handle="cal-one";sync_device_calendar()
 schedule.planned_on="2028-03-01";schedule.start_ms=1835481600000;schedule.end_ms=1835568000000;sync_device_calendar();check(writes==2 && !device_calendar_links["503"].pending,"changed confirmed date update/readback")
 native_event.revision="external";native_event.title="person edited";sync_device_calendar();check(writes==2,"external change no overwrite")
-device_calendar_handle="other";sync_device_calendar();check(writes==2,"other calendar no duplicate")
+device_calendar_handle="other";sync_device_calendar();check(writes==2,"changed external event and other handle no duplicate")
 device_calendar_handle="cal-one";device_calendar_links={};native_event=nil;truncated=true;sync_device_calendar();check(writes==2,"truncated lookup no create")
 truncated=false;stale=true;sync_device_calendar();check(writes==3 && device_calendar_links.to_json()=="{}","account switch ignores old callback")
 View{width:Fill height:Fill Label{text:"HOST_CALENDAR_CHECKS="+checks+";FAILURES="+failures}}
