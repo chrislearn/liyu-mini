@@ -19,7 +19,7 @@ def function(name):
     end = source.index('\nfn ', start + 1)
     return source[start:end]
 
-guards = '\n'.join(function(name) for name in ['valid_plan_date', 'budget_cents', 'gift_ideas_input', 'valid_gift_plan'])
+guards = '\n'.join(function(name) for name in ['valid_plan_date', 'budget_cents', 'gift_ideas_input', 'valid_gift_result','valid_gift_plan'])
 checks = '''
 demo_data = demo_seed()
 let ai_budget = "35.00"
@@ -40,12 +40,12 @@ ai_budget = "35"; let input = gift_ideas_input()
 check(input.products.len()>0, "budget catalogue")
 for p in input.products {check(p.price_cents<=3500, "no over budget candidate")}
 let candidate = {product_id: input.products[0].product_id, reason: "适合", buying_tip: "核对规格", message: "生日快乐"}
-let plan = {recommendations: [candidate]}
+let plan = {status:"matched",no_match_reason:"",recommendations: [candidate]}
 check(valid_gift_plan(plan,input), "known proposal")
-let fake = {recommendations: [{product_id: 99999, reason: "适合", buying_tip: "核对规格", message: "生日快乐"}]}
+let fake = {status:"matched",no_match_reason:"",recommendations: [{product_id: 99999, reason: "适合", buying_tip: "核对规格", message: "生日快乐"}]}
 check(!valid_gift_plan(fake,input), "invented id")
-check(!valid_gift_plan({recommendations: [candidate,candidate]},input), "duplicate candidates")
-check(!valid_gift_plan({recommendations: []},input), "empty candidates")
+check(!valid_gift_plan({status:"matched",no_match_reason:"",recommendations: [candidate,candidate]},input), "duplicate candidates")
+check(!valid_gift_plan({status:"matched",no_match_reason:"",recommendations: []},input), "empty candidates")
 let old = input.to_json(); ai_occasion = "乔迁"; check(gift_ideas_input().to_json()!=old, "changed occasion invalidates snapshot")
 let before = demo_data.orders.len()
 let body = {items: [{product_id: 1,recipient_id:9001}]}

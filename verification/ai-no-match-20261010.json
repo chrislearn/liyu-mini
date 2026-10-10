@@ -1,0 +1,251 @@
+{
+  "date": "2026-10-10",
+  "app_version": "1.0.42",
+  "scope": "Real model.complete using extracted production generator/validators; public server catalog and fictional preferences; signed development fixture on stock official RC2. Not a full login/preview/adoption GUI acceptance or App Hub store install. UI separately renders recorded result in a demo fixture.",
+  "host": {
+    "version": "0.1.0-rc.2",
+    "build": "20261009.090252",
+    "sha256": "5917555da411ec149309b249aeb5755512f78e29f0a0ca20b447ed998b9902ba"
+  },
+  "catalog": {
+    "source": "https://liyu.taidge.com/api/v1/catalog?limit=50",
+    "items": 33,
+    "scope": "current budget-filtered candidate catalog only"
+  },
+  "prompt_and_validation_sha256": "9cb1fec8a03cf7ab54ca11baaa8f86478ea6dc544993ee4893c41dce3c9e87e9",
+  "results": [
+    {
+      "case": {
+        "id": "coffee-only-30-en-1",
+        "budget": "30",
+        "occasion": "Only coffee, no tea or milk tea. If unavailable do not substitute."
+      },
+      "output": {
+        "no_match_reason": "当前候选目录中唯一的商品为「喜茶多肉葡萄兑换券」（品类：奶茶），与您「只要咖啡，不要茶或奶茶」明确排除奶茶的硬条件冲突。按规则不得用奶茶或不符合条件的商品替代，建议您主动将条件放宽为接受奶茶或茶饮，或补充咖啡类商品后再来匹配。",
+        "recommendations": [],
+        "status": "no_match"
+      },
+      "adoptable_plan": false,
+      "display": "当前候选目录没有可确认符合条件的商品。\n当前候选目录中唯一的商品为「喜茶多肉葡萄兑换券」（品类：奶茶），与您「只要咖啡，不要茶或奶茶」明确排除奶茶的硬条件冲突。按规则不得用奶茶或不符合条件的商品替代，建议您主动将条件放宽为接受奶茶或茶饮，或补充咖啡类商品后再来匹配。\n可修改预算或场景条件后重新预览，也可手动查看商品。未生成礼盒草稿。",
+      "usage": {
+        "estimated": false,
+        "input_tokens": 714,
+        "output_tokens": 279
+      }
+    },
+    {
+      "case": {
+        "id": "coffee-only-30-zh-1",
+        "budget": "30",
+        "occasion": "只要咖啡，不要茶和奶茶。没有符合条件的商品就说明原因，不能凑数。"
+      },
+      "output": {
+        "no_match_reason": "当前候选目录中唯一的商品是喜茶多肉葡萄兑换券（属于奶茶类），不符合您「只要咖啡，不要茶和奶茶」的硬条件，因此不推荐。建议您修改条件：将范围调整为接受奶茶，或补充咖啡类商品后再筛选。",
+        "recommendations": [],
+        "status": "no_match"
+      },
+      "adoptable_plan": false,
+      "display": "当前候选目录没有可确认符合条件的商品。\n当前候选目录中唯一的商品是喜茶多肉葡萄兑换券（属于奶茶类），不符合您「只要咖啡，不要茶和奶茶」的硬条件，因此不推荐。建议您修改条件：将范围调整为接受奶茶，或补充咖啡类商品后再筛选。\n可修改预算或场景条件后重新预览，也可手动查看商品。未生成礼盒草稿。",
+      "usage": {
+        "estimated": false,
+        "input_tokens": 716,
+        "output_tokens": 121
+      }
+    },
+    {
+      "case": {
+        "id": "coffee-only-30-zh-2",
+        "budget": "30",
+        "occasion": "给喜欢咖啡的朋友，硬条件只要咖啡，排除茶和奶茶。"
+      },
+      "output": {
+        "no_match_reason": "当前候选目录仅有一件奶茶类兑换券，与硬条件\"只要咖啡、排除茶和奶茶\"冲突，且无任何咖啡类商品可供选择。建议用户：放宽品类限制（如允许其他饮品），或由用户主动补充咖啡类商品后再筛选。",
+        "recommendations": [],
+        "status": "no_match"
+      },
+      "adoptable_plan": false,
+      "display": "当前候选目录没有可确认符合条件的商品。\n当前候选目录仅有一件奶茶类兑换券，与硬条件\"只要咖啡、排除茶和奶茶\"冲突，且无任何咖啡类商品可供选择。建议用户：放宽品类限制（如允许其他饮品），或由用户主动补充咖啡类商品后再筛选。\n可修改预算或场景条件后重新预览，也可手动查看商品。未生成礼盒草稿。",
+      "usage": {
+        "estimated": false,
+        "input_tokens": 713,
+        "output_tokens": 218
+      }
+    },
+    {
+      "case": {
+        "id": "coffee-only-35-positive",
+        "budget": "35",
+        "occasion": "只要咖啡，不要茶和奶茶。"
+      },
+      "output": {
+        "no_match_reason": "",
+        "recommendations": [
+          {
+            "buying_tip": "确认收券人是否饮用咖啡或含乳饮品，胃部不适或忌乳糖者慎选；留意电子券有效期与适用门店。",
+            "message": "一杯热拿铁,温暖你每段加班时光。",
+            "product_id": 1,
+            "reason": "符合用户只要咖啡、排除茶与奶茶的明确要求,且单价等于上限,刚好在预算内。"
+          }
+        ],
+        "status": "matched"
+      },
+      "adoptable_plan": true,
+      "display": "AI 挑礼方案 · 尚未下单",
+      "usage": {
+        "estimated": false,
+        "input_tokens": 735,
+        "output_tokens": 209
+      }
+    },
+    {
+      "case": {
+        "id": "flowers-only-30",
+        "budget": "30",
+        "occasion": "只要鲜花，不要饮料、食品或其他替代品。"
+      },
+      "output": {
+        "no_match_reason": "当前候选目录仅含奶茶饮品（喜茶多肉葡萄兑换券），与您「只要鲜花，不要饮料、食品或其他替代品」的硬条件直接冲突。建议您放宽品类限制或补充鲜花类商品后再匹配。",
+        "recommendations": [],
+        "status": "no_match"
+      },
+      "adoptable_plan": false,
+      "display": "当前候选目录没有可确认符合条件的商品。\n当前候选目录仅含奶茶饮品（喜茶多肉葡萄兑换券），与您「只要鲜花，不要饮料、食品或其他替代品」的硬条件直接冲突。建议您放宽品类限制或补充鲜花类商品后再匹配。\n可修改预算或场景条件后重新预览，也可手动查看商品。未生成礼盒草稿。",
+      "usage": {
+        "estimated": false,
+        "input_tokens": 709,
+        "output_tokens": 148
+      }
+    },
+    {
+      "case": {
+        "id": "electronic-50-positive",
+        "budget": "50",
+        "occasion": "Only electronic vouchers, no physical delivery."
+      },
+      "output": {
+        "no_match_reason": "",
+        "recommendations": [
+          {
+            "buying_tip": "下单前确认收券人是否偏好拿铁、是否需替换为大杯/其他饮品的规则，并核对电子券有效期及适用门店。",
+            "message": "提神暖心，工作日里为你留一杯好咖啡",
+            "product_id": 1,
+            "reason": "经典连锁咖啡电子券，符合用户仅要电子券、且不需实物配送的硬条件，预算内。"
+          },
+          {
+            "buying_tip": "核对电子券有效期、是否需到店自取，以及适用门店清单；确认收券人能接受多肉葡萄口味。",
+            "message": "果香清甜，这份小确幸想与你分享",
+            "product_id": 2,
+            "reason": "茶饮类电子兑换券，纯电子形式、无需配送，满足用户硬条件，价格低于预算上限。"
+          },
+          {
+            "buying_tip": "确认收券人所在城市的合作影院范围，核对通兑票有效期、是否限定场次/特殊厅（如IMAX）需补差价。",
+            "message": "挑一场好电影，给自己一段放空的快乐",
+            "product_id": 3,
+            "reason": "电影电子通兑票，无实物配送，符合仅要电子券的要求，单张价格仍低于预算上限。"
+          }
+        ],
+        "status": "matched"
+      },
+      "adoptable_plan": true,
+      "display": "AI 挑礼方案 · 尚未下单",
+      "usage": {
+        "estimated": false,
+        "input_tokens": 784,
+        "output_tokens": 728
+      }
+    },
+    {
+      "case": {
+        "id": "coffee-only-30-en-2-retry",
+        "budget": "30",
+        "occasion": "Revision: reduce budget to 30 yuan; still only coffee, no tea or milk tea. If unavailable explain the limitation."
+      },
+      "output": {
+        "no_match_reason": "当前候选目录仅有一项『喜茶多肉葡萄兑换券』(奶茶类),与您『只要咖啡、不要奶茶/茶』的硬条件直接冲突;候选中没有任何咖啡或非茶类饮品可推荐。请补充更多咖啡类商品后再匹配,或调整类别限制。",
+        "recommendations": [],
+        "status": "no_match"
+      },
+      "adoptable_plan": false,
+      "display": "当前候选目录没有可确认符合条件的商品。\n当前候选目录仅有一项『喜茶多肉葡萄兑换券』(奶茶类),与您『只要咖啡、不要奶茶/茶』的硬条件直接冲突;候选中没有任何咖啡或非茶类饮品可推荐。请补充更多咖啡类商品后再匹配,或调整类别限制。\n可修改预算或场景条件后重新预览，也可手动查看商品。未生成礼盒草稿。",
+      "usage": {
+        "estimated": false,
+        "input_tokens": 724,
+        "output_tokens": 202
+      }
+    },
+    {
+      "case": {
+        "id": "no-food-100-positive-retry",
+        "budget": "100",
+        "occasion": "Only practical non-food items; no drinks or food."
+      },
+      "output": {
+        "no_match_reason": "",
+        "recommendations": [
+          {
+            "buying_tip": "购买前确认尺寸能否放下A4文件或13寸笔记本；确认印花与颜色是否符合对方审美；检查包带长度与承重是否舒适。",
+            "message": "实用好物伴左右，愿你每一天都从容自在。",
+            "product_id": 5,
+            "reason": "帆布托特包是日常通勤、购物皆可用的实用单品，可装文件/电脑/便当袋，非食品非饮品，符合硬条件且在预算内。"
+          },
+          {
+            "buying_tip": "购买前确认所在城市适用影院范围、有效期、是否需提前预约、有无场次或座位限制，避免临期或区域不可用。",
+            "message": "挑一场喜欢的电影，给自己一段放空时光。",
+            "product_id": 3,
+            "reason": "电影通兑票使用灵活、不限场次时段，是放松休闲的实用选择，非食品非饮品，符合要求。"
+          },
+          {
+            "buying_tip": "购买前确认盲盒内文具品类（笔/本/贴纸等），款式随机可能重复；若对方偏好确定款式，慎选盲盒。",
+            "message": "小惊喜里藏着大满足，工作学习都顺心。",
+            "product_id": 9,
+            "reason": "文具盲盒价格亲民、内容实用，适合日常办公学习，非食品非饮品，且远低于预算。"
+          }
+        ],
+        "status": "matched"
+      },
+      "adoptable_plan": true,
+      "display": "AI 挑礼方案 · 尚未下单",
+      "usage": {
+        "estimated": false,
+        "input_tokens": 962,
+        "output_tokens": 1205
+      }
+    }
+  ],
+  "empty_catalog": {
+    "budget_yuan": 5,
+    "model_calls": 0,
+    "plan": null,
+    "display": "当前预算内没有可选商品，请调整预算或刷新商品目录。"
+  },
+  "rate_limit_errors": [
+    {
+      "case": "coffee-only-30-en-2",
+      "error": "rate: This app may make 6 model calls a minute; try again in 17 s.",
+      "plan": null,
+      "retry": "passed after slower rerun"
+    },
+    {
+      "case": "no-food-100-positive",
+      "error": "rate: This app may make 6 model calls a minute; try again in 14 s.",
+      "plan": null,
+      "retry": "passed after slower rerun"
+    }
+  ],
+  "checks": {
+    "real_model_successful_cases": 8,
+    "no_match_cases": 5,
+    "matched_cases": 3,
+    "coffee_30_no_match_repetitions": 4,
+    "synthetic_flow": 50,
+    "purchase_and_date_guards": 22,
+    "demo": 23,
+    "calendar_flow": 22
+  },
+  "limitations": [
+    "Model classification of arbitrary natural-language constraints remains probabilistic; these samples do not guarantee all preferences.",
+    "No-match is scoped to supplied candidates, not the entire market.",
+    "Schema and production validator reject empty matched plans, contradictory outcomes and stale contexts; actual matching and individual reasons still need user review.",
+    "Demo mode continues to show fixed labeled examples, not real preference inference."
+  ]
+}
