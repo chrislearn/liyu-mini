@@ -68,7 +68,7 @@ revision = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=root, text=
 dirty = bool(subprocess.check_output(['git', 'status', '--porcelain'], cwd=root, text=True).strip())
 report = {'app_version': manifest['version'], 'source_revision': revision, 'working_tree_dirty': dirty,
           'bundle_blake3': digest, 'bundle_bytes': size, 'archive_sha256': hashlib.sha256(archive.read_bytes()).hexdigest(),
-          'server_revision': (root / 'verification/server-revision.txt').read_text(encoding='utf-8').strip(),
+          'minimum_server_version': '0.1.6', 'server_revision': (root / 'verification/server-revision.txt').read_text(encoding='utf-8').strip(),
           'scope': 'portable package validation; no GUI, real login, signature or platform certification claim'}
 (output / 'verification.json').write_text(json.dumps(report, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
 print(json.dumps(report, ensure_ascii=False))

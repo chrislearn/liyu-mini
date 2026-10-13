@@ -7,7 +7,7 @@ from pathlib import Path
 r=Path(__file__).resolve().parents[1];s=(r/'bundle/main.splash').read_text()
 def fn(name):
  a=s.index('fn '+name+'(');b=s.index('\nfn ',a+1);return s[a:b].replace('host.request(', 'model_adapter(')
-names=['pad2','money','budget_cents','gift_ideas_input','gift_model_input','review_gift_ideas','cancel_gift_review','confirm_gift_review','valid_gift_result','valid_gift_plan','gift_ai_error','ask_gift_ideas','generate_gift_ideas','gift_query_identity','query_active','stop_gift_query','valid_query_constraints','gift_constraint_schema','gift_step_schema','plan_gift_query','confirm_gift_constraints','cancel_gift_constraints','start_alternative_search','gift_condition_differences','product_meets_constraints','applied_constraints_match','gift_query_model_products','gift_current_query_history','gift_purchase_checklist','valid_gift_query_step','gift_query_step','execute_gift_search','adopt_gift_idea','verify_and_adopt_query_idea']
+names=['floor_div','pad2','money','budget_cents','gift_ideas_input','gift_model_input','review_gift_ideas','cancel_gift_review','confirm_gift_review','valid_gift_result','valid_gift_plan','gift_ai_error','ask_gift_ideas','generate_gift_ideas','gift_query_identity','query_active','stop_gift_query','valid_query_constraints','gift_constraint_schema','gift_step_schema','plan_gift_query','confirm_gift_constraints','cancel_gift_constraints','start_alternative_search','gift_condition_differences','product_meets_constraints','applied_constraints_match','gift_query_model_products','gift_current_query_history','gift_purchase_checklist','valid_gift_query_step','gift_query_step','execute_gift_search','adopt_gift_idea','verify_and_adopt_query_idea']
 seed=json.loads(json.loads(s.split('fn demo_seed(){ return ',1)[1].split('.parse_json()',1)[0].strip()))
 globals=s[s.index('let ai_text ='):s.index('let purchase_busy =')]
 fixture='let seed='+json.dumps(json.dumps(seed,ensure_ascii=False),ensure_ascii=False)+'.parse_json()\n'+globals+'''
@@ -91,6 +91,10 @@ let longspec=coffee.to_json().parse_json();longspec.spec="";for i in 250 {longsp
 check(ai_constraints.max_price_cents==3500 && ai_constraints.allowed_kinds[0]=="咖啡","app locks budget and kinds")
 check(sent[1].input.products.len()==0 && sent[2].input.products[0].product_id==coffee.id,"model receives actual returned products next round")
 adopt_gift_idea(ai_plan.recommendations[0]);check(draft_calls==1 && draft_recipient_ids[0]==contact_id,"adoption rechecks backend detail")
+let large_product=coffee.to_json().parse_json();large_product.id=16777217
+check(product_meets_constraints(large_product),"large integer product ID remains eligible")
+check(valid_gift_query_step(search_step("",16777217)),"large integer tool cursor remains valid")
+check(money(99999999)=="¥999999.99","large exact cents display")
 reset();ask_gift_ideas();ai_share_note=true;ai_share_relationship=true;confirm_gift_review()
 check(sent[0].input.note==source_friend.note && sent[0].input.relationship==source_friend.relationship,"optional fields explicitly shared")
 reset();delayed=true;parse();ai_context=ai_context+1;pending({is_ok:true,data:{output:planner}});check(query_calls==0 && ai_plan==nil,"cancel during parsing no search")

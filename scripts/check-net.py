@@ -4,7 +4,7 @@ import json,os,subprocess,time,urllib.request
 from pathlib import Path
 root=Path(__file__).resolve().parents[1]
 s=(root/'bundle/main.splash').read_text()
-api=s[s.index('fn api_request('):s.index('let appearance =')].replace('host.request(', 'fixture_backend_request(')
+api=s[s.index('fn api_request_once('):s.index('let appearance =')].replace('host.request(', 'fixture_backend_request(')
 fixture=r'''
 let demo_mode=false
 let connection="opaque-host-handle"
@@ -29,8 +29,8 @@ checks=r'''
 let checks=0
 let failures=""
 fn check(value,label){checks=checks+1;if !value {failures=failures+label+";"}}
-api_request({path:"/catalog?limit=50"},receive)
-check(method=="auth.backend.request" && last.operation=="liyu.read" && last.query.path=="/catalog?limit=50","declared read")
+api_request({path:"/catalog?limit=20"},receive)
+check(method=="auth.backend.request" && last.operation=="liyu.read" && last.query.path=="/catalog?limit=20","declared read")
 check(last.connection==connection,"opaque connection")
 api_request({method:"POST",path:"/orders",body:{items:[]},idempotency_key:"attempt-1",expected_total:3500},receive)
 check(last.operation=="liyu.post" && last.body.path=="/orders","declared write")

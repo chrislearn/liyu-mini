@@ -29,3 +29,54 @@ jobs:
           name: liyu-mini-package-${{ matrix.os }}-${{ github.sha }}
           path: build/review/
           if-no-files-found: error
+  native-control-flow:
+    runs-on: macos-latest
+    env:
+      OCTO_HUB: ${{ github.workspace }}/runtime/OctoSense-App-Hub/target/release/hub
+      OCTO_CARD_HOST: ${{ github.workspace }}/runtime/OctoSense-App-Hub/target/release/card-host
+      MAKEPAD_HIDE_WINDOWS: '1'
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          path: liyu-mini
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: OctoSense-org/OctoSense-App-Design-Flow
+          ref: 049bc6b4010aa3660bab4ad632857d6ed4612151
+          path: OctoScript-App-Design-Flow
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: OctoSense-org/OctoSense-App-Hub
+          ref: a72989ff2e4d51562693d05210b68e11f3bf3fcd
+          path: runtime/OctoSense-App-Hub
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: OctoSense-org/makepad
+          ref: 975c5630e01b0f3f3ae16cafd2e0fce3c9a5f7d9
+          path: runtime/makepad
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: OctoSense-org/Octoscript
+          ref: 68f6a9df55692b5d8ef8873a12721e279a3f40d6
+          path: runtime/octoscript
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: OctoSense-org/Octoscript-Makepad
+          ref: 65d30a091eee284ed45afe5b8502835563fb56f7
+          path: runtime/octoscript-makepad
+      - uses: dtolnay/rust-toolchain@89b12181fb390509a0842a86cc55eeb8eb928c1d
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6
+        with:
+          workspaces: runtime/OctoSense-App-Hub
+      - name: Build the fixed reference runtime
+        working-directory: runtime/OctoSense-App-Hub
+        run: cargo build --locked --release -p octosense-card-host -p octosense-app-hub
+      - name: Run native control flow and restart checks
+        working-directory: liyu-mini
+        run: |
+          python3 scripts/check-local-demo.py
+          python3 scripts/check-net.py
+          python3 scripts/check-real-ai-flow.py
+          python3 scripts/check-ai-purchase.py
+          python3 scripts/check-host-calendar.py
+          python3 scripts/check-resilience.py

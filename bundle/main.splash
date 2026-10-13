@@ -199,7 +199,7 @@ fn demo_request(request){
     return demo_fail("此操作需要真实账号；可退出本地演示后登录体验。")
 }
 // Keep the established response shape so business actions share one transport.
-fn api_request(input, done){
+fn api_request_once(input, done){
     let request = {method: "GET", path: "", token: nil, body: nil, idempotency_key: nil, expected_total: nil}
     for k v in input { request[k] = v }
     if demo_mode {
@@ -224,7 +224,42 @@ fn api_request(input, done){
     // Native write review can take five minutes before the network call starts.
     start_timeout(340.0, || { if !settled && generation == auth_generation { settled = true; done({is_ok: false, data: {status: 0, body: nil}, error: "请求尚未确认完成，请先重新读取，勿重复提交。"}) } })
 }
+fn record_has(value, name){ for k v in value { if k.to_string() == name { return true } }; return false }
+fn api_request(input, done){
+    let normalized = {method: "GET", path: ""}; for k v in input { normalized[k] = v }; input = normalized
+    if !demo_mode && input.method == "GET" {
+        let catalog = input.path == "/catalog?limit=50"
+        let paged = catalog
+        for path in ["/friends", "/gifts/inbox", "/gifts/outbox", "/contracts", "/wishlists/mine", "/wishlists/friends", "/notifications"] { if input.path == path { paged = true } }
+        if paged { read_list_pages(input.path, catalog, if catalog {-1} else {0}, [], done); return }
+    }
+    api_request_once(input, done)
+}
+// Each response fits the host limit. Accumulate only verified, progressing pages.
+fn read_list_pages(path, catalog, cursor, items, done){
+    let query = if catalog {"/catalog?limit=20&cursor=" + cursor} else {path + "?limit=20&before=" + cursor}
+    api_request_once({path: query}, fn(r){
+        if !r.is_ok || r.data.status != 200 { done(r); return }
+        let page = r.data.body
+        if !record_has(page, "items") || !record_has(page, "next_cursor") || page.items.to_json().search("[") != 0 || page.items.len() > 20 { done({is_ok: false, error: "列表分页接口不可用，请升级服务端后重试。", data: {status: 0, body: nil}}); return }
+        let previous = cursor
+        for row in page.items {
+            let id = if path == "/contracts" {row.gift_id} else {row.id}
+            if !(id >= 0) || id != floor_div(id, 1) || (catalog && id <= previous) || (!catalog && (id == 0 || (previous != 0 && id >= previous))) {
+                done({is_ok: false, error: "列表游标或顺序不一致，请重新读取。", data: {status: 0, body: nil}}); return
+            }
+            previous = id; items.push(row)
+        }
+        if items.len() > 4096 { done({is_ok: false, error: "列表较大，当前无法完整加载，请联系运营者处理；未显示不完整数据。", data: {status: 0, body: nil}}); return }
+        if page.next_cursor != nil {
+            if page.items.len() == 0 || page.next_cursor != "" + previous { done({is_ok: false, error: "列表分页没有前进，请重新读取。", data: {status: 0, body: nil}}); return }
+            read_list_pages(path, catalog, previous, items, done); return
+        }
+        done({is_ok: true, error: "", data: {status: 200, body: if catalog {{items: items, next_cursor: nil}} else {items}}})
+    })
+}
 let appearance = if fs.exists("appearance.txt") {fs.read("appearance.txt").trim()} else {"dark"}
+let read_versions = {}
 let account_busy = false
 fn set_appearance(value){
     appearance = value; fs.write("appearance.txt", value); refresh()
@@ -281,6 +316,7 @@ let device_calendar_name = ""
 let device_calendar_busy = false
 let device_calendar_generation = 0
 let device_calendar_links = {}
+let calendar_recovery_blocked = false
 let calendar_page = ""
 let contract_date_request = ""
 let contract_date_proposal = nil
@@ -400,6 +436,8 @@ let ai_eligible_total = -1
 let ai_search_round = 0
 let purchase_busy = false
 let purchase_pending = -1
+let purchase_needs_answer = false
+let purchase_recovery_blocked = false
 let purchase_settings = nil
 let purchase_expected = -1
 let purchase_request = nil
@@ -417,11 +455,26 @@ fn on_app_resize(width, _height){
 
 fn refresh(){ ui.content.render() }
 fn pad2(n){ if n < 10 { return "0" + n } return "" + n }
-fn today(){ let t = local_time(time_now() + 8 * 3600); return "" + t.year + "-" + pad2(t.month) + "-" + pad2(t.day) }
-fn expiry_time(epoch){ let t = local_time(epoch + 8 * 3600); return "" + t.year + "-" + pad2(t.month) + "-" + pad2(t.day) + " " + pad2(t.hour) + ":" + pad2(t.minute) }
-fn expiry_short(epoch){ let t = local_time(epoch + 8 * 3600); return "" + t.month + "/" + t.day + " " + pad2(t.hour) + ":" + pad2(t.minute) }
+// Fixed Shanghai civil time from Unix seconds; independent of host local_time offsets.
+fn floor_div(n, d){ let rest = n % d; return (n - rest) / d - if rest < 0 {1} else {0} }
+fn shanghai_time(epoch){
+    // Avoid the runtime's f32 math intrinsics when dividing Unix timestamps.
+    let seconds = floor_div(epoch, 1) + 28800
+    let days = floor_div(seconds, 86400); let clock = seconds - days * 86400
+    let z = days + 719468; let era = floor_div(z, 146097); let doe = z - era * 146097
+    let yoe = floor_div(doe - floor_div(doe, 1460) + floor_div(doe, 36524) - floor_div(doe, 146096), 365)
+    let year = yoe + era * 400
+    let doy = doe - (365 * yoe + floor_div(yoe, 4) - floor_div(yoe, 100))
+    let mp = floor_div(5 * doy + 2, 153); let day = doy - floor_div(153 * mp + 2, 5) + 1
+    let month = mp + if mp < 10 {3} else {-9}
+    if month <= 2 { year = year + 1 }
+    return {year: year, month: month, day: day, hour: floor_div(clock, 3600), minute: floor_div(clock % 3600, 60)}
+}
+fn today(){ let t = shanghai_time(time_now()); return "" + t.year + "-" + pad2(t.month) + "-" + pad2(t.day) }
+fn expiry_time(epoch){ let t = shanghai_time(epoch); return "" + t.year + "-" + pad2(t.month) + "-" + pad2(t.day) + " " + pad2(t.hour) + ":" + pad2(t.minute) }
+fn expiry_short(epoch){ let t = shanghai_time(epoch); return "" + t.month + "/" + t.day + " " + pad2(t.hour) + ":" + pad2(t.minute) }
 fn expiry_hours(){ let s = draft_expiry_hours.trim(); if !regex("^[0-9]+$", "").test(s) { return -1 }; let n = s.to_f64(); if n < 1 || n > 720 { return -1 }; return floor(n) }
-fn money(cents){ if cents % 100 == 0 { return "¥" + floor(cents / 100) } return "¥" + floor(cents / 100) + "." + pad2(cents % 100) }
+fn money(cents){ if cents % 100 == 0 { return "¥" + floor_div(cents, 100) } return "¥" + floor_div(cents, 100) + "." + pad2(cents % 100) }
 fn wallet_kind_name(entry){
     if entry.kind == "cash_out" { return "礼物卖出" }
     if entry.kind == "exchange" { if entry.amount_cents < 0 { return "换购补差" }; return "换购退差" }
@@ -517,12 +570,12 @@ fn valid_plan_date(value){
     return day >= 1 && day <= days[month - 1]
 }
 fn load_contract_date(id){
-    device_calendar_generation = device_calendar_generation + 1; device_calendar_busy = false; device_calendars = []
+    device_calendar_generation = device_calendar_generation + 1; let read_generation = device_calendar_generation; device_calendar_busy = false; device_calendars = []
     device_calendar_handle = ""; device_calendar_name = ""
     for k v in device_calendar_links { if k.to_string() == "" + id { device_calendar_handle = v.handle; device_calendar_name = "已关联日历" } }
     let generation = auth_generation
     api_request({path: "/contracts/" + id + "/schedule"}, fn(r){
-        if generation != auth_generation || contract_edit_id != id || stage != "contract_status" { return }
+        if generation != auth_generation || read_generation != device_calendar_generation || contract_edit_id != id || stage != "contract_status" { return }
         contract_date_loading = false
         if r.is_ok && r.data.status == 200 { contract_schedule = r.data.body; contract_date_saved = contract_schedule.planned_on; contract_date = if contract_schedule.pending {contract_schedule.proposed_on} else {contract_date_saved} }
         else { notice = "未能读取约定日期，请重新读取后再操作。"; contract_date_loading = true }
@@ -596,7 +649,16 @@ fn select_device_calendar(value){
         calendar_notice("已选择日历；添加或更新事件仍需你在宿主确认。")
     })
 }
-fn persist_calendar_links(){ fs.write("calendar-links.json", device_calendar_links.to_json()) }
+fn persist_calendar_links(){
+    try {
+        let saved = device_calendar_links.to_json()
+        fs.write("calendar-links.json", saved)
+        if fs.exists("calendar-links.json") && fs.read("calendar-links.json") == saved { return true }
+    } catch {}
+    calendar_recovery_blocked = true
+    calendar_notice("日历关联记录未能保存，已停止后续写入；请核对系统日历或使用 .ics。")
+    return false
+}
 fn calendar_event_matches(value, event){
     return value.title == event.title && value.start_ms == event.start_ms && value.end_ms == event.end_ms && value.notes == event.notes && value.all_day && (value.timezone == "UTC" || value.timezone == "GMT") && value.location == event.location && !value.recurring && !value.has_attendees
 }
@@ -621,7 +683,7 @@ fn verify_calendar_event(generation, id, handle, event_id, event, planned_on){
         }
         if !calendar_event_matches(read.data, event) { calendar_notice("事件内容与约定不一致，未完成核验；不会覆盖外部修改或自动创建第二个事件。"); return }
         device_calendar_links["" + id] = {handle: handle, event_id: event_id, revision: read.data.revision, planned_on: planned_on, start_ms: event.start_ms, end_ms: event.end_ms, pending: false}
-        persist_calendar_links()
+        if !persist_calendar_links() { return }
         api_request({path: "/contracts/" + id + "/schedule"}, fn(current){
             if !calendar_context(generation, id) { return }
             if !current.is_ok || current.data.status != 200 || current.data.body.planned_on != planned_on { calendar_notice("事件已写入，但约定日期随后变化，请重新读取日期后手动更新事件。"); return }
@@ -636,16 +698,17 @@ fn write_calendar_event(generation, id, handle, event, date, previous){
         method = "device_calendar.events.update"; args += {event_id: previous.id, revision: previous.revision}
     }
     device_calendar_links["" + id] = {handle: handle, event_id: if previous == nil {""} else {previous.id}, revision: if previous == nil {""} else {previous.revision}, planned_on: date, start_ms: event.start_ms, end_ms: event.end_ms, pending: true}
-    persist_calendar_links()
+    if !persist_calendar_links() { return }
     host.request(method, args, fn(r){
         if !calendar_context(generation, id) { return }
         if !r.is_ok { calendar_notice(r.error + "；结果可能尚未确认，重试前会先查找现有事件。"); return }
         let event_id = r.data.event.id
-        device_calendar_links["" + id].event_id = event_id; persist_calendar_links()
+        device_calendar_links["" + id].event_id = event_id; if !persist_calendar_links() { return }
         verify_calendar_event(generation, id, handle, event_id, event, date)
     })
 }
 fn sync_device_calendar(){
+    if calendar_recovery_blocked { notice = "日历关联文件无法安全恢复，已停止写入；请核对系统日历或使用 .ics。"; refresh(); return }
     if device_calendar_busy || contract_date_loading || contract_schedule == nil || device_calendar_handle == "" { return }
     if demo_mode { notice = "本地演示不会写入设备日历。"; refresh(); return }
     device_calendar_busy = true; refresh()
@@ -716,8 +779,8 @@ fn ask_contract_date(){
     start_timeout(60.0, || { if context == ai_context && ai_busy { ai_context = ai_context + 1; ai_busy = false; notice = "AI 超时，未保存任何日期。"; refresh() } })
 }
 fn clear_account_data(){
-    auth_generation = auth_generation + 1
-    calendar_page = ""; device_calendars = []; device_calendar_handle = ""; device_calendar_name = ""; device_calendar_busy = false; device_calendar_links = {}; ai_plan = nil; ai_plan_snapshot = ""; ai_plan_friend = -1; ai_search_options = nil; ai_constraint_plan = nil; ai_constraints = nil; ai_locked_json = ""; ai_query_snapshot = ""; ai_seen_products = []; ai_query_history = []; purchase_busy = false; purchase_pending = -1; purchase_settings = nil; purchase_request = nil; purchase_expected = -1; purchase_recipient_ids = []; contract_date_loading = false
+    auth_generation = auth_generation + 1; read_versions = {}; calendar_recovery_blocked = false
+    calendar_page = ""; device_calendars = []; device_calendar_handle = ""; device_calendar_name = ""; device_calendar_busy = false; device_calendar_links = {}; ai_plan = nil; ai_plan_snapshot = ""; ai_plan_friend = -1; ai_search_options = nil; ai_constraint_plan = nil; ai_constraints = nil; ai_locked_json = ""; ai_query_snapshot = ""; ai_seen_products = []; ai_query_history = []; purchase_busy = false; purchase_pending = -1; purchase_needs_answer = false; purchase_recovery_blocked = false; purchase_settings = nil; purchase_request = nil; purchase_expected = -1; purchase_recipient_ids = []; contract_date_loading = false
     products = []; categories = [{id: "", name: "全部"}]; friends = []; friend_tags = []
     my_wishes = []; friend_wishes = []; inbox = []; outbox = []; contracts = []; contract_templates = []; reminders = []
     draft_recipient_ids = []; gift_replacing_product = false; contract_busy_id = -1
@@ -735,7 +798,21 @@ fn clear_account_data(){
     contact_search = ""; tag_search = ""; tag_people_search = ""; tag_selected_id = -1; contact_detail_origin_stage = "browse"
 }
 fn auth_lost(message){ connection = ""; clear_account_data(); auth_state = "signed_out"; auth_message = message; refresh() }
-fn auth_ready(){ clear_account_data(); if fs.exists("calendar-links.json") { device_calendar_links = fs.read("calendar-links.json").parse_json() }; auth_state = "signed_in"; auth_message = ""; refresh(); load_all() }
+fn restore_calendar_links(){
+    if demo_mode || !fs.exists("calendar-links.json") { return }
+    calendar_recovery_blocked = true
+    try {
+        let saved_text = fs.read("calendar-links.json").trim(); let saved = saved_text.parse_json()
+        if saved_text != saved.to_json() || saved.to_json().search("{") != 0 { calendar_recovery_blocked = true; notice = "日历关联文件损坏，已保留文件；请核对系统日历或使用 .ics。"; return }
+        for k row in saved {
+            for field in ["handle", "event_id", "revision", "planned_on", "start_ms", "end_ms", "pending"] { if !record_has(row, field) { calendar_recovery_blocked = true; notice = "日历关联文件不完整，已停止原生写入；请核对系统日历或使用 .ics。"; return } }
+            for field in ["handle", "event_id", "revision", "planned_on"] { if row[field].to_json().search("\"") != 0 { calendar_recovery_blocked = true; notice = "日历关联记录格式无效，已停止原生写入；请使用 .ics。"; return } }
+            if row.handle == "" || !(row.start_ms >= 0 && row.end_ms > row.start_ms && row.end_ms <= 4102444800000) || (row.pending.to_json() != "true" && row.pending.to_json() != "false") { calendar_recovery_blocked = true; notice = "日历关联记录范围无效，已停止原生写入；请使用 .ics。"; return }
+        }
+        device_calendar_links = saved; calendar_recovery_blocked = false
+    } catch { calendar_recovery_blocked = true; notice = "日历关联文件无法读取，已停止原生写入；请使用 .ics。" }
+}
+fn auth_ready(){ clear_account_data(); restore_purchase(); restore_calendar_links(); auth_state = "signed_in"; auth_message = ""; refresh(); load_all(); if purchase_request != nil {tab = "command"; stage = "checkout"; refresh()} }
 fn enter_demo(){
     if account_busy { return }
     auth_flow_generation = auth_flow_generation + 1
@@ -841,9 +918,12 @@ fn logout(){
 fn get(path, kind){
     if auth_state != "signed_in" { return }
     if kind == "mine" { wish_lists_loading = true }
+    let read_key = if kind == "preview" {kind + path} else {kind}
+    let version = if record_has(read_versions, read_key) {read_versions[read_key] + 1} else {1}
+    read_versions[read_key] = version
     let generation = auth_generation
     api_request({method: "GET", path: path}, fn(r){
-            if generation != auth_generation { return }
+            if generation != auth_generation || read_versions[read_key] != version { return }
             if kind == "mine" { wish_lists_loading = false }
             if kind == "wish_detail" && path != "/wishlists/" + wish_detail_id { return }
             if kind == "gift_detail" && path != "/gifts/" + gift_detail_id { return }
@@ -872,7 +952,7 @@ fn get(path, kind){
             if kind == "friend_tags" { friend_tags = data }
             if kind == "reminders" { reminders = data }
             if kind == "mine" { my_wishes = data }
-            if kind == "friend_wishes" { friend_wishes = data; wish_previews = []; for w in data { get("/wishlists/" + w.id, "preview") } }
+            if kind == "friend_wishes" { friend_wishes = data; wish_previews = []; for k v in read_versions { if k.to_string().search("preview") == 0 { read_versions[k] = v + 1 } }; for w in data { get("/wishlists/" + w.id, "preview") } }
             if kind == "preview" { wish_previews.push(data) }
             if kind == "inbox" { inbox = data }
             if kind == "outbox" { outbox = data }
@@ -1046,6 +1126,7 @@ fn save_display_name(){
     let value = profile_edit_value.trim()
     if value == "" || value.len() > 50 { notice = "显示名请填写 1–50 个字。"; refresh(); return }
     account_write("/me/profile", "PATCH", {display_name: value}, |data| {
+        if record_has(read_versions, "profile") { read_versions["profile"] = read_versions["profile"] + 1 }
         profile = data; stage = "profile"; notice = "显示名已更新。"; get("/me", "me"); refresh()
     })
 }
@@ -1164,7 +1245,8 @@ fn budget_cents(){
     let value = ai_budget.trim()
     if value == "" { return 0 }
     if !regex("^[0-9]{1,6}([.][0-9]{1,2})?$", "").test(value) { return -1 }
-    return floor(value.to_f64() * 100 + 0.5)
+    let parts = value.split(".")
+    return parts[0].to_f64() * 100 + if parts.len() == 2 {parts[1].to_f64() * if parts[1].len() == 1 {10} else {1}} else {0}
 }
 fn gift_ideas_input(){
     if contact_index < 0 || contact_index >= friends.len() { return nil }
@@ -1328,7 +1410,7 @@ fn gift_condition_differences(p){
 
 fn cancel_gift_constraints(){ ai_context = ai_context + 1; ai_busy = false; ai_plan = nil; ai_constraint_plan = nil; ai_constraints = nil; ai_locked_json = ""; stage = "contact_detail"; ai_text = ""; notice = "已取消商品查询；已发送的条件解析请求不会撤回。"; refresh() }
 fn product_meets_constraints(p){
-    if p == nil || !p.available || p.stock <= 0 || p.id < 0 || p.id != floor(p.id) || p.price_cents < 0 || p.price_cents != floor(p.price_cents) { return false }
+    if p == nil || !p.available || p.stock <= 0 || p.id < 0 || p.id != floor_div(p.id, 1) || p.price_cents < 0 || p.price_cents != floor_div(p.price_cents, 1) { return false }
     if ai_constraints.max_price_cents != 0 && p.price_cents > ai_constraints.max_price_cents { return false }
     if ai_constraints.delivery == "electronic" && p.physical != false { return false }
     if ai_constraints.delivery == "physical" && p.physical != true { return false }
@@ -1354,7 +1436,7 @@ fn gift_purchase_checklist(p){
     return text + "退款、升级或补差政策未核验，请向商家确认。"
 }
 fn valid_gift_query_step(step){
-    if step == nil || step.recommendations == nil || step.q == nil || step.reason == nil || step.cursor == nil || step.cursor < -1 || step.cursor != floor(step.cursor) || step.q.split("").len() > 100 || step.reason.split("").len() > 240 { return false }
+    if step == nil || step.recommendations == nil || step.q == nil || step.reason == nil || step.cursor == nil || step.cursor < -1 || step.cursor != floor_div(step.cursor, 1) || step.q.split("").len() > 100 || step.reason.split("").len() > 240 { return false }
     if step.action == "search" { return step.recommendations.len() == 0 }
     if step.action == "recommend" { return step.q == "" && step.cursor == -1 && valid_gift_plan({status: "matched", no_match_reason: "", recommendations: step.recommendations}, {budget_cents: ai_constraints.max_price_cents, products: gift_query_model_products()}) }
     return (step.action == "no_match" || step.action == "insufficient") && step.recommendations.len() == 0 && step.q == "" && step.cursor == -1 && step.reason.trim() != ""
@@ -1400,7 +1482,7 @@ fn execute_gift_search(q, cursor, context, generation){
         if !query_active(context, generation) { return }
         if !r.is_ok || r.data.status != 200 || r.data.body == nil { stop_gift_query("商品查询失败或接口未升级，未完成查找；不能判断没有匹配商品。请检查服务端并重试。"); return }
         let page = r.data.body
-        if page.items == nil || page.items.len() > 20 || page.eligible_total == nil || page.eligible_total < 0 || page.total_matches == nil || page.total_matches < page.items.len() || page.total_matches > page.eligible_total || page.eligible_total != floor(page.eligible_total) || page.total_matches != floor(page.total_matches) || page.catalog_revision == nil || page.catalog_revision == "" || !applied_constraints_match(page.applied) { stop_gift_query("后端查询契约或硬条件不一致，已停止；不会使用这些商品。"); return }
+        if page.items == nil || page.items.len() > 20 || page.eligible_total == nil || page.eligible_total < 0 || page.total_matches == nil || page.total_matches < page.items.len() || page.total_matches > page.eligible_total || page.eligible_total != floor_div(page.eligible_total, 1) || page.total_matches != floor_div(page.total_matches, 1) || page.catalog_revision == nil || page.catalog_revision == "" || !applied_constraints_match(page.applied) { stop_gift_query("后端查询契约或硬条件不一致，已停止；不会使用这些商品。"); return }
         if ai_catalog_revision != "" && ai_catalog_revision != page.catalog_revision { stop_gift_query("查询期间商品目录发生变化，请重新预览后查询；旧结果不再使用。"); return }
         if ai_eligible_total >= 0 && ai_eligible_total != page.eligible_total { stop_gift_query("目录计数发生变化，查询已停止，请重新开始。"); return }
         ai_catalog_revision = page.catalog_revision; ai_eligible_total = page.eligible_total
@@ -1621,7 +1703,7 @@ fn add_vague_wish(){
     })
 }
 fn begin(kind, product){
-    if purchase_busy || purchase_request != nil { tab = "command"; stage = "checkout"; notice = "请先核验原订单，再开始另一份礼盒。"; refresh(); return }
+    if purchase_busy || purchase_request != nil || purchase_recovery_blocked { tab = "command"; stage = "checkout"; notice = "请先核验原订单，再开始另一份礼盒。"; refresh(); return }
     if kind == "wish" {
         if product >= 0 { open_wish_picker(product) } else { start_wish_draft(false) }
         return
@@ -1701,7 +1783,7 @@ fn parse_command(){
     refresh()
 }
 fn quote_gift(){
-    if purchase_busy || purchase_request != nil { notice = "请先继续核验原订单。"; stage = "checkout"; refresh(); return }
+    if purchase_busy || purchase_request != nil || purchase_recovery_blocked { notice = "请先继续核验原订单。"; stage = "checkout"; refresh(); return }
     order_key = "mini-" + time_now() + "-" + random_u32()
     if expiry_hours() < 1 { draft_error = "有效期请输入 1–720 小时（最多 30 天）。"; refresh(); return }
     if draft_product < 0 { notice = "请确认商品。"; refresh(); return }
@@ -1711,17 +1793,57 @@ fn quote_gift(){
     let body = gift_checkout_body()
     mutate("/orders/quote", "POST", body, |data| { quote = data; stage = "checkout"; notice = if demo_mode {"演示报价，不产生真实订单或扣款。"} else {"价格已由 LIYU 服务端核算。"}; refresh() })
 }
+// Only app/account-scoped business state is saved. Credentials and puzzle answers are excluded.
+fn persist_purchase(){
+    if demo_mode { return true }
+    let settings = {unlock_kind: purchase_settings.unlock_kind, clue: purchase_settings.clue, message: purchase_settings.message, contract_text: purchase_settings.contract_text}
+    try {
+        let saved = {version: 1, key: order_key, order_id: purchase_pending, request: purchase_request, expected: purchase_expected, recipients: purchase_recipient_ids, settings: settings}.to_json()
+        fs.write("purchase-recovery.json", saved)
+        if !fs.exists("purchase-recovery.json") || fs.read("purchase-recovery.json") != saved { checkout_failed("订单恢复记录未能读回，已停止后续操作；请检查应用存储。"); return false }
+        return true
+    } catch { notice = "无法保存订单恢复记录，已停止后续操作；请检查应用存储后重试。"; purchase_busy = false; refresh(); return false }
+}
+fn restore_purchase(){
+    if demo_mode || !fs.exists("purchase-recovery.json") { return }
+    purchase_recovery_blocked = true
+    try {
+        let saved_text = fs.read("purchase-recovery.json").trim(); let saved = saved_text.parse_json()
+        if saved_text != saved.to_json() { notice = "订单恢复记录损坏或格式无法核验，已保留文件；请核对原订单。"; return }
+        for field in ["version", "key", "order_id", "request", "expected", "recipients", "settings"] { if !record_has(saved, field) { notice = "订单恢复记录不完整，已保留文件；请核对原订单。"; return } }
+        for field in ["unlock_kind", "clue", "message", "contract_text"] { if !record_has(saved.settings, field) || saved.settings[field].to_json().search("\"") != 0 { notice = "订单恢复配置无法识别，已保留文件。"; return } }
+        if saved.version != 1 || saved.key == nil || saved.key.to_json().search("\"") != 0 || saved.key == "" || saved.key.split("").len() > 128 || saved.request == nil || saved.request.items == nil || saved.request.items.to_json().search("[") != 0 || saved.request.items.len() == 0 || saved.request.items.len() > 100 || saved.expected == nil || !(saved.expected >= 0) || saved.expected != floor_div(saved.expected, 1) || saved.recipients == nil || saved.recipients.to_json().search("[") != 0 || saved.recipients.len() != saved.request.items.len() || saved.settings == nil || saved.order_id == nil || !(saved.order_id >= -1) || saved.order_id != floor_div(saved.order_id, 1) { notice = "订单恢复记录无法识别，已保留文件；请联系运营者核对原订单，勿重复购买。"; return }
+        if saved.settings.unlock_kind != "free" && saved.settings.unlock_kind != "guess_who" && saved.settings.unlock_kind != "question" { notice = "订单恢复记录无法识别，已保留文件；请核对原订单。"; return }
+        if !record_has(saved.request, "expires_hours") || !(saved.request.expires_hours >= 1 && saved.request.expires_hours <= 720) || saved.request.expires_hours != floor_div(saved.request.expires_hours, 1) { notice = "恢复记录的有效期无效，已停止；请核对原订单。"; return }
+        for i in saved.recipients.len() { if !(saved.recipients[i] > 0) || saved.recipients[i] != floor_div(saved.recipients[i], 1) || !(saved.request.items[i].product_id >= 0) || saved.request.items[i].product_id != floor_div(saved.request.items[i].product_id, 1) { notice = "恢复记录的商品或收礼人无效，已停止；请核对原订单。"; return } }
+        for i in saved.recipients.len() { if saved.request.items[i].recipient_id != saved.recipients[i] { notice = "恢复记录的收礼人不一致，已停止；请核对原订单。"; return } }
+        order_key = saved.key; purchase_pending = saved.order_id; purchase_request = saved.request; purchase_expected = saved.expected; purchase_recipient_ids = saved.recipients
+        purchase_settings = saved.settings; purchase_settings.answer = ""
+        purchase_needs_answer = saved.settings.unlock_kind == "question"; purchase_recovery_blocked = false
+        draft_product = -1; draft_recipient_ids = saved.recipients; draft_unlock = saved.settings.unlock_kind; draft_clue = saved.settings.clue
+        draft_expiry_hours = "" + saved.request.expires_hours
+        quote = {total_cents: purchase_expected}; notice = "发现上次未完成的订单，请继续核验原订单；不会自动支付或创建另一份订单。"
+    } catch { notice = "订单恢复记录损坏，已保留文件；请联系运营者核对原订单，勿重复购买。" }
+}
+fn clear_purchase_recovery(){
+    if demo_mode { return true }
+    try {
+        if fs.exists("purchase-recovery.json") { fs.remove("purchase-recovery.json") }
+        if fs.exists("purchase-recovery.json") { checkout_failed("恢复记录尚未清理，请继续核验原订单重试；不会创建新订单。"); return false }
+        return true
+    } catch { checkout_failed("恢复记录清理失败，请继续核验原订单重试；不会创建新订单。"); return false }
+}
 fn checkout_failed(message){ purchase_busy = false; notice = message; refresh() }
 fn create_order(){
     if purchase_busy { return }
-    if purchase_request != nil { notice = "请先继续核验原订单，避免重复创建。"; refresh(); return }
+    if purchase_request != nil || purchase_recovery_blocked { notice = "请先继续核验原订单，避免重复创建。"; refresh(); return }
     if quote == nil || !recipients_valid() { notice = "请先核对收礼人并重新报价。"; refresh(); return }
     draft_error = gift_form_error()
     if draft_error != "" { stage = "draft"; refresh(); return }
     purchase_settings = {unlock_kind: draft_unlock, clue: if draft_unlock == "free" {""} else {draft_clue.trim()}, answer: draft_answer.trim(), message: draft_message.trim(), contract_text: draft_contract.trim()}
     purchase_request = gift_checkout_body(); purchase_expected = quote.total_cents; purchase_pending = -1
     purchase_recipient_ids = []; for id in draft_recipient_ids {purchase_recipient_ids.push(id)}
-    submit_purchase()
+    if persist_purchase() { submit_purchase() }
 }
 fn submit_purchase(){
     if purchase_busy || purchase_request == nil { return }
@@ -1731,12 +1853,13 @@ fn submit_purchase(){
         if !r.is_ok { checkout_failed(r.error + " 使用下方继续按钮可按同一编号重试。"); return }
         if r.data.status == 401 { auth_lost("登录已过期，请重新登录。"); return }
         if r.data.status < 200 || r.data.status >= 300 {
-            if r.data.body.code == "quote_changed" { purchase_request = nil; quote = nil; stage = "draft"; checkout_failed("价格已变化，未创建订单或支付。请重新报价并确认。"); return }
+            if r.data.body.code == "quote_changed" { if !clear_purchase_recovery() { return }; purchase_request = nil; quote = nil; stage = "draft"; checkout_failed("价格已变化，未创建订单或支付。请重新报价并确认。"); return }
             checkout_failed("订单未能确认：" + r.data.body.error); return
         }
         let order = r.data.body; purchase_pending = order.id
-        if order.total_cents != purchase_expected { purchase_request = nil; checkout_failed("订单金额与确认报价不同，已停止测试支付。请核查订单 " + order.id + "。"); return }
-        pay_pending_order()
+        if !persist_purchase() { return }
+        if order.total_cents != purchase_expected { checkout_failed("订单金额与确认报价不同，已停止测试支付。请核查订单 " + order.id + "。"); return }
+        resume_purchase()
     })
 }
 fn pay_pending_order(){
@@ -1749,7 +1872,27 @@ fn pay_pending_order(){
 }
 fn retry_purchase(){
     if purchase_busy || purchase_request == nil { return }
-    if purchase_pending < 0 { submit_purchase() } else { purchase_busy = true; pay_pending_order() }
+    if purchase_needs_answer && (purchase_settings.answer.trim() == "" || purchase_settings.answer.trim().split("").len() > 100) { notice = "请重新填写原问题答案，再继续核验；答案不会保存在恢复文件中。"; refresh(); return }
+    if !persist_purchase() { return }
+    if purchase_pending < 0 { submit_purchase() } else { purchase_busy = true; resume_purchase() }
+}
+fn purchase_order_matches(order){
+    if !record_has(order, "id") || order.id != purchase_pending || !record_has(order, "items") || order.items.to_json().search("[") != 0 { return false }
+    if order.total_cents != purchase_expected || order.items.len() != purchase_recipient_ids.len() { return false }
+    for i in order.items.len() { if order.items[i].product_id != purchase_request.items[i].product_id || order.items[i].recipient_id != purchase_recipient_ids[i] { return false } }
+    return true
+}
+fn resume_purchase(){
+    let id = purchase_pending; let generation = auth_generation
+    api_request({path: "/orders/" + id}, fn(r){
+        if generation != auth_generation { return }
+        if r.is_ok && r.data.status == 401 { auth_lost("登录已过期，请重新登录后核验原订单。"); return }
+        if !r.is_ok || r.data.status != 200 { checkout_failed("无法读取原订单 " + id + "，已停止；不会创建另一份订单。"); return }
+        if !purchase_order_matches(r.data.body) { checkout_failed("原订单金额、商品或收礼人不一致，已停止测试支付；请核对原订单。"); return }
+        if r.data.body.status == "paid_test" { get_paid_order(id); return }
+        if r.data.body.status != "pending" { checkout_failed("原订单不是待支付状态，已停止；请核对原订单。"); return }
+        pay_pending_order()
+    })
 }
 fn get_paid_order(id){
     let generation = auth_generation
@@ -1764,7 +1907,7 @@ fn get_paid_order(id){
 }
 fn configure_paid_gifts(items, index){
     if index >= items.len() {
-        purchase_busy = false; purchase_request = nil
+        if !clear_purchase_recovery() { return }; purchase_busy = false; purchase_request = nil; purchase_needs_answer = false
         notice = items.len() + if demo_mode {" 个礼盒已保存并读回核验（本次演示）。"} else {" 个测试礼盒已保存，订单与玩法已读回核验。"}
         purchase_settings = nil; purchase_pending = -1
         tab = "box"; stage = "browse"; gift_side = "outbox"
@@ -3518,10 +3661,15 @@ View{width: Fill height: Fill flow: Down
             }
         }
         if tab == "command" && stage == "checkout" {
+            View{width: Fill height: Fill flow: Down
             ScrollYView{width: Fill height: Fill flow: Down padding: 16 spacing: 14
                 Card{padding: 16 spacing: 10
                     Label{text: "确认礼盒" draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 18}}
-                    if draft_product >= 0 { Label{text: products[draft_product].name draw_text.color: ink} }
+                    if draft_product >= 0 && draft_product < products.len() { Label{text: products[draft_product].name draw_text.color: ink} }
+                    if draft_product < 0 && purchase_request != nil && purchase_request.items.len() > 0 {
+                        let restored_product = product_by_id(purchase_request.items[0].product_id)
+                        Label{width: Fill text: if restored_product != nil {restored_product.name} else {"商品编号 " + purchase_request.items[0].product_id} draw_text.color: ink}
+                    }
                     Label{text: "送给 " + draft_recipient_ids.len() + " 位熟人" draw_text.color: muted}
                     Label{text: "有效期  " + draft_expiry_hours + " 小时（测试支付后开始）" draw_text.color: muted draw_text.text_style.font_size: 13}
                     for id in draft_recipient_ids { Label{text: recipient_name(id) draw_text.color: muted draw_text.text_style.font_size: 13} }
@@ -3530,9 +3678,17 @@ View{width: Fill height: Fill flow: Down
                     if quote != nil { Label{text: "应付  " + money(quote.total_cents) draw_text.color: accent draw_text.text_style: theme.font_bold{font_size: 24}} }
                     Label{width: Fill text: if demo_mode {"本地演示仅生成内存订单，不请求服务器或扣款。"} else {"确认后在 liyu-server 创建订单并进行测试支付，不产生真实扣款。"} draw_text.color: faint draw_text.text_style.font_size: 12}
                 }
-                Primary{width: Fill text: if purchase_busy {"正在执行并核验…"} else {"确认并测试支付"} on_click: || create_order()}
+            }
+            View{width: Fill height: Fit flow: Down padding: Inset{left: 16 right: 16 top: 8 bottom: 8} spacing: 8 draw_bg.color: canvas
+                if purchase_pending >= 0 { Label{text: "原订单 " + purchase_pending draw_text.color: muted draw_text.text_style.font_size: 12} }
+                if purchase_request == nil && !purchase_recovery_blocked { Primary{width: Fill text: if purchase_busy {"正在执行并核验…"} else {"确认并测试支付"} on_click: || create_order()} }
+                if purchase_needs_answer && purchase_settings != nil {
+                    Label{width: Fill text: "请重新填写上次问题的答案；答案不保存到恢复文件。" draw_text.color: muted draw_text.text_style.font_size: 12}
+                    Entry{empty_text: "原问题答案" text: purchase_settings.answer on_change: |v| purchase_settings.answer = v}
+                }
                 if purchase_request != nil && !purchase_busy { Secondary{width: Fill text: "继续核验原订单（不重复购买）" on_click: || retry_purchase()} }
                 Secondary{width: Fill text: "返回修改礼盒" on_click: || {if !purchase_busy {stage = "draft"; quote = nil; refresh()}}}
+            }
             }
         }
     }

@@ -6,8 +6,13 @@ import json,os,subprocess,time,urllib.request
 from pathlib import Path
 root=Path(__file__).resolve().parents[1]
 s=(root/'bundle/main.splash').read_text()
-functions=s[s.index('fn calendar_notice'):s.index('fn open_calendar_export')].replace('host.request(', 'fixture_request(')
+functions=s[s.index('fn calendar_notice'):s.index('fn open_calendar_export')]
+for name in ['record_has','restore_calendar_links','load_contract_date']:
+ start=s.index('fn '+name+'(');functions+='\n'+s[start:s.index('\nfn ',start+1)]
+functions=functions.replace('host.request(', 'fixture_request(').replace('fs.write(', 'fixture_write(')
 fixture=r'''
+let calendar_recovery_blocked=false
+let storage_failure=false
 let auth_generation=1
 let device_calendar_generation=0
 let contract_edit_id=503
@@ -21,6 +26,10 @@ let device_calendar_name="Fixture"
 let device_calendar_links={}
 let contract_date_loading=false
 let contract_schedule={}
+let contract_date_saved=""
+let contract_date=""
+let delayed_reads=false
+let pending_reads=[]
 let schedule={planned_on:"2028-02-29",title:"一起看电影",start_ms:1835395200000,end_ms:1835481600000}
 let native_event=nil
 let writes=0
@@ -35,8 +44,9 @@ let stale=false
 let missing_id=false
 let read_denied=false
 let duplicate=false
+fn fixture_write(path,data){fs.write(if storage_failure {"uncreated-review-directory/file"} else {path},data)}
 fn refresh(){}
-fn api_request(input,done){done({is_ok:true,data:{status:200,body:schedule}})}
+fn api_request(input,done){if delayed_reads {pending_reads.push(done);return};done({is_ok:true,data:{status:200,body:schedule}})}
 fn fixture_request(method,args,done){
     requests=requests+1
     if method=="runtime.describe" {done({is_ok:true,data:{supported:!unsupported}});return}
@@ -58,6 +68,19 @@ checks=r'''
 let checks=0
 let failures=""
 fn check(value,label){checks=checks+1;if !value {failures=failures+label+";"}}
+delayed_reads=true;load_contract_date(503);load_contract_date(503)
+pending_reads[1]({is_ok:true,data:{status:200,body:{planned_on:"2028-03-02",pending:false}}});pending_reads[0]({is_ok:true,data:{status:200,body:{planned_on:"2028-03-01",pending:false}}})
+check(contract_date_saved=="2028-03-02" && !contract_date_loading,"late same-agreement schedule load discarded")
+delayed_reads=false;device_calendar_handle="cal-one";contract_schedule={}
+if fs.exists("calendar-links.json") {fs.remove("calendar-links.json")}
+restore_calendar_links();check(!calendar_recovery_blocked,"missing calendar file allowed")
+fs.write("calendar-links.json","invalid json");restore_calendar_links();sync_device_calendar()
+check(calendar_recovery_blocked && writes==0 && fs.read("calendar-links.json")=="invalid json","corrupt calendar file preserved and stops native write blocked="+calendar_recovery_blocked+" writes="+writes+" file="+fs.read("calendar-links.json")+" parsed="+fs.read("calendar-links.json").parse_json().to_json())
+calendar_recovery_blocked=false;fs.write("calendar-links.json","{\"503\":{\"handle\":\"cal-one\"}}");restore_calendar_links()
+check(calendar_recovery_blocked,"incomplete calendar row blocked")
+calendar_recovery_blocked=false;fs.write("calendar-links.json","{}");restore_calendar_links();check(!calendar_recovery_blocked,"valid empty calendar state restored")
+consent=true;storage_failure=true;sync_device_calendar();check(writes==0 && calendar_recovery_blocked && !device_calendar_busy,"calendar storage failure prevents native write blocked="+calendar_recovery_blocked+" writes="+writes+" busy="+device_calendar_busy+" notice="+notice)
+storage_failure=false;calendar_recovery_blocked=false;device_calendar_links={};consent=false
 unsupported=true;open_device_calendars();check(permission_calls==0 && !device_calendar_busy,"unsupported discovery fallback")
 unsupported=false;denied=true;open_device_calendars();check(permission_calls==1 && device_calendars.len()==0 && writes==0,"permission denial no write")
 denied=false;open_device_calendars();check(device_calendars.len()==1,"writable calendar list")
@@ -67,6 +90,7 @@ schedule.planned_on="2028-02-29";schedule.start_ms=-1;sync_device_calendar();che
 uncertain=true;sync_device_calendar();check(writes==1 && device_calendar_links["503"].pending,"unknown save tracked")
 uncertain=false;sync_device_calendar();check(writes==1 && !device_calendar_links["503"].pending,"retry recovers without duplicate")
 sync_device_calendar();check(writes==1,"same event no second write")
+let saved_links=device_calendar_links.to_json();device_calendar_links={};restore_calendar_links();check(device_calendar_links.to_json()==saved_links && !calendar_recovery_blocked,"persisted calendar row restores completely")
 native_event.timezone="GMT";sync_device_calendar();check(writes==1 && !device_calendar_links["503"].pending,"equivalent GMT readback")
 device_calendar_links["503"].event_id="old-id";missing_id=true;sync_device_calendar();check(writes==1 && device_calendar_links["503"].event_id=="event-one","lost ID recovers by bounded marker lookup")
 device_calendar_handle="reselected";sync_device_calendar();check(writes==1 && device_calendar_links["503"].handle=="reselected","reselected handle recovers existing event only")

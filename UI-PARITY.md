@@ -1,4 +1,12 @@
-# LIYU → LIYU-MINI UI element audit (2026-09-29)
+# LIYU → LIYU-MINI UI element audit
+
+## Current status (2026-10-13, 1.0.45 source)
+
+Authentication now uses host-managed PKCE: only opaque handles enter app memory, and credentials remain in the host. Contact verification uses the server WebReader. The layout automatically switches at a 760-point viewport width; account/address editors and desktop columns are implemented. Purchasing supports verified order recovery, with controls pinned to the bottom. See [README](README.md), [authentication](docs/authentication.md) and [current verification](docs/verification.md) for current behavior and test scope.
+
+The dated audit below is historical evidence for its recorded versions. Its local session files, explicit layout switch, local backend address and earlier missing-feature list do not describe the current app.
+
+## Historical audit (2026-09-29)
 
 The native source of truth is `../OctoSense/apps/liyu/src/lib.rs`, `canvas.rs`, and `theme.rs`. The Splash mapping is `bundle/main.splash`. Measurements below come from the native widget declarations and `apply_shaping`, with a 412-point card-host window used for runtime checks. The native 1280-point desktop screen has a 208-point sidebar and right-hand aside. LIYU-MINI now offers a manually selected desktop mode with those three columns.
 
