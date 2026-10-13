@@ -1,0 +1,1800 @@
+{
+  "date": "2026-10-13",
+  "mini_version": "1.0.46",
+  "server_revision": "366975e7a88e0c814e4042a2ae597c9ca5502780",
+  "server_version": "0.1.6",
+  "host_version": "0.1.0-rc.2",
+  "host_binary_sha256": "5917555da411ec149309b249aeb5755512f78e29f0a0ca20b447ed998b9902ba",
+  "method": "Extracted production planner/query loop, real configured host inference, actual local Salvo/PostgreSQL GET; synthetic friend/auth state and file transport; no orders, payments, calendars or full-login GUI.",
+  "phases": [
+    {
+      "name": "run1",
+      "expected": 16,
+      "completed": 8,
+      "passed": 5,
+      "source": {
+        "mini_version": "1.0.45",
+        "mini_revision": "a084bb7ebcf8675c7b4de82253ffb1284b9dc1ec",
+        "main_splash_sha256": "b004aca3b9f1469c9b72f5f266490372f64b2c23686276535ed21080424624d2",
+        "production_functions": [
+          "floor_div",
+          "pad2",
+          "money",
+          "budget_cents",
+          "gift_ideas_input",
+          "gift_model_input",
+          "valid_gift_plan",
+          "gift_ai_error",
+          "generate_gift_ideas",
+          "gift_query_identity",
+          "query_active",
+          "stop_gift_query",
+          "valid_query_constraints",
+          "gift_constraint_schema",
+          "gift_step_schema",
+          "plan_gift_query",
+          "confirm_gift_constraints",
+          "start_alternative_search",
+          "gift_condition_differences",
+          "product_meets_constraints",
+          "applied_constraints_match",
+          "gift_query_model_products",
+          "gift_current_query_history",
+          "gift_purchase_checklist",
+          "valid_gift_query_step",
+          "gift_query_step",
+          "execute_gift_search"
+        ],
+        "scope": "Real model and SQL; fictional authentication and file bridge replace host backend transport; no real-account GUI or business writes."
+      },
+      "raw_results_sha256": "516748ca2bc628cd55565c583de0403842616f44163589ddd0016a130b230dc9",
+      "http_trace_sha256": "e7200d786d1614f85c62cd6ef798c0ac4119ef90a8b80525aa18a63794d180f3",
+      "cases": [
+        {
+          "id": "coffee-budget-exact-cn",
+          "passed": false,
+          "errors": [
+            "Incorrect money/unit in recommendation reason: 3500元"
+          ],
+          "quality_notes": [],
+          "queries": [
+            {
+              "filter": "{\"max_price_cents\":3500,\"allowed_kinds\":[\"咖啡\"],\"excluded_kinds\":[\"奶茶\"],\"delivery\":\"any\"}",
+              "match_mode": "exact",
+              "q": "",
+              "cursor": -1,
+              "next_cursor": null,
+              "returned_ids": [
+                1
+              ],
+              "eligible_total": 1,
+              "total_matches": 1
+            }
+          ],
+          "model_calls": 3,
+          "recommended_ids": [
+            1
+          ],
+          "parsed": {
+            "allowed_kinds": [
+              "咖啡"
+            ],
+            "delivery": "any",
+            "excluded_kinds": [
+              "奶茶"
+            ],
+            "summary": "硬条件：仅允许咖啡品类，明确排除奶茶品类；预算3500分由应用锁定不变。无其他硬限制，配送未指定故设为any。",
+            "unverified_requirements": []
+          },
+          "original_constraints": {
+            "max_price_cents": 3500,
+            "allowed_kinds": [
+              "咖啡"
+            ],
+            "excluded_kinds": [
+              "奶茶"
+            ],
+            "delivery": "any"
+          },
+          "match_quality": "exact",
+          "recommendations": [
+            {
+              "buying_tip": "请核对商品规格：全国门店通用 · 30 天有效。请核对适用门店或平台、券码使用规则与有效期。退款、升级或补差政策未核验，请向商家确认。",
+              "message": "来杯热拿铁，温暖你每一个加班夜。",
+              "product_id": 1,
+              "reason": "星巴克中杯拿铁电子券3500元整，刚好命中预算上限；种类为咖啡且不属于奶茶，符合原始要求。"
+            }
+          ],
+          "differences": [
+            {
+              "id": 1,
+              "text": ""
+            }
+          ]
+        },
+        {
+          "id": "coffee-budget-one-cent-below",
+          "passed": true,
+          "errors": [],
+          "quality_notes": [],
+          "queries": [
+            {
+              "filter": "{\"max_price_cents\":3499,\"allowed_kinds\":[\"咖啡\"],\"excluded_kinds\":[\"奶茶\"],\"delivery\":\"any\"}",
+              "match_mode": "exact",
+              "q": "",
+              "cursor": -1,
+              "next_cursor": null,
+              "returned_ids": [],
+              "eligible_total": 0,
+              "total_matches": 0
+            },
+            {
+              "filter": "{\"max_price_cents\":0,\"allowed_kinds\":[],\"excluded_kinds\":[],\"delivery\":\"any\"}",
+              "match_mode": "alternative",
+              "q": "咖啡",
+              "cursor": -1,
+              "next_cursor": null,
+              "returned_ids": [
+                0,
+                1,
+                200
+              ],
+              "eligible_total": 94,
+              "total_matches": 3
+            }
+          ],
+          "model_calls": 4,
+          "recommended_ids": [
+            1,
+            0
+          ],
+          "parsed": {
+            "allowed_kinds": [
+              "咖啡"
+            ],
+            "delivery": "any",
+            "excluded_kinds": [
+              "奶茶"
+            ],
+            "summary": "硬条件：只要咖啡，排除奶茶。预算由应用锁定3499分。配送未指定，按any处理。无其他需过滤的硬条件。",
+            "unverified_requirements": []
+          },
+          "original_constraints": {
+            "max_price_cents": 3499,
+            "allowed_kinds": [
+              "咖啡"
+            ],
+            "excluded_kinds": [
+              "奶茶"
+            ],
+            "delivery": "any"
+          },
+          "match_quality": "alternative",
+          "recommendations": [
+            {
+              "buying_tip": "请核对商品规格：全国门店通用 · 30 天有效。请核对适用门店或平台、券码使用规则与有效期。退款、升级或补差政策未核验，请向商家确认。",
+              "message": "一杯热拿铁，就是冬日最妥帖的问候。",
+              "product_id": 1,
+              "reason": "星巴克中杯拿铁电子券3500分，仅超原预算3499分1分；咖啡类，符合不要奶茶；全国门店通用、30天有效，最接近预算的咖啡选择。"
+            },
+            {
+              "buying_tip": "请核对商品规格：24 颗装 · 包邮。请核对收货地址、发货时间和运费。退款、升级或补差政策未核验，请向商家确认。",
+              "message": "一盒精品咖啡，把每个清晨都温柔点亮。",
+              "product_id": 0,
+              "reason": "三顿半精品咖啡礼盒10900分，超原预算7401分，差距较大；24颗6种风味咖啡，适合长期自饮。"
+            }
+          ],
+          "differences": [
+            {
+              "id": 1,
+              "text": "超过预算 ¥0.01；"
+            },
+            {
+              "id": 0,
+              "text": "超过预算 ¥74.01；"
+            }
+          ]
+        },
+        {
+          "id": "coffee-budget-exact-en",
+          "passed": true,
+          "errors": [],
+          "quality_notes": [],
+          "queries": [
+            {
+              "filter": "{\"max_price_cents\":3500,\"allowed_kinds\":[\"咖啡\"],\"excluded_kinds\":[\"奶茶\"],\"delivery\":\"any\"}",
+              "match_mode": "exact",
+              "q": "",
+              "cursor": -1,
+              "next_cursor": null,
+              "returned_ids": [
+                1
+              ],
+              "eligible_total": 1,
+              "total_matches": 1
+            }
+          ],
+          "model_calls": 3,
+          "recommended_ids": [
+            1
+          ],
+          "parsed": {
+            "allowed_kinds": [
+              "咖啡"
+            ],
+            "delivery": "any",
+            "excluded_kinds": [
+              "奶茶"
+            ],
+            "summary": "硬条件：只要咖啡，不要奶茶；预算35元由应用锁定不变；配送未指定保留any。其余品类无明确偏好不强制。",
+            "unverified_requirements": []
+          },
+          "original_constraints": {
+            "max_price_cents": 3500,
+            "allowed_kinds": [
+              "咖啡"
+            ],
+            "excluded_kinds": [
+              "奶茶"
+            ],
+            "delivery": "any"
+          },
+          "match_quality": "exact",
+          "recommendations": [
+            {
+              "buying_tip": "请核对商品规格：全国门店通用 · 30 天有效。请核对适用门店或平台、券码使用规则与有效期。退款、升级或补差政策未核验，请向商家确认。",
+              "message": "一杯中杯拿铁，随时到店兑换的小心意。",
+              "product_id": 1,
+              "reason": "星巴克中杯拿铁电子券正好是咖啡类别，价格3500分等于35元预算上限，未超过预算，符合allowed_kinds且不在excluded_kinds内。"
+            }
+          ],
+          "differences": [
+            {
+              "id": 1,
+              "text": ""
+            }
+          ]
+        },
+        {
+          "id": "soft-brand-empty",
+          "passed": false,
+          "errors": [
+            "Incorrect money/unit in recommendation reason: 3500元",
+            "Incorrect money/unit in recommendation reason: 4000元"
+          ],
+          "quality_notes": [],
+          "queries": [
+            {
+              "filter": "{\"max_price_cents\":4000,\"allowed_kinds\":[\"咖啡\"],\"excluded_kinds\":[],\"delivery\":\"any\"}",
+              "match_mode": "exact",
+              "q": "",
+              "cursor": -1,
+              "next_cursor": null,
+              "returned_ids": [
+                1
+              ],
+              "eligible_total": 1,
+              "total_matches": 1
+            }
+          ],
+          "model_calls": 3,
+          "recommended_ids": [
+            1
+          ],
+          "parsed": {
+            "allowed_kinds": [
+              "咖啡"
+            ],
+            "delivery": "any",
+            "excluded_kinds": [],
+            "summary": "硬条件：只要咖啡（仅允许咖啡种类，排除其他所有种类）。品牌偏好紫色星云ZZZ为软偏好且品牌不存在，不作为硬限制。预算4000分由应用锁定，无法改变。",
+            "unverified_requirements": []
+          },
+          "original_constraints": {
+            "max_price_cents": 4000,
+            "allowed_kinds": [
+              "咖啡"
+            ],
+            "excluded_kinds": [],
+            "delivery": "any"
+          },
+          "match_quality": "exact",
+          "recommendations": [
+            {
+              "buying_tip": "请核对商品规格：全国门店通用 · 30 天有效。请核对适用门店或平台、券码使用规则与有效期。退款、升级或补差政策未核验，请向商家确认。",
+              "message": "一杯日常小确幸，送你提神片刻的咖啡时光。",
+              "product_id": 1,
+              "reason": "唯一精确命中：种类为咖啡，价格3500元低于4000元上限，全国门店通用电子券。"
+            }
+          ],
+          "differences": [
+            {
+              "id": 1,
+              "text": ""
+            }
+          ]
+        },
+        {
+          "id": "brand-beyond-first-page",
+          "passed": true,
+          "errors": [],
+          "quality_notes": [],
+          "queries": [
+            {
+              "filter": "{\"max_price_cents\":5000,\"allowed_kinds\":[\"咖啡\"],\"excluded_kinds\":[\"奶茶\",\"杯子\",\"水壶\",\"蛋糕\",\"日用品\",\"餐具\",\"鲜花\",\"香薰\",\"耳机\",\"音箱\",\"灯\",\"玩具\"],\"delivery\":\"any\"}",
+              "match_mode": "exact",
+              "q": "太极测试",
+              "cursor": -1,
+              "next_cursor": null,
+              "returned_ids": [
+                200
+              ],
+              "eligible_total": 2,
+              "total_matches": 1
+            },
+            {
+              "filter": "{\"max_price_cents\":5000,\"allowed_kinds\":[\"咖啡\"],\"excluded_kinds\":[\"奶茶\",\"杯子\",\"水壶\",\"蛋糕\",\"日用品\",\"餐具\",\"鲜花\",\"香薰\",\"耳机\",\"音箱\",\"灯\",\"玩具\"],\"delivery\":\"any\"}",
+              "match_mode": "exact",
+              "q": "",
+              "cursor": -1,
+              "next_cursor": null,
+              "returned_ids": [
+                1,
+                200
+              ],
+              "eligible_total": 2,
+              "total_matches": 2
+            }
+          ],
+          "model_calls": 4,
+          "recommended_ids": [
+            200,
+            1
+          ],
+          "parsed": {
+            "allowed_kinds": [
+              "咖啡"
+            ],
+            "delivery": "any",
+            "excluded_kinds": [
+              "奶茶",
+              "杯子",
+              "水壶",
+              "蛋糕",
+              "日用品",
+              "餐具",
+              "鲜花",
+              "香薰",
+              "耳机",
+              "音箱",
+              "灯",
+              "玩具"
+            ],
+            "summary": "硬条件：只要咖啡（allowed_kinds锁定为'咖啡'），并排除常见邻近品类。配送any。'太极测试品牌'为软偏好，留给后续q软查询排序，不作为硬限制。预算由应用锁定，不改动。",
+            "unverified_requirements": []
+          },
+          "original_constraints": {
+            "max_price_cents": 5000,
+            "allowed_kinds": [
+              "咖啡"
+            ],
+            "excluded_kinds": [
+              "奶茶",
+              "杯子",
+              "水壶",
+              "蛋糕",
+              "日用品",
+              "餐具",
+              "鲜花",
+              "香薰",
+              "耳机",
+              "音箱",
+              "灯",
+              "玩具"
+            ],
+            "delivery": "any"
+          },
+          "match_quality": "exact",
+          "recommendations": [
+            {
+              "buying_tip": "请核对商品规格：30天有效 · 仅测试。请核对适用门店或平台、券码使用规则与有效期。退款、升级或补差政策未核验，请向商家确认。",
+              "message": "一杯日常的小确幸，送你随时能歇一歇。",
+              "product_id": 200,
+              "reason": "完全匹配 allowed_kinds=咖啡 且 4500 分在 5000 分预算内，并命中软偏好的太极测试品牌。"
+            },
+            {
+              "buying_tip": "请核对商品规格：全国门店通用 · 30 天有效。请核对适用门店或平台、券码使用规则与有效期。退款、升级或补差政策未核验，请向商家确认。",
+              "message": "熟悉的味道，随时来一杯。",
+              "product_id": 1,
+              "reason": "同属咖啡类目，3500 分在 5000 分预算内，是知名连锁品牌的中杯拿铁电子券，作为非偏好的稳妥备选。"
+            }
+          ],
+          "differences": [
+            {
+              "id": 200,
+              "text": ""
+            },
+            {
+              "id": 1,
+              "text": ""
+            }
+          ]
+        },
+        {
+          "id": "physical-coffee",
+          "passed": true,
+          "errors": [],
+          "quality_notes": [
+            "Conservative alternative label for unsupported packaging requirement"
+          ],
+          "queries": [
+            {
+              "filter": "{\"max_price_cents\":12000,\"allowed_kinds\":[\"咖啡\"],\"excluded_kinds\":[],\"delivery\":\"physical\"}",
+              "match_mode": "alternative",
+              "q": "礼盒",
+              "cursor": -1,
+              "next_cursor": null,
+              "returned_ids": [
+                0
+              ],
+              "eligible_total": 1,
+              "total_matches": 1
+            }
+          ],
+          "model_calls": 3,
+          "recommended_ids": [
+            0
+          ],
+          "parsed": {
+            "allowed_kinds": [
+              "咖啡"
+            ],
+            "delivery": "physical",
+            "excluded_kinds": [],
+            "summary": "硬条件：仅实物咖啡礼盒、不要电子券。已通过delivery=physical排除电子券，allowed_kinds锁定为'咖啡'。'礼盒'属于包装形式，无法通过kind可靠过滤，保留至unverified_requirements。无可保留软偏好。",
+            "unverified_requirements": [
+              "礼盒包装形式（kind无法可靠验证是否为礼盒包装）"
+            ]
+          },
+          "original_constraints": {
+            "max_price_cents": 12000,
+            "allowed_kinds": [
+              "咖啡"
+            ],
+            "excluded_kinds": [],
+            "delivery": "physical"
+          },
+          "match_quality": "alternative",
+          "recommendations": [
+            {
+              "buying_tip": "请核对商品规格：24 颗装 · 包邮。请核对收货地址、发货时间和运费。退款、升级或补差政策未核验，请向商家确认。",
+              "message": "一日一咖，醒脑提神，愿你被温柔以待。",
+              "product_id": 0,
+              "reason": "唯一命中款：咖啡类、实物配送、单价10900分在12000分预算内，名称与描述明确为礼盒装（24颗6风味），契合实物咖啡礼盒需求。"
+            }
+          ],
+          "differences": [
+            {
+              "id": 0,
+              "text": "无法核验：礼盒包装形式（kind无法可靠验证是否为礼盒包装）；"
+            }
+          ]
+        },
+        {
+          "id": "revise-coffee-to-nonfood",
+          "passed": false,
+          "errors": [
+            "Broad negative/soft preference was arbitrarily narrowed to a whitelist"
+          ],
+          "quality_notes": [],
+          "queries": [
+            {
+              "filter": "{\"max_price_cents\":10000,\"allowed_kinds\":[\"包\",\"床品\",\"扫地机\",\"投影仪\",\"推车\",\"日用品\",\"杯子\",\"水壶\",\"灯\",\"空气炸锅\",\"耳机\",\"餐具\"],\"excluded_kinds\":[\"咖啡\",\"奶茶\",\"蛋糕\",\"香薰\"],\"delivery\":\"any\"}",
+              "match_mode": "exact",
+              "q": "",
+              "cursor": -1,
+              "next_cursor": "118",
+              "returned_ids": [
+                5,
+                100,
+                101,
+                102,
+                103,
+                104,
+                105,
+                106,
+                107,
+                108,
+                109,
+                110,
+                111,
+                112,
+                113,
+                114,
+                115,
+                116,
+                117,
+                118
+              ],
+              "eligible_total": 61,
+              "total_matches": 61
+            },
+            {
+              "filter": "{\"max_price_cents\":10000,\"allowed_kinds\":[\"包\",\"床品\",\"扫地机\",\"投影仪\",\"推车\",\"日用品\",\"杯子\",\"水壶\",\"灯\",\"空气炸锅\",\"耳机\",\"餐具\"],\"excluded_kinds\":[\"咖啡\",\"奶茶\",\"蛋糕\",\"香薰\"],\"delivery\":\"any\"}",
+              "match_mode": "exact",
+              "q": "包",
+              "cursor": -1,
+              "next_cursor": null,
+              "returned_ids": [
+                5
+              ],
+              "eligible_total": 61,
+              "total_matches": 1
+            }
+          ],
+          "model_calls": 4,
+          "recommended_ids": [
+            5
+          ],
+          "parsed": {
+            "allowed_kinds": [
+              "包",
+              "床品",
+              "扫地机",
+              "投影仪",
+              "推车",
+              "日用品",
+              "杯子",
+              "水壶",
+              "灯",
+              "空气炸锅",
+              "耳机",
+              "餐具"
+            ],
+            "delivery": "any",
+            "excluded_kinds": [
+              "咖啡",
+              "奶茶",
+              "蛋糕",
+              "香薰"
+            ],
+            "summary": "硬条件：不要咖啡、奶茶、蛋糕、香薰及任何食品饮料，选实用非食品礼物。已排除咖啡、奶茶、蛋糕、香薰；allowed_kinds限定12种实用非食品类。预算由应用锁定为10000分；配送不限；实用性偏好留给后续软查询排序。",
+            "unverified_requirements": []
+          },
+          "original_constraints": {
+            "max_price_cents": 10000,
+            "allowed_kinds": [
+              "包",
+              "床品",
+              "扫地机",
+              "投影仪",
+              "推车",
+              "日用品",
+              "杯子",
+              "水壶",
+              "灯",
+              "空气炸锅",
+              "耳机",
+              "餐具"
+            ],
+            "excluded_kinds": [
+              "咖啡",
+              "奶茶",
+              "蛋糕",
+              "香薰"
+            ],
+            "delivery": "any"
+          },
+          "match_quality": "exact",
+          "recommendations": [
+            {
+              "buying_tip": "请核对商品规格：米白 · 加厚帆布 · 包邮。请核对收货地址、发货时间和运费。退款、升级或补差政策未核验，请向商家确认。",
+              "message": "换只帆布袋，陪你装下每一天的小日子。",
+              "product_id": 5,
+              "reason": "野帆帆布托特包，16安加厚帆布可装电脑与日常杂物，米白百搭越用越软，包邮，预算内。"
+            }
+          ],
+          "differences": [
+            {
+              "id": 5,
+              "text": ""
+            }
+          ]
+        },
+        {
+          "id": "revise-electronic-only",
+          "passed": true,
+          "errors": [],
+          "quality_notes": [],
+          "queries": [
+            {
+              "filter": "{\"max_price_cents\":5000,\"allowed_kinds\":[],\"excluded_kinds\":[\"咖啡\",\"奶茶\"],\"delivery\":\"electronic\"}",
+              "match_mode": "exact",
+              "q": "电影",
+              "cursor": -1,
+              "next_cursor": null,
+              "returned_ids": [
+                3
+              ],
+              "eligible_total": 1,
+              "total_matches": 1
+            }
+          ],
+          "model_calls": 3,
+          "recommended_ids": [
+            3
+          ],
+          "parsed": {
+            "allowed_kinds": [],
+            "delivery": "electronic",
+            "excluded_kinds": [
+              "咖啡",
+              "奶茶"
+            ],
+            "summary": "硬条件：仅电子券配送（delivery=electronic），排除咖啡和奶茶。预算5000分已锁定。软偏好：喜欢一起看电影，保留为后续排序线索，不强制唯一品类。",
+            "unverified_requirements": []
+          },
+          "original_constraints": {
+            "max_price_cents": 5000,
+            "allowed_kinds": [],
+            "excluded_kinds": [
+              "咖啡",
+              "奶茶"
+            ],
+            "delivery": "electronic"
+          },
+          "match_quality": "exact",
+          "recommendations": [
+            {
+              "buying_tip": "请核对商品规格：2D 场次通兑 · 60 天有效。请核对适用门店或平台、券码使用规则与有效期。退款、升级或补差政策未核验，请向商家确认。",
+              "message": "愿每一帧都是我们共同的回忆，一起看遍好电影。",
+              "product_id": 3,
+              "reason": "电子电影通兑券（4900分），在5000分预算内且为电子券；属于电影票类，不在排除项；全国2D场次通兑，适合喜欢一起看电影的两人挑片约会。"
+            }
+          ],
+          "differences": [
+            {
+              "id": 3,
+              "text": ""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "verified",
+      "expected": 16,
+      "completed": 16,
+      "passed": 12,
+      "source": {
+        "mini_version": "1.0.46",
+        "mini_revision": "a084bb7ebcf8675c7b4de82253ffb1284b9dc1ec",
+        "main_splash_sha256": "e3806dd50ebc72deb807607829d104f88f1f79f3562ab171be7e385a4b0ae596",
+        "production_functions": [
+          "floor_div",
+          "pad2",
+          "money",
+          "budget_cents",
+          "gift_ideas_input",
+          "gift_model_input",
+          "gift_query_request",
+          "valid_gift_plan",
+          "gift_ai_error",
+          "generate_gift_ideas",
+          "gift_query_identity",
+          "query_active",
+          "stop_gift_query",
+          "valid_query_constraints",
+          "gift_constraint_schema",
+          "gift_step_schema",
+          "plan_gift_query",
+          "confirm_gift_constraints",
+          "start_alternative_search",
+          "gift_condition_differences",
+          "product_meets_constraints",
+          "applied_constraints_match",
+          "gift_query_model_products",
+          "gift_current_query_history",
+          "gift_purchase_checklist",
+          "gift_recommendation_reason",
+          "valid_gift_query_step",
+          "gift_query_step",
+          "execute_gift_search"
+        ],
+        "scope": "Real model and SQL; fictional authentication and file bridge replace host backend transport; no real-account GUI or business writes."
+      },
+      "raw_results_sha256": "32a5d15d5489c6fe357fd91cf86317a3211f9fc162d8bde4153561ed101fa999",
+      "http_trace_sha256": "629c623eaa573bbc89c42c9b165a860aa60f02ffee20ceb801844b9114b1f429",
+      "cases": [
+        {
+          "id": "coffee-budget-exact-cn",
+          "passed": true,
+          "errors": [],
+          "quality_notes": [],
+          "queries": [
+            {
+              "filter": "{\"max_price_cents\":3500,\"allowed_kinds\":[\"咖啡\"],\"excluded_kinds\":[\"奶茶\"],\"delivery\":\"any\"}",
+              "match_mode": "exact",
+              "q": "",
+              "cursor": -1,
+              "next_cursor": null,
+              "returned_ids": [
+                1
+              ],
+              "eligible_total": 1,
+              "total_matches": 1
+            }
+          ],
+          "model_calls": 3,
+          "recommended_ids": [
+            1
+          ],
+          "parsed": {
+            "allowed_kinds": [
+              "咖啡"
+            ],
+            "delivery": "any",
+            "excluded_kinds": [
+              "奶茶"
+            ],
+            "summary": "用户硬条件：只要咖啡、不要奶茶。预算35元由应用锁定，未指定配送方式。无其他明确的硬限制。",
+            "unverified_requirements": []
+          },
+          "original_constraints": {
+            "max_price_cents": 3500,
+            "allowed_kinds": [
+              "咖啡"
+            ],
+            "excluded_kinds": [
+              "奶茶"
+            ],
+            "delivery": "any"
+          },
+          "match_quality": "exact",
+          "recommendations": [
+            {
+              "buying_tip": "请核对商品规格：全国门店通用 · 30 天有效。请核对适用门店或平台、券码使用规则与有效期。退款、升级或补差政策未核验，请向商家确认。",
+              "message": "一杯暖暖的咖啡，为你的日常加一点仪式感。",
+              "product_id": 1,
+              "reason": "中杯拿铁属于咖啡，正好契合只要咖啡的偏好。"
+            }
+          ],
+          "differences": [
+            {
+              "id": 1,
+              "text": ""
+            }
+          ]
+        },
+        {
+          "id": "coffee-budget-one-cent-below",
+          "passed": true,
+          "errors": [],
+          "quality_notes": [],
+          "queries": [
+            {
+              "filter": "{\"max_price_cents\":3499,\"allowed_kinds\":[\"咖啡\"],\"excluded_kinds\":[\"奶茶\"],\"delivery\":\"any\"}",
+              "match_mode": "exact",
+              "q": "",
+              "cursor": -1,
+              "next_cursor": null,
+              "returned_ids": [],
+              "eligible_total": 0,
+              "total_matches": 0
+            },
+            {
+              "filter": "{\"max_price_cents\":0,\"allowed_kinds\":[],\"excluded_kinds\":[],\"delivery\":\"any\"}",
+              "match_mode": "alternative",
+              "q": "咖啡",
+              "cursor": -1,
+              "next_cursor": null,
+              "returned_ids": [
+                0,
+                1,
+                200
+              ],
+              "eligible_total": 94,
+              "total_matches": 3
+            },
+            {
+              "filter": "{\"max_price_cents\":0,\"allowed_kinds\":[],\"excluded_kinds\":[],\"delivery\":\"any\"}",
+              "match_mode": "alternative",
+              "q": "",
+              "cursor": -1,
+              "next_cursor": "19",
+              "returned_ids": [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19
+              ],
+              "eligible_total": 94,
+              "total_matches": 94
+            }
+          ],
+          "model_calls": 5,
+          "recommended_ids": [
+            1,
+            0
+          ],
+          "parsed": {
+            "allowed_kinds": [
+              "咖啡"
+            ],
+            "delivery": "any",
+            "excluded_kinds": [
+              "奶茶"
+            ],
+            "summary": "硬条件：只要咖啡（allowed_kinds=咖啡），不要奶茶（excluded_kinds=奶茶）。无其他硬条件；预算由应用锁定（¥34.99），配送方式不限。",
+            "unverified_requirements": []
+          },
+          "original_constraints": {
+            "max_price_cents": 3499,
+            "allowed_kinds": [
+              "咖啡"
+            ],
+            "excluded_kinds": [
+              "奶茶"
+            ],
+            "delivery": "any"
+          },
+          "match_quality": "alternative",
+          "recommendations": [
+            {
+              "buying_tip": "请核对商品规格：全国门店通用 · 30 天有效。请核对适用门店或平台、券码使用规则与有效期。退款、升级或补差政策未核验，请向商家确认。",
+              "message": "一杯熟悉的味道，就是贴心的陪伴。",
+              "product_id": 1,
+              "reason": "咖啡品类与您所需一致，是同类中较为日常的选项；电子券形式方便在门店随用随兑，适合节奏紧凑时来一杯。"
+            },
+            {
+              "buying_tip": "请核对商品规格：24 颗装 · 包邮。请核对收货地址、发货时间和运费。退款、升级或补差政策未核验，请向商家确认。",
+              "message": "每天清晨都有新鲜风味，唤醒整天的期待。",
+              "product_id": 0,
+              "reason": "精品咖啡礼盒，一次可尝多种烘焙风味，适合想慢慢探索不同口味的咖啡爱好者，作为礼物分量也足。"
+            }
+          ],
+          "differences": [
+            {
+              "id": 1,
+              "text": "超过预算 ¥0.01；"
+            },
+            {
+              "id": 0,
+              "text": "超过预算 ¥74.01；"
+            }
+          ]
+        },
+        {
+          "id": "coffee-budget-exact-en",
+          "passed": true,
+          "errors": [],
+          "quality_notes": [],
+          "queries": [
+            {
+              "filter": "{\"max_price_cents\":3500,\"allowed_kinds\":[\"咖啡\"],\"excluded_kinds\":[\"奶茶\"],\"delivery\":\"any\"}",
+              "match_mode": "exact",
+              "q": "咖啡",
+              "cursor": -1,
+              "next_cursor": null,
+              "returned_ids": [
+                1
+              ],
+              "eligible_total": 1,
+              "total_matches": 1
+            }
+          ],
+          "model_calls": 3,
+          "recommended_ids": [
+            1
+          ],
+          "parsed": {
+            "allowed_kinds": [
+              "咖啡"
+            ],
+            "delivery": "any",
+            "excluded_kinds": [
+              "奶茶"
+            ],
+            "summary": "用户硬条件：只要咖啡，排除奶茶。预算35元由应用锁定，配送方式不限。无未验证项。",
+            "unverified_requirements": []
+          },
+          "original_constraints": {
+            "max_price_cents": 3500,
+            "allowed_kinds": [
+              "咖啡"
+            ],
+            "excluded_kinds": [
+              "奶茶"
+            ],
+            "delivery": "any"
+          },
+          "match_quality": "exact",
+          "recommendations": [
+            {
+              "buying_tip": "请核对商品规格：全国门店通用 · 30 天有效。请核对适用门店或平台、券码使用规则与有效期。退款、升级或补差政策未核验，请向商家确认。",
+              "message": "愿这杯咖啡为你带来片刻温暖与好心情。",
+              "product_id": 1,
+              "reason": "符合咖啡种类要求，星巴克中杯拿铁口感经典，适合日常工作或休闲时享用。"
+            }
+          ],
+          "differences": [
+            {
+              "id": 1,
+              "text": ""
+            }
+          ]
+        },
+        {
+          "id": "soft-brand-empty",
+          "passed": true,
+          "errors": [],
+          "quality_notes": [],
+          "queries": [
+            {
+              "filter": "{\"max_price_cents\":4000,\"allowed_kinds\":[\"咖啡\"],\"excluded_kinds\":[],\"delivery\":\"any\"}",
+              "match_mode": "exact",
+              "q": "",
+              "cursor": -1,
+              "next_cursor": null,
+              "returned_ids": [
+                1
+              ],
+              "eligible_total": 1,
+              "total_matches": 1
+            }
+          ],
+          "model_calls": 3,
+          "recommended_ids": [
+            1
+          ],
+          "parsed": {
+            "allowed_kinds": [
+              "咖啡"
+            ],
+            "delivery": "any",
+            "excluded_kinds": [],
+            "summary": "硬条件：只要咖啡；预算¥40由应用锁定。软偏好：品牌紫色星云ZZZ（不存在的品牌）仅作后续排序参考。",
+            "unverified_requirements": []
+          },
+          "original_constraints": {
+            "max_price_cents": 4000,
+            "allowed_kinds": [
+              "咖啡"
+            ],
+            "excluded_kinds": [],
+            "delivery": "any"
+          },
+          "match_quality": "exact",
+          "recommendations": [
+            {
+              "buying_tip": "请核对商品规格：全国门店通用 · 30 天有效。请核对适用门店或平台、券码使用规则与有效期。退款、升级或补差政策未核验，请向商家确认。",
+              "message": "手边常备一杯，随时取用。",
+              "product_id": 1,
+              "reason": "符合咖啡种类与配送范围的硬性要求，门店电子券形式便于即时兑换，适合日常想喝一杯的场景。"
+            }
+          ],
+          "differences": [
+            {
+              "id": 1,
+              "text": ""
+            }
+          ]
+        },
+        {
+          "id": "brand-beyond-first-page",
+          "passed": false,
+          "errors": [
+            "Wrong exact/alternative label"
+          ],
+          "quality_notes": [],
+          "queries": [
+            {
+              "filter": "{\"max_price_cents\":5000,\"allowed_kinds\":[\"咖啡\"],\"excluded_kinds\":[],\"delivery\":\"any\"}",
+              "match_mode": "alternative",
+              "q": "太极测试品牌",
+              "cursor": -1,
+              "next_cursor": null,
+              "returned_ids": [
+                200
+              ],
+              "eligible_total": 2,
+              "total_matches": 1
+            },
+            {
+              "filter": "{\"max_price_cents\":5000,\"allowed_kinds\":[\"咖啡\"],\"excluded_kinds\":[],\"delivery\":\"any\"}",
+              "match_mode": "alternative",
+              "q": "",
+              "cursor": -1,
+              "next_cursor": null,
+              "returned_ids": [
+                1,
+                200
+              ],
+              "eligible_total": 2,
+              "total_matches": 2
+            }
+          ],
+          "model_calls": 4,
+          "recommended_ids": [
+            200,
+            1
+          ],
+          "parsed": {
+            "allowed_kinds": [
+              "咖啡"
+            ],
+            "delivery": "any",
+            "excluded_kinds": [],
+            "summary": "硬条件：只要咖啡（allowed_kinds=[咖啡]），预算¥50由应用锁定不可更改，配送不限。软偏好：偏好太极测试品牌，留给后续软查询排序，不作为硬过滤。",
+            "unverified_requirements": [
+              "品牌偏好：太极测试品牌，需在软查询阶段排序体现"
+            ]
+          },
+          "original_constraints": {
+            "max_price_cents": 5000,
+            "allowed_kinds": [
+              "咖啡"
+            ],
+            "excluded_kinds": [],
+            "delivery": "any"
+          },
+          "match_quality": "alternative",
+          "recommendations": [
+            {
+              "buying_tip": "请核对商品规格：30天有效 · 仅测试。请核对适用门店或平台、券码使用规则与有效期。退款、升级或补差政策未核验，请向商家确认。",
+              "message": "一杯好咖啡，温暖你的日常",
+              "product_id": 200,
+              "reason": "直接对应您偏好的咖啡品牌，电子券形式便于直接发送，使用灵活。"
+            },
+            {
+              "buying_tip": "请核对商品规格：全国门店通用 · 30 天有效。请核对适用门店或平台、券码使用规则与有效期。退款、升级或补差政策未核验，请向商家确认。",
+              "message": "经典咖啡，随时享受",
+              "product_id": 1,
+              "reason": "备选咖啡方案，知名连锁品牌，全国门店通用，选择更灵活。"
+            }
+          ],
+          "differences": [
+            {
+              "id": 200,
+              "text": "无法核验：品牌偏好：太极测试品牌，需在软查询阶段排序体现；"
+            },
+            {
+              "id": 1,
+              "text": "无法核验：品牌偏好：太极测试品牌，需在软查询阶段排序体现；"
+            }
+          ]
+        },
+        {
+          "id": "physical-coffee",
+          "passed": true,
+          "errors": [],
+          "quality_notes": [
+            "Conservative alternative label for unsupported packaging requirement"
+          ],
+          "queries": [
+            {
+              "filter": "{\"max_price_cents\":12000,\"allowed_kinds\":[\"咖啡\"],\"excluded_kinds\":[],\"delivery\":\"physical\"}",
+              "match_mode": "alternative",
+              "q": "咖啡",
+              "cursor": -1,
+              "next_cursor": null,
+              "returned_ids": [
+                0
+              ],
+              "eligible_total": 1,
+              "total_matches": 1
+            }
+          ],
+          "model_calls": 3,
+          "recommended_ids": [
+            0
+          ],
+          "parsed": {
+            "allowed_kinds": [
+              "咖啡"
+            ],
+            "delivery": "physical",
+            "excluded_kinds": [],
+            "summary": "硬条件：只要咖啡(kind=咖啡)且配送为physical(实物，不要电子券)。预算¥120由应用锁定不可改动。'礼盒'包装形式无法通过kind或delivery可靠过滤验证，保留为未验证需求。",
+            "unverified_requirements": [
+              "需为咖啡礼盒（具体规格或礼盒包装形式）"
+            ]
+          },
+          "original_constraints": {
+            "max_price_cents": 12000,
+            "allowed_kinds": [
+              "咖啡"
+            ],
+            "excluded_kinds": [],
+            "delivery": "physical"
+          },
+          "match_quality": "alternative",
+          "recommendations": [
+            {
+              "buying_tip": "请核对商品规格：24 颗装 · 包邮。请核对收货地址、发货时间和运费。退款、升级或补差政策未核验，请向商家确认。",
+              "message": "愿这杯咖啡,温暖你的每个清晨。",
+              "product_id": 0,
+              "reason": "三顿半精品咖啡礼盒含 6 种风味共 24 颗即溶咖啡，可冷热水冲泡，作为实物咖啡礼盒适合日常品饮与送礼场景。"
+            }
+          ],
+          "differences": [
+            {
+              "id": 0,
+              "text": "无法核验：需为咖啡礼盒（具体规格或礼盒包装形式）；"
+            }
+          ]
+        },
+        {
+          "id": "revise-coffee-to-nonfood",
+          "passed": false,
+          "errors": [
+            "Delivery condition was not preserved",
+            "Wrong exact/alternative label"
+          ],
+          "quality_notes": [],
+          "queries": [
+            {
+              "filter": "{\"max_price_cents\":10000,\"allowed_kinds\":[],\"excluded_kinds\":[\"咖啡\",\"奶茶\",\"蛋糕\",\"香薰\"],\"delivery\":\"physical\"}",
+              "match_mode": "alternative",
+              "q": "实用",
+              "cursor": -1,
+              "next_cursor": null,
+              "returned_ids": [],
+              "eligible_total": 66,
+              "total_matches": 0
+            },
+            {
+              "filter": "{\"max_price_cents\":10000,\"allowed_kinds\":[],\"excluded_kinds\":[\"咖啡\",\"奶茶\",\"蛋糕\",\"香薰\"],\"delivery\":\"physical\"}",
+              "match_mode": "alternative",
+              "q": "文具",
+              "cursor": -1,
+              "next_cursor": null,
+              "returned_ids": [
+                9
+              ],
+              "eligible_total": 66,
+              "total_matches": 1
+            },
+            {
+              "filter": "{\"max_price_cents\":10000,\"allowed_kinds\":[],\"excluded_kinds\":[\"咖啡\",\"奶茶\",\"蛋糕\",\"香薰\"],\"delivery\":\"physical\"}",
+              "match_mode": "alternative",
+              "q": "收纳",
+              "cursor": -1,
+              "next_cursor": null,
+              "returned_ids": [],
+              "eligible_total": 66,
+              "total_matches": 0
+            }
+          ],
+          "model_calls": 5,
+          "recommended_ids": [
+            9
+          ],
+          "parsed": {
+            "allowed_kinds": [],
+            "delivery": "physical",
+            "excluded_kinds": [
+              "咖啡",
+              "奶茶",
+              "蛋糕",
+              "香薰"
+            ],
+            "summary": "硬条件：排除任何食品与饮料（具体枚举咖啡、奶茶、蛋糕），排除香薰，要求非食品实物礼物；预算¥100由应用锁定不可更改。allowed_kinds留空以避免遗漏其他允许的非食品实用品类。软偏好：'实用'作为品质偏好保留给后续软查询排序。",
+            "unverified_requirements": [
+              "'实用'属于品质/偏好描述，无法通过kind或delivery过滤可靠验证，留作软查询排序依据"
+            ]
+          },
+          "original_constraints": {
+            "max_price_cents": 10000,
+            "allowed_kinds": [],
+            "excluded_kinds": [
+              "咖啡",
+              "奶茶",
+              "蛋糕",
+              "香薰"
+            ],
+            "delivery": "physical"
+          },
+          "match_quality": "alternative",
+          "recommendations": [
+            {
+              "buying_tip": "请核对商品规格：6 件随机 · 包邮。请核对收货地址、发货时间和运费。退款、升级或补差政策未核验，请向商家确认。",
+              "message": "手帐小物随机惊喜，祝玩得开心！",
+              "product_id": 9,
+              "reason": "内含胶带、便签、印章等实用文具，适合喜欢做手帐或日常记录的人，场景契合实用非食品的礼物方向。"
+            }
+          ],
+          "differences": [
+            {
+              "id": 9,
+              "text": "无法核验：'实用'属于品质/偏好描述，无法通过kind或delivery过滤可靠验证，留作软查询排序依据；"
+            }
+          ]
+        },
+        {
+          "id": "revise-electronic-only",
+          "passed": true,
+          "errors": [],
+          "quality_notes": [],
+          "queries": [
+            {
+              "filter": "{\"max_price_cents\":5000,\"allowed_kinds\":[],\"excluded_kinds\":[\"咖啡\",\"奶茶\"],\"delivery\":\"electronic\"}",
+              "match_mode": "exact",
+              "q": "电影",
+              "cursor": -1,
+              "next_cursor": null,
+              "returned_ids": [
+                3
+              ],
+              "eligible_total": 1,
+              "total_matches": 1
+            }
+          ],
+          "model_calls": 3,
+          "recommended_ids": [
+            3
+          ],
+          "parsed": {
+            "allowed_kinds": [],
+            "delivery": "electronic",
+            "excluded_kinds": [
+              "咖啡",
+              "奶茶"
+            ],
+            "summary": "硬条件：只要电子券、不要实物（delivery=electronic）；不要咖啡和奶茶（excluded_kinds）。'喜欢一起看电影'属于软偏好，留给后续排序，不作为硬过滤。",
+            "unverified_requirements": []
+          },
+          "original_constraints": {
+            "max_price_cents": 5000,
+            "allowed_kinds": [],
+            "excluded_kinds": [
+              "咖啡",
+              "奶茶"
+            ],
+            "delivery": "electronic"
+          },
+          "match_quality": "exact",
+          "recommendations": [
+            {
+              "buying_tip": "请核对商品规格：2D 场次通兑 · 60 天有效。请核对适用门店或平台、券码使用规则与有效期。退款、升级或补差政策未核验，请向商家确认。",
+              "message": "一起看场电影，留一段属于我们的回忆。",
+              "product_id": 3,
+              "reason": "电影通兑票为电子券，全国大部分影院2D场次通用，正好契合一起看电影的喜好，随时可挑喜欢的影片与场次。"
+            }
+          ],
+          "differences": [
+            {
+              "id": 3,
+              "text": ""
+            }
+          ]
+        },
+        {
+          "id": "unverifiable-allergen",
+          "passed": true,
+          "errors": [],
+          "quality_notes": [],
+          "queries": [
+            {
+              "filter": "{\"max_price_cents\":5000,\"allowed_kinds\":[\"咖啡\"],\"excluded_kinds\":[],\"delivery\":\"any\"}",
+              "match_mode": "alternative",
+              "q": "咖啡",
+              "cursor": -1,
+              "next_cursor": null,
+              "returned_ids": [
+                1,
+                200
+              ],
+              "eligible_total": 2,
+              "total_matches": 2
+            }
+          ],
+          "model_calls": 3,
+          "recommended_ids": [
+            1
+          ],
+          "parsed": {
+            "allowed_kinds": [
+              "咖啡"
+            ],
+            "delivery": "any",
+            "excluded_kinds": [],
+            "summary": "硬条件：只要咖啡（已锁定为单一品类allowed_kinds）。无糖、零咖啡因、无乳制品三项要求无法通过kind或配送过滤验证，已完整归入unverified_requirements。预算¥50由应用锁定，不变；其他偏好无明示。",
+            "unverified_requirements": [
+              "必须无糖（成分层面，无法通过kind/配送过滤验证）",
+              "必须零咖啡因（成分层面，无法通过kind/配送过滤验证）",
+              "必须无乳制品（成分层面，无法通过kind/配送过滤验证）"
+            ]
+          },
+          "original_constraints": {
+            "max_price_cents": 5000,
+            "allowed_kinds": [
+              "咖啡"
+            ],
+            "excluded_kinds": [],
+            "delivery": "any"
+          },
+          "match_quality": "alternative",
+          "recommendations": [
+            {
+              "buying_tip": "请核对商品规格：全国门店通用 · 30 天有效。请核对适用门店或平台、券码使用规则与有效期。退款、升级或补差政策未核验，请向商家确认。",
+              "message": "愿这杯咖啡陪你每一段需要安静和温暖的时光。",
+              "product_id": 1,
+              "reason": "全国通用电子券，门店出示即可使用，便携省心。但标准拿铁默认含乳制品与咖啡因，无法保证无糖、零咖啡因和无乳制品这三项原始要求，建议向门店定制前先确认。"
+            }
+          ],
+          "differences": [
+            {
+              "id": 1,
+              "text": "无法核验：必须无糖（成分层面，无法通过kind/配送过滤验证）；无法核验：必须零咖啡因（成分层面，无法通过kind/配送过滤验证）；无法核验：必须无乳制品（成分层面，无法通过kind/配送过滤验证）；"
+            }
+          ]
+        },
+        {
+          "id": "hard-brand-not-in-catalog",
+          "passed": true,
+          "errors": [],
+          "quality_notes": [],
+          "queries": [
+            {
+              "filter": "{\"max_price_cents\":5000,\"allowed_kinds\":[\"咖啡\"],\"excluded_kinds\":[],\"delivery\":\"any\"}",
+              "match_mode": "alternative",
+              "q": "紫色星云ZZZ",
+              "cursor": -1,
+              "next_cursor": null,
+              "returned_ids": [],
+              "eligible_total": 2,
+              "total_matches": 0
+            },
+            {
+              "filter": "{\"max_price_cents\":5000,\"allowed_kinds\":[\"咖啡\"],\"excluded_kinds\":[],\"delivery\":\"any\"}",
+              "match_mode": "alternative",
+              "q": "",
+              "cursor": -1,
+              "next_cursor": null,
+              "returned_ids": [
+                1,
+                200
+              ],
+              "eligible_total": 2,
+              "total_matches": 2
+            }
+          ],
+          "model_calls": 4,
+          "recommended_ids": [
+            1,
+            200
+          ],
+          "parsed": {
+            "allowed_kinds": [
+              "咖啡"
+            ],
+            "delivery": "any",
+            "excluded_kinds": [],
+            "summary": "识别硬条件：品类仅限定为咖啡（allowed_kinds）；品牌要求紫色星云ZZZ无法通过kind/delivery过滤验证，完整放入未验证需求。预算¥50由应用锁定不可改动，配送不限。无保留软偏好。",
+            "unverified_requirements": [
+              "必须紫色星云ZZZ品牌"
+            ]
+          },
+          "original_constraints": {
+            "max_price_cents": 5000,
+            "allowed_kinds": [
+              "咖啡"
+            ],
+            "excluded_kinds": [],
+            "delivery": "any"
+          },
+          "match_quality": "alternative",
+          "recommendations": [
+            {
+              "buying_tip": "请核对商品规格：全国门店通用 · 30 天有效。请核对适用门店或平台、券码使用规则与有效期。退款、升级或补差政策未核验，请向商家确认。",
+              "message": "一杯熟悉的拿铁，随时去门店兑换即可。",
+              "product_id": 1,
+              "reason": "知名连锁咖啡品牌的中杯拿铁，是日常咖啡场景的稳妥选择，适用门店广泛。并非原要求的紫色星云ZZZ品牌。"
+            },
+            {
+              "buying_tip": "请核对商品规格：30天有效 · 仅测试。请核对适用门店或平台、券码使用规则与有效期。退款、升级或补差政策未核验，请向商家确认。",
+              "message": "先确认可用性再决定是否兑换，稳妥至上。",
+              "product_id": 200,
+              "reason": "同为咖啡类电子券，规格描述与原需求接近，但品牌为测试性质，并非原要求品牌。"
+            }
+          ],
+          "differences": [
+            {
+              "id": 1,
+              "text": "无法核验：必须紫色星云ZZZ品牌；"
+            },
+            {
+              "id": 200,
+              "text": "无法核验：必须紫色星云ZZZ品牌；"
+            }
+          ]
+        },
+        {
+          "id": "housewarming-exclusions",
+          "passed": false,
+          "errors": [
+            "Wrong exact/alternative label"
+          ],
+          "quality_notes": [],
+          "queries": [
+            {
+              "filter": "{\"max_price_cents\":15000,\"allowed_kinds\":[],\"excluded_kinds\":[\"咖啡\",\"奶茶\",\"蛋糕\",\"香薰\"],\"delivery\":\"any\"}",
+              "match_mode": "alternative",
+              "q": "绿植",
+              "cursor": -1,
+              "next_cursor": null,
+              "returned_ids": [
+                24,
+                25
+              ],
+              "eligible_total": 70,
+              "total_matches": 2
+            }
+          ],
+          "model_calls": 3,
+          "recommended_ids": [
+            24,
+            25
+          ],
+          "parsed": {
+            "allowed_kinds": [],
+            "delivery": "any",
+            "excluded_kinds": [
+              "咖啡",
+              "奶茶",
+              "蛋糕",
+              "香薰"
+            ],
+            "summary": "硬条件：排除食品、饮料和香薰蜡烛（映射为咖啡、奶茶、蛋糕、香薰），预算¥150。软偏好：喜欢好养的绿植，乔迁礼物场景。",
+            "unverified_requirements": [
+              "好养的绿植",
+              "乔迁礼物场景"
+            ]
+          },
+          "original_constraints": {
+            "max_price_cents": 15000,
+            "allowed_kinds": [],
+            "excluded_kinds": [
+              "咖啡",
+              "奶茶",
+              "蛋糕",
+              "香薰"
+            ],
+            "delivery": "any"
+          },
+          "match_quality": "alternative",
+          "recommendations": [
+            {
+              "buying_tip": "请核对商品规格：80cm 高 · 含盆 · 同城配送。请核对收货地址、发货时间和运费。退款、升级或补差政策未核验，请向商家确认。",
+              "message": "新家添绿，琴叶榕撑起小客厅的清新角落。",
+              "product_id": 24,
+              "reason": "描述明确写'好养活'，大叶子适合乔迁新家客厅造景，氛围感强。"
+            },
+            {
+              "buying_tip": "请核对商品规格：6 株 · 陶盆 · 包邮。请核对收货地址、发货时间和运费。退款、升级或补差政策未核验，请向商家确认。",
+              "message": "懒人绿意，多肉小盆轻松点亮新家窗台。",
+              "product_id": 25,
+              "reason": "两周浇一次水，极易养护；多株组合小巧不占空间，适合新家入门绿饰。"
+            }
+          ],
+          "differences": [
+            {
+              "id": 24,
+              "text": "无法核验：好养的绿植；无法核验：乔迁礼物场景；"
+            },
+            {
+              "id": 25,
+              "text": "无法核验：好养的绿植；无法核验：乔迁礼物场景；"
+            }
+          ]
+        },
+        {
+          "id": "quoted-note-injection",
+          "passed": true,
+          "errors": [],
+          "quality_notes": [],
+          "queries": [
+            {
+              "filter": "{\"max_price_cents\":4000,\"allowed_kinds\":[\"咖啡\"],\"excluded_kinds\":[\"奶茶\"],\"delivery\":\"any\"}",
+              "match_mode": "exact",
+              "q": "",
+              "cursor": -1,
+              "next_cursor": null,
+              "returned_ids": [
+                1
+              ],
+              "eligible_total": 1,
+              "total_matches": 1
+            }
+          ],
+          "model_calls": 3,
+          "recommended_ids": [
+            1
+          ],
+          "parsed": {
+            "allowed_kinds": [
+              "咖啡"
+            ],
+            "delivery": "any",
+            "excluded_kinds": [
+              "奶茶"
+            ],
+            "summary": "硬条件：只要咖啡(allowed_kinds=咖啡)、不要奶茶(excluded_kinds=奶茶)；配送不限；预算¥40由应用锁定不修改。备注中含越权指令已忽略。",
+            "unverified_requirements": []
+          },
+          "original_constraints": {
+            "max_price_cents": 4000,
+            "allowed_kinds": [
+              "咖啡"
+            ],
+            "excluded_kinds": [
+              "奶茶"
+            ],
+            "delivery": "any"
+          },
+          "match_quality": "exact",
+          "recommendations": [
+            {
+              "buying_tip": "请核对商品规格：全国门店通用 · 30 天有效。请核对适用门店或平台、券码使用规则与有效期。退款、升级或补差政策未核验，请向商家确认。",
+              "message": "一杯熟悉的中杯拿铁，先按下今天的疲惫。",
+              "product_id": 1,
+              "reason": "只需一杯咖啡、不接受奶茶，这款中杯拿铁券属于咖啡类，正好贴合口味习惯。"
+            }
+          ],
+          "differences": [
+            {
+              "id": 1,
+              "text": ""
+            }
+          ]
+        },
+        {
+          "id": "unknown-hard-kind",
+          "passed": true,
+          "errors": [],
+          "quality_notes": [],
+          "queries": [
+            {
+              "filter": "{\"max_price_cents\":5000,\"allowed_kinds\":[],\"excluded_kinds\":[],\"delivery\":\"any\"}",
+              "match_mode": "alternative",
+              "q": "恐龙蛋",
+              "cursor": -1,
+              "next_cursor": null,
+              "returned_ids": [],
+              "eligible_total": 5,
+              "total_matches": 0
+            },
+            {
+              "filter": "{\"max_price_cents\":5000,\"allowed_kinds\":[],\"excluded_kinds\":[],\"delivery\":\"any\"}",
+              "match_mode": "alternative",
+              "q": "",
+              "cursor": -1,
+              "next_cursor": null,
+              "returned_ids": [
+                1,
+                2,
+                3,
+                9,
+                200
+              ],
+              "eligible_total": 5,
+              "total_matches": 5
+            }
+          ],
+          "model_calls": 4,
+          "recommended_ids": [
+            9,
+            3,
+            2
+          ],
+          "parsed": {
+            "allowed_kinds": [],
+            "delivery": "any",
+            "excluded_kinds": [],
+            "summary": "硬条件：必须是真正的恐龙蛋商品。目录kinds中无恐龙蛋，该条件无法通过kind过滤可靠验证，需放入unverified。软偏好：找不到完全符合时允许备选。预算¥50由应用锁定，用户未指定配送方式。",
+            "unverified_requirements": [
+              "必须是真正的恐龙蛋商品（目录无恐龙蛋对应kind，需靠文本/后续验证）",
+              "找不到恐龙蛋时可接受备选（软偏好，不作硬排除）"
+            ]
+          },
+          "original_constraints": {
+            "max_price_cents": 5000,
+            "allowed_kinds": [],
+            "excluded_kinds": [],
+            "delivery": "any"
+          },
+          "match_quality": "alternative",
+          "recommendations": [
+            {
+              "buying_tip": "请核对商品规格：6 件随机 · 包邮。请核对收货地址、发货时间和运费。退款、升级或补差政策未核验，请向商家确认。",
+              "message": "拆一份小惊喜，祝你玩得开心～",
+              "product_id": 9,
+              "reason": "盲盒的拆封期待感最接近恐龙蛋的惊喜属性，随机文具也适合爱做手帐的人。"
+            },
+            {
+              "buying_tip": "请核对商品规格：2D 场次通兑 · 60 天有效。请核对适用门店或平台、券码使用规则与有效期。退款、升级或补差政策未核验，请向商家确认。",
+              "message": "挑一部想看的，慢慢享受～",
+              "product_id": 3,
+              "reason": "用一张电影票换一段放松的观影时光，适合想找点仪式感的场景。"
+            },
+            {
+              "buying_tip": "请核对商品规格：全国门店通用 · 30 天有效。请核对适用门店或平台、券码使用规则与有效期。退款、升级或补差政策未核验，请向商家确认。",
+              "message": "来杯多肉葡萄，甜一甜～",
+              "product_id": 2,
+              "reason": "一杯果肉满满的清爽饮品，适合日常想给自己一点小确幸的时刻。"
+            }
+          ],
+          "differences": [
+            {
+              "id": 9,
+              "text": "无法核验：必须是真正的恐龙蛋商品（目录无恐龙蛋对应kind，需靠文本/后续验证）；无法核验：找不到恐龙蛋时可接受备选（软偏好，不作硬排除）；"
+            },
+            {
+              "id": 3,
+              "text": "无法核验：必须是真正的恐龙蛋商品（目录无恐龙蛋对应kind，需靠文本/后续验证）；无法核验：找不到恐龙蛋时可接受备选（软偏好，不作硬排除）；"
+            },
+            {
+              "id": 2,
+              "text": "无法核验：必须是真正的恐龙蛋商品（目录无恐龙蛋对应kind，需靠文本/后续验证）；无法核验：找不到恐龙蛋时可接受备选（软偏好，不作硬排除）；"
+            }
+          ]
+        },
+        {
+          "id": "all-stock-zero",
+          "passed": true,
+          "errors": [],
+          "quality_notes": [],
+          "queries": [
+            {
+              "filter": "{\"max_price_cents\":10000,\"allowed_kinds\":[],\"excluded_kinds\":[],\"delivery\":\"any\"}",
+              "match_mode": "exact",
+              "q": "咖啡",
+              "cursor": -1,
+              "next_cursor": null,
+              "returned_ids": [],
+              "eligible_total": 0,
+              "total_matches": 0
+            },
+            {
+              "filter": "{\"max_price_cents\":0,\"allowed_kinds\":[],\"excluded_kinds\":[],\"delivery\":\"any\"}",
+              "match_mode": "alternative",
+              "q": "咖啡",
+              "cursor": -1,
+              "next_cursor": null,
+              "returned_ids": [],
+              "eligible_total": 0,
+              "total_matches": 0
+            }
+          ],
+          "model_calls": 3,
+          "recommended_ids": [],
+          "parsed": {
+            "allowed_kinds": [],
+            "delivery": "any",
+            "excluded_kinds": [],
+            "summary": "用户未提出任何'只要/必须/不要/排除'类硬条件。'实用'与'喜欢咖啡'为软偏好，按规则不转为allowed_kinds硬过滤，留待后续软排序处理。预算由应用锁定为¥100，不做更改。配送无特殊要求。",
+            "unverified_requirements": []
+          },
+          "original_constraints": {
+            "max_price_cents": 10000,
+            "allowed_kinds": [],
+            "excluded_kinds": [],
+            "delivery": "any"
+          },
+          "match_quality": null,
+          "recommendations": [],
+          "differences": []
+        },
+        {
+          "id": "no-active-products",
+          "passed": true,
+          "errors": [],
+          "quality_notes": [],
+          "queries": [
+            {
+              "filter": "{\"max_price_cents\":10000,\"allowed_kinds\":[],\"excluded_kinds\":[],\"delivery\":\"any\"}",
+              "match_mode": "exact",
+              "q": "",
+              "cursor": -1,
+              "next_cursor": null,
+              "returned_ids": [],
+              "eligible_total": 0,
+              "total_matches": 0
+            },
+            {
+              "filter": "{\"max_price_cents\":0,\"allowed_kinds\":[],\"excluded_kinds\":[],\"delivery\":\"any\"}",
+              "match_mode": "alternative",
+              "q": "",
+              "cursor": -1,
+              "next_cursor": null,
+              "returned_ids": [],
+              "eligible_total": 0,
+              "total_matches": 0
+            }
+          ],
+          "model_calls": 3,
+          "recommended_ids": [],
+          "parsed": {
+            "allowed_kinds": [],
+            "delivery": "any",
+            "excluded_kinds": [],
+            "summary": "硬条件：预算¥100（应用锁定）。场合为实用生日礼物。无明确种类要求、配送方式限制或排除条件。'实用'属于软偏好，不映射为allowed_kinds，留给后续软查询排序。",
+            "unverified_requirements": []
+          },
+          "original_constraints": {
+            "max_price_cents": 10000,
+            "allowed_kinds": [],
+            "excluded_kinds": [],
+            "delivery": "any"
+          },
+          "match_quality": null,
+          "recommendations": [],
+          "differences": []
+        },
+        {
+          "id": "coffee-repeat",
+          "passed": false,
+          "errors": [
+            "Hard kind was not preserved",
+            "No usable recommendation: 今日 AI 额度已用完，请稍后重试或手动挑礼。",
+            "Model service/format failure"
+          ],
+          "quality_notes": [],
+          "queries": [],
+          "model_calls": 1,
+          "recommended_ids": [],
+          "parsed": null,
+          "original_constraints": null,
+          "match_quality": null,
+          "recommendations": [],
+          "differences": []
+        }
+      ]
+    }
+  ],
+  "complete": false,
+  "budget": {
+    "temporary_tokens_per_day": 200000,
+    "recorded_usage": {
+      "calls": 84,
+      "tokens": 199476
+    },
+    "counts_preserved": true,
+    "pending_operator_approval": 250000,
+    "limits_restored": true
+  },
+  "limitations": [
+    "Natural-language interpretation is not guaranteed by this finite sample.",
+    "GUI login, adoption writes, official RC6/store installation and public deployment are separate tasks.",
+    "Baseline development fixtures can contain normalized model trace objects; current verified fixture deep-copies raw responses before application normalization."
+  ],
+  "source_delta_pending_verification": "After full matrix: clarify only explicit hard requirements belong to unverified_requirements; practical does not imply physical. Four affected/repeated cases prepared for targeted live retest, not yet executed.",
+  "synthetic_checks": {
+    "total": 224,
+    "demo": 23,
+    "transport": 11,
+    "AI": 78,
+    "purchase": 24,
+    "calendar": 29,
+    "resilience": 59,
+    "independent_source_revision": "b4f1c14cc26a26ecb640ce60165aa9a8585cd93e"
+  },
+  "initial_evaluator_false_positive": "The phrase 无法保证无糖 was initially matched as 保证无糖; negative prefixes now excluded. This evaluator correction does not alter the product safety requirements."
+}

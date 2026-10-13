@@ -311,7 +311,8 @@ def assess(args):
                     cents = Decimal(amount) * (1 if unit == '分' else 100)
                     if cents not in allowed_amounts:
                         errors.append('Incorrect money/unit in recommendation reason: ' + amount + unit)
-            if any(word in item['reason'] for word in ['已付款', '已购买', '保证无糖', '保证零咖啡因', '免费退款']):
+            claim = re.search(r'(?<!无法)(?<!不能)(?<!没有)(?<!不)(?<!未)(已付款|已购买|保证无糖|保证零咖啡因|免费退款)', item['reason'])
+            if claim:
                 errors.append('Unsupported execution or merchant claim')
         if plan is not None:
             for model in reversed(result['models']):
