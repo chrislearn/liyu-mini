@@ -24,7 +24,7 @@ NAMES = ['floor_div', 'pad2', 'money', 'budget_cents', 'gift_ideas_input',
          'gift_model_input','gift_query_request', 'valid_gift_plan', 'gift_ai_error', 'generate_gift_ideas',
          'gift_query_identity', 'query_active', 'stop_gift_query',
          'valid_query_constraints', 'gift_constraint_schema', 'gift_step_schema',
-         'plan_gift_query', 'confirm_gift_constraints', 'start_alternative_search',
+         'gift_explicit_excluded_kinds','plan_gift_query', 'confirm_gift_constraints', 'start_alternative_search',
          'gift_condition_differences', 'product_meets_constraints',
          'applied_constraints_match', 'gift_query_model_products',
          'gift_current_query_history', 'gift_purchase_checklist', 'gift_recommendation_reason',
@@ -89,6 +89,8 @@ fn run_case(){
  api_request({method:"GET",path:"/catalog/search-options"},fn(r){ai_search_options=r.data.body;active=true;generate_gift_ideas()})
 }
 '''
+    if args.planner_only:
+        fixture = fixture.replace('fn model_adapter(method,args,done){', 'fn model_adapter(method,args,done){\n if model_trace.len()>0 {ai_busy=false;ai_text="Live planning and literal exclusion guard verified; recommendation not executed";refresh();return}\n')
     for name in NAMES:
         start = source.index('fn ' + name + '(')
         end = source.index('\nfn ', start + 1)
@@ -104,6 +106,7 @@ fn run_case(){
         'mini_version': manifest['version'],
         'mini_revision': subprocess.check_output(['git', '-C', str(ROOT), 'rev-parse', 'HEAD'], text=True).strip(),
         'main_splash_sha256': hashlib.sha256(source.encode()).hexdigest(),
+        'mode': 'planner-only' if args.planner_only else 'full-loop',
         'production_functions': NAMES,
         'scope': 'Real model and SQL; fictional authentication and file bridge replace host backend transport; no real-account GUI or business writes.'})
     subprocess.run([str(args.hub), 'stamp', str(folder)], check=True)
@@ -212,6 +215,8 @@ def host(args):
 
 def assess(args):
     results = json.loads((args.output / 'live-apps/liyu-mini/results.json').read_text())
+    source_info = json.loads((args.output / 'source.json').read_text())
+    planner_only = source_info.get('mode') == 'planner-only'
     expectations = {c['id']: c['expect'] for c in json.loads((ROOT / 'verification/ai-quality-cases.json').read_text())}
     report = []
     trace_path = args.output / 'http-trace.json'
@@ -273,7 +278,10 @@ def assess(args):
         for term in expect.get('unverified_terms', []):
             if term not in '\n'.join(parsed.get('unverified_requirements', [])):
                 errors.append('Unverified requirement missing: ' + term)
-        if expect.get('no_plan'):
+        if planner_only:
+            if plan is not None or result['queries'] or len(result['models']) != 1:
+                errors.append('Planning-only probe executed unexpected recommendation or extra calls')
+        elif expect.get('no_plan'):
             if plan is not None or not result['queries'] or not any(q['eligible_total'] == 0 for q in result['queries']):
                 errors.append('No-stock/empty catalog did not produce verified empty outcome')
         elif plan is None:
@@ -300,6 +308,8 @@ def assess(args):
             p = products.get(item['product_id'])
             if not p or not p['available'] or p['stock'] <= 0:
                 errors.append('Unknown, unavailable or out-of-stock recommendation')
+            elif '不销售' in p.get('description', '') or '非卖品' in p.get('description', ''):
+                errors.append('Recommended a product whose description conflicts with sale availability')
             elif plan.get('match_quality') == 'exact':
                 if original.get('max_price_cents', 0) and p['price_cents'] > original['max_price_cents']:
                     errors.append('Exact recommendation exceeds budget')
@@ -327,7 +337,7 @@ def assess(args):
             errors.append('Model service/format failure')
         report.append({'id': result['case']['id'], 'passed': not errors, 'errors': errors, 'quality_notes': warnings, 'queries': len(result['queries']), 'model_calls': len(result['models']), 'recommended_ids': ids})
     expected = len(json.loads((args.output / 'cases.json').read_text()))
-    summary = {'expected': expected, 'completed': len(report), 'passed': sum(r['passed'] for r in report), 'cases': report, 'source': json.loads((args.output / 'source.json').read_text()), 'scope': 'Independent deterministic semantic checks; qualitative reasons still require review. Live inference failures are retained, not retried silently.'}
+    summary = {'expected': expected, 'completed': len(report), 'passed': sum(r['passed'] for r in report), 'cases': report, 'source': source_info, 'scope': 'Planning-only; no fresh recommendation claim.' if planner_only else 'Independent deterministic semantic checks; qualitative reasons still require review. Live inference failures are retained, not retried silently.'}
     write(args.output / 'assessment.json', summary)
     return summary
 
@@ -338,6 +348,7 @@ if __name__ == '__main__':
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--hub', type=Path)
     parser.add_argument('--ids')
+    parser.add_argument('--planner-only', action='store_true', help='One real planning call per case; no query/recommendation inference')
     parser.add_argument('--server')
     parser.add_argument('--database')
     parser.add_argument('--pg-port', type=int, default=55440)

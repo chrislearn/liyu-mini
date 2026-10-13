@@ -7,7 +7,7 @@ from pathlib import Path
 r=Path(__file__).resolve().parents[1];s=(r/'bundle/main.splash').read_text()
 def fn(name):
  a=s.index('fn '+name+'(');b=s.index('\nfn ',a+1);return s[a:b].replace('host.request(', 'model_adapter(')
-names=['floor_div','pad2','money','budget_cents','gift_ideas_input','gift_model_input','gift_query_request','review_gift_ideas','cancel_gift_review','confirm_gift_review','valid_gift_result','valid_gift_plan','gift_ai_error','ask_gift_ideas','generate_gift_ideas','gift_query_identity','query_active','stop_gift_query','valid_query_constraints','gift_constraint_schema','gift_step_schema','plan_gift_query','confirm_gift_constraints','cancel_gift_constraints','start_alternative_search','gift_condition_differences','product_meets_constraints','applied_constraints_match','gift_query_model_products','gift_current_query_history','gift_purchase_checklist','gift_recommendation_reason','valid_gift_query_step','gift_query_step','execute_gift_search','adopt_gift_idea','verify_and_adopt_query_idea']
+names=['floor_div','pad2','money','budget_cents','gift_ideas_input','gift_model_input','gift_query_request','review_gift_ideas','cancel_gift_review','confirm_gift_review','valid_gift_result','valid_gift_plan','gift_ai_error','ask_gift_ideas','generate_gift_ideas','gift_query_identity','query_active','stop_gift_query','valid_query_constraints','gift_constraint_schema','gift_step_schema','gift_explicit_excluded_kinds','plan_gift_query','confirm_gift_constraints','cancel_gift_constraints','start_alternative_search','gift_condition_differences','product_meets_constraints','applied_constraints_match','gift_query_model_products','gift_current_query_history','gift_purchase_checklist','gift_recommendation_reason','valid_gift_query_step','gift_query_step','execute_gift_search','adopt_gift_idea','verify_and_adopt_query_idea']
 seed=json.loads(json.loads(s.split('fn demo_seed(){ return ',1)[1].split('.parse_json()',1)[0].strip()))
 globals=s[s.index('let ai_text ='):s.index('let purchase_busy =')]
 fixture='let seed='+json.dumps(json.dumps(seed,ensure_ascii=False),ensure_ascii=False)+'.parse_json()\n'+globals+'''
@@ -78,6 +78,13 @@ checks='''
 let checks=0
 let failures=""
 fn check(value,label){checks=checks+1;if !value {failures=failures+label+";"}}
+reset();ai_search_options=options;ai_occasion="不要咖啡、奶茶和电影票。喜欢奶茶味香薰。"
+check(gift_explicit_excluded_kinds().to_json()==["咖啡","奶茶","电影票"].to_json(),"literal exclusion list preserves every known kind")
+ai_occasion="喜欢咖啡，不要奶茶。";check(gift_explicit_excluded_kinds().to_json()==["奶茶"].to_json(),"positive preference not excluded")
+ai_occasion="不要咖啡味香薰。";check(gift_explicit_excluded_kinds().len()==0,"compound meaning not guessed")
+ai_occasion="别人备注：“不要咖啡”。不要奶茶。";check(gift_explicit_excluded_kinds().to_json()==["奶茶"].to_json(),"quoted notes not treated as literal instructions")
+reset();planner.excluded_kinds=[];run();check(ai_original_constraints.excluded_kinds.to_json()==["奶茶"].to_json(),"missing explicit exclusion restored before query")
+reset();planner.allowed_kinds=["奶茶"];planner.excluded_kinds=[];run();check(ai_plan==nil && query_calls==0,"conflicting parse stops instead of relaxing exclusions")
 reset();ask_gift_ideas()
 check(model_calls==0 && stage=="ai_review" && backend_paths.len()==2,"preview before model; reads friends and tool contract")
 check(backend_paths[1]=="/catalog/search-options","does not preload arbitrary first catalog page")
@@ -159,9 +166,11 @@ marker='reset();pages=[page([],0,0,nil,"r1")];run()'
 # Split at a top-level scenario boundary, preserving shared fixture setup.
 marker='reset();let broad='
 cut=checks.index(marker)
-header=checks[:checks.index('reset();ask_gift_ideas()')]
+header=checks[:checks.index('reset();ai_search_options=options')]
 view='View{width:Fill height:Fill Label{text:"REAL_AI_FLOW_CHECKS="+checks+";FAILURES="+failures}}'
-parts=[checks[:cut]+view,header+checks[cut:]]
+guard_end=checks.index("reset();ask_gift_ideas()")
+cut2=checks.index("reset();pages[0].applied.max_price_cents=99900")
+parts=[checks[:guard_end]+view,header+checks[guard_end:cut]+view,header+checks[cut:cut2]+view,header+checks[cut2:]]
 b=r/'build/real-ai-flow-check';b.mkdir(parents=True,exist_ok=True)
 m=json.loads((r/'bundle/manifest.json').read_text());[m.pop(k,None) for k in ['integrity','requires','backend','host_api','storage','network']];m['capabilities']=['model'];(b/'manifest.json').write_text(json.dumps(m))
 h=Path(os.environ.get('OCTO',str(r.parent/'OctoScript-App-Design-Flow/tools/octo')));port='8146'

@@ -1767,34 +1767,1096 @@
           "differences": []
         }
       ]
+    },
+    {
+      "name": "targeted-final",
+      "scope": "Independent deterministic semantic checks; qualitative reasons still require review. Live inference failures are retained, not retried silently.",
+      "expected": 4,
+      "completed": 4,
+      "passed": 3,
+      "source": {
+        "mini_version": "1.0.46",
+        "mini_revision": "b4f1c14cc26a26ecb640ce60165aa9a8585cd93e",
+        "main_splash_sha256": "2f02c87e197c4c752c6cc0b65df2f06a2572ceb62630a31928efb71488eb3d82",
+        "production_functions": [
+          "floor_div",
+          "pad2",
+          "money",
+          "budget_cents",
+          "gift_ideas_input",
+          "gift_model_input",
+          "gift_query_request",
+          "valid_gift_plan",
+          "gift_ai_error",
+          "generate_gift_ideas",
+          "gift_query_identity",
+          "query_active",
+          "stop_gift_query",
+          "valid_query_constraints",
+          "gift_constraint_schema",
+          "gift_step_schema",
+          "plan_gift_query",
+          "confirm_gift_constraints",
+          "start_alternative_search",
+          "gift_condition_differences",
+          "product_meets_constraints",
+          "applied_constraints_match",
+          "gift_query_model_products",
+          "gift_current_query_history",
+          "gift_purchase_checklist",
+          "gift_recommendation_reason",
+          "valid_gift_query_step",
+          "gift_query_step",
+          "execute_gift_search"
+        ],
+        "scope": "Real model and SQL; fictional authentication and file bridge replace host backend transport; no real-account GUI or business writes."
+      },
+      "raw_results_sha256": "0511987ebbcea8764a21c0e31417ef122119eabb60e6979f6d72bbb7097a2ca1",
+      "http_trace_sha256": "4021029a2c9b6d8438b947c103693e07ebc283f16042b8b1cafd31cf20d1a300",
+      "cases": [
+        {
+          "id": "brand-beyond-first-page",
+          "passed": true,
+          "errors": [],
+          "quality_notes": [],
+          "queries": [
+            {
+              "filter": "{\"max_price_cents\":5000,\"allowed_kinds\":[\"咖啡\"],\"excluded_kinds\":[],\"delivery\":\"any\"}",
+              "match_mode": "exact",
+              "q": "太极测试",
+              "cursor": -1,
+              "next_cursor": null,
+              "returned_ids": [
+                200
+              ],
+              "eligible_total": 2,
+              "total_matches": 1
+            }
+          ],
+          "model_calls": 3,
+          "recommended_ids": [
+            200
+          ],
+          "parsed": {
+            "allowed_kinds": [
+              "咖啡"
+            ],
+            "delivery": "any",
+            "excluded_kinds": [],
+            "summary": "硬条件：只要咖啡，已将allowed_kinds限定为咖啡。预算¥50由应用锁定，不可更改。未指定配送方式，delivery设为any。太极测试品牌仅为软偏好，排序时优先但不作为硬过滤。",
+            "unverified_requirements": []
+          },
+          "original_constraints": {
+            "max_price_cents": 5000,
+            "allowed_kinds": [
+              "咖啡"
+            ],
+            "excluded_kinds": [],
+            "delivery": "any"
+          },
+          "raw_planner_exclusions": [],
+          "match_quality": "exact",
+          "recommendations": [
+            {
+              "buying_tip": "请核对商品规格：30天有效 · 仅测试。请核对适用门店或平台、券码使用规则与有效期。退款、升级或补差政策未核验，请向商家确认。",
+              "message": "愿这杯咖啡陪你度过每一个需要提神的瞬间。",
+              "product_id": 200,
+              "reason": "来自太极测试品牌的咖啡电子券，正好符合咖啡种类要求，也契合用户对太极测试品牌的偏好。电子券形式方便收礼人按节奏兑换。"
+            }
+          ],
+          "differences": [
+            {
+              "id": 200,
+              "text": ""
+            }
+          ]
+        },
+        {
+          "id": "revise-coffee-to-nonfood",
+          "passed": false,
+          "errors": [
+            "Recommended a product whose description conflicts with sale availability",
+            "Recommended a product whose description conflicts with sale availability",
+            "Recommended a product whose description conflicts with sale availability"
+          ],
+          "quality_notes": [],
+          "queries": [
+            {
+              "filter": "{\"max_price_cents\":10000,\"allowed_kinds\":[],\"excluded_kinds\":[\"咖啡\",\"奶茶\",\"蛋糕\",\"香薰\"],\"delivery\":\"any\"}",
+              "match_mode": "exact",
+              "q": "实用",
+              "cursor": -1,
+              "next_cursor": null,
+              "returned_ids": [],
+              "eligible_total": 68,
+              "total_matches": 0
+            },
+            {
+              "filter": "{\"max_price_cents\":10000,\"allowed_kinds\":[],\"excluded_kinds\":[\"咖啡\",\"奶茶\",\"蛋糕\",\"香薰\"],\"delivery\":\"any\"}",
+              "match_mode": "exact",
+              "q": "日用",
+              "cursor": -1,
+              "next_cursor": "119",
+              "returned_ids": [
+                100,
+                101,
+                102,
+                103,
+                104,
+                105,
+                106,
+                107,
+                108,
+                109,
+                110,
+                111,
+                112,
+                113,
+                114,
+                115,
+                116,
+                117,
+                118,
+                119
+              ],
+              "eligible_total": 68,
+              "total_matches": 60
+            }
+          ],
+          "model_calls": 4,
+          "recommended_ids": [
+            100,
+            105,
+            110
+          ],
+          "parsed": {
+            "allowed_kinds": [],
+            "delivery": "any",
+            "excluded_kinds": [
+              "咖啡",
+              "奶茶",
+              "蛋糕",
+              "香薰"
+            ],
+            "summary": "硬条件：排除所有食品饮料（咖啡、奶茶、蛋糕）及香薰，预算¥100锁定；实用非食品礼物作为软偏好保留。",
+            "unverified_requirements": []
+          },
+          "original_constraints": {
+            "max_price_cents": 10000,
+            "allowed_kinds": [],
+            "excluded_kinds": [
+              "咖啡",
+              "奶茶",
+              "蛋糕",
+              "香薰"
+            ],
+            "delivery": "any"
+          },
+          "raw_planner_exclusions": [
+            "咖啡",
+            "奶茶",
+            "蛋糕",
+            "香薰"
+          ],
+          "match_quality": "exact",
+          "recommendations": [
+            {
+              "buying_tip": "请核对商品规格：虚构测试商品。请核对收货地址、发货时间和运费。退款、升级或补差政策未核验，请向商家确认。",
+              "message": "实用贴心，愿你的日常多一份便利与温暖。",
+              "product_id": 100,
+              "reason": "日用品类实用小件，适合日常使用场景，受礼人在工作生活中都能用得上。"
+            },
+            {
+              "buying_tip": "请核对商品规格：虚构测试商品。请核对收货地址、发货时间和运费。退款、升级或补差政策未核验，请向商家确认。",
+              "message": "挑选一份实用好物，陪伴你每一天。",
+              "product_id": 105,
+              "reason": "日用品类实用物件，契合实用礼物定位，适用于多种日常场景。"
+            },
+            {
+              "buying_tip": "请核对商品规格：虚构测试商品。请核对收货地址、发货时间和运费。退款、升级或补差政策未核验，请向商家确认。",
+              "message": "用心挑选的小物件，让生活更轻松。",
+              "product_id": 110,
+              "reason": "日用品类基础实用单品，价格区间符合预算，可作为贴心实用的日常伴手礼。"
+            }
+          ],
+          "differences": [
+            {
+              "id": 100,
+              "text": ""
+            },
+            {
+              "id": 105,
+              "text": ""
+            },
+            {
+              "id": 110,
+              "text": ""
+            }
+          ]
+        },
+        {
+          "id": "housewarming-exclusions",
+          "passed": true,
+          "errors": [],
+          "quality_notes": [],
+          "queries": [
+            {
+              "filter": "{\"max_price_cents\":15000,\"allowed_kinds\":[],\"excluded_kinds\":[\"咖啡\",\"奶茶\",\"蛋糕\",\"香薰\"],\"delivery\":\"any\"}",
+              "match_mode": "exact",
+              "q": "绿植",
+              "cursor": -1,
+              "next_cursor": null,
+              "returned_ids": [
+                24,
+                25
+              ],
+              "eligible_total": 70,
+              "total_matches": 2
+            }
+          ],
+          "model_calls": 3,
+          "recommended_ids": [
+            25,
+            24
+          ],
+          "parsed": {
+            "allowed_kinds": [],
+            "delivery": "any",
+            "excluded_kinds": [
+              "咖啡",
+              "奶茶",
+              "蛋糕",
+              "香薰"
+            ],
+            "summary": "乔迁礼物场景。硬条件：不要食品、饮料和香薰蜡烛，对应排除咖啡、奶茶、蛋糕、香薰。软偏好：喜欢好养的绿植，留给后续软查询排序，不强制为唯一种类。预算¥150，配送未指定，按any处理。",
+            "unverified_requirements": []
+          },
+          "original_constraints": {
+            "max_price_cents": 15000,
+            "allowed_kinds": [],
+            "excluded_kinds": [
+              "咖啡",
+              "奶茶",
+              "蛋糕",
+              "香薰"
+            ],
+            "delivery": "any"
+          },
+          "raw_planner_exclusions": [
+            "咖啡",
+            "奶茶",
+            "蛋糕",
+            "香薰"
+          ],
+          "match_quality": "exact",
+          "recommendations": [
+            {
+              "buying_tip": "请核对商品规格：6 株 · 陶盆 · 包邮。请核对收货地址、发货时间和运费。退款、升级或补差政策未核验，请向商家确认。",
+              "message": "新家添一抹绿，惬意好养护。",
+              "product_id": 25,
+              "reason": "多肉组合两周浇一次水即可，养护极省心，适合忙碌或新手搬家后的日常打理。"
+            },
+            {
+              "buying_tip": "请核对商品规格：80cm 高 · 含盆 · 同城配送。请核对收货地址、发货时间和运费。退款、升级或补差政策未核验，请向商家确认。",
+              "message": "乔迁之喜，绿意常伴新居。",
+              "product_id": 24,
+              "reason": "琴叶榕叶大造型大气，只需常规浇水就能茁壮，适合放在客厅角落作装饰。"
+            }
+          ],
+          "differences": [
+            {
+              "id": 25,
+              "text": ""
+            },
+            {
+              "id": 24,
+              "text": ""
+            }
+          ]
+        },
+        {
+          "id": "coffee-repeat",
+          "passed": true,
+          "errors": [],
+          "quality_notes": [],
+          "queries": [
+            {
+              "filter": "{\"max_price_cents\":3500,\"allowed_kinds\":[\"咖啡\"],\"excluded_kinds\":[\"奶茶\"],\"delivery\":\"any\"}",
+              "match_mode": "exact",
+              "q": "",
+              "cursor": -1,
+              "next_cursor": null,
+              "returned_ids": [
+                1
+              ],
+              "eligible_total": 1,
+              "total_matches": 1
+            }
+          ],
+          "model_calls": 3,
+          "recommended_ids": [
+            1
+          ],
+          "parsed": {
+            "allowed_kinds": [
+              "咖啡"
+            ],
+            "delivery": "any",
+            "excluded_kinds": [
+              "奶茶"
+            ],
+            "summary": "硬条件：只要咖啡，排除奶茶；预算¥35由应用锁定。未指定配送方式，按any处理。",
+            "unverified_requirements": []
+          },
+          "original_constraints": {
+            "max_price_cents": 3500,
+            "allowed_kinds": [
+              "咖啡"
+            ],
+            "excluded_kinds": [
+              "奶茶"
+            ],
+            "delivery": "any"
+          },
+          "raw_planner_exclusions": [
+            "奶茶"
+          ],
+          "match_quality": "exact",
+          "recommendations": [
+            {
+              "buying_tip": "请核对商品规格：全国门店通用 · 30 天有效。请核对适用门店或平台、券码使用规则与有效期。退款、升级或补差政策未核验，请向商家确认。",
+              "message": "愿这杯拿铁，暖你今天的好心情。",
+              "product_id": 1,
+              "reason": "明确属于咖啡，排除奶茶，电子券形式便于到门店出示，符合只要咖啡的场景。"
+            }
+          ],
+          "differences": [
+            {
+              "id": 1,
+              "text": ""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "grounded",
+      "scope": "Independent deterministic semantic checks; qualitative reasons still require review. Live inference failures are retained, not retried silently.",
+      "expected": 2,
+      "completed": 2,
+      "passed": 1,
+      "source": {
+        "mini_version": "1.0.46",
+        "mini_revision": "6146b442203d38c86898c1f4489d9de932f3abbd",
+        "main_splash_sha256": "9d0670bfaeab06b2f8751017b5933a4db7e2e3e035489235e5ead54b2ed7c716",
+        "production_functions": [
+          "floor_div",
+          "pad2",
+          "money",
+          "budget_cents",
+          "gift_ideas_input",
+          "gift_model_input",
+          "gift_query_request",
+          "valid_gift_plan",
+          "gift_ai_error",
+          "generate_gift_ideas",
+          "gift_query_identity",
+          "query_active",
+          "stop_gift_query",
+          "valid_query_constraints",
+          "gift_constraint_schema",
+          "gift_step_schema",
+          "plan_gift_query",
+          "confirm_gift_constraints",
+          "start_alternative_search",
+          "gift_condition_differences",
+          "product_meets_constraints",
+          "applied_constraints_match",
+          "gift_query_model_products",
+          "gift_current_query_history",
+          "gift_purchase_checklist",
+          "gift_recommendation_reason",
+          "valid_gift_query_step",
+          "gift_query_step",
+          "execute_gift_search"
+        ],
+        "scope": "Real model and SQL; fictional authentication and file bridge replace host backend transport; no real-account GUI or business writes."
+      },
+      "raw_results_sha256": "f3a442cb8ce1532f8f12f4c92f929b3cbc74654b984797b386a2dfde6d47a335",
+      "http_trace_sha256": "8b19e61fc73cd28ca4bf2aa833fde9bcfd6a8f3b6d205adeccf7490c53dadb25",
+      "cases": [
+        {
+          "id": "brand-beyond-first-page",
+          "passed": true,
+          "errors": [],
+          "quality_notes": [],
+          "queries": [
+            {
+              "filter": "{\"max_price_cents\":5000,\"allowed_kinds\":[\"咖啡\"],\"excluded_kinds\":[],\"delivery\":\"any\"}",
+              "match_mode": "exact",
+              "q": "太极测试",
+              "cursor": -1,
+              "next_cursor": null,
+              "returned_ids": [
+                200
+              ],
+              "eligible_total": 2,
+              "total_matches": 1
+            },
+            {
+              "filter": "{\"max_price_cents\":5000,\"allowed_kinds\":[\"咖啡\"],\"excluded_kinds\":[],\"delivery\":\"any\"}",
+              "match_mode": "exact",
+              "q": "",
+              "cursor": -1,
+              "next_cursor": null,
+              "returned_ids": [
+                1,
+                200
+              ],
+              "eligible_total": 2,
+              "total_matches": 2
+            }
+          ],
+          "model_calls": 4,
+          "recommended_ids": [
+            200,
+            1
+          ],
+          "parsed": {
+            "allowed_kinds": [
+              "咖啡"
+            ],
+            "delivery": "any",
+            "excluded_kinds": [],
+            "summary": "硬条件：只要咖啡（allowed_kinds=咖啡）。软偏好太极测试品牌，留给后续软查询排序，不做硬过滤。配送未指定为any。",
+            "unverified_requirements": []
+          },
+          "original_constraints": {
+            "max_price_cents": 5000,
+            "allowed_kinds": [
+              "咖啡"
+            ],
+            "excluded_kinds": [],
+            "delivery": "any"
+          },
+          "raw_planner_exclusions": [],
+          "match_quality": "exact",
+          "recommendations": [
+            {
+              "buying_tip": "请核对商品规格：30天有效 · 仅测试。请核对适用门店或平台、券码使用规则与有效期。退款、升级或补差政策未核验，请向商家确认。",
+              "message": "一杯随心的咖啡，送给爱尝鲜的你。",
+              "product_id": 200,
+              "reason": "电子咖啡券，符合用户希望尝试指定品牌的软偏好，属于咖啡类目，可作日常兑换使用。"
+            },
+            {
+              "buying_tip": "请核对商品规格：全国门店通用 · 30 天有效。请核对适用门店或平台、券码使用规则与有效期。退款、升级或补差政策未核验，请向商家确认。",
+              "message": "熟悉的味道，给日常一点小确幸。",
+              "product_id": 1,
+              "reason": "全国通用电子拿铁券，知名咖啡品牌，兑换方式简单，适合日常一杯咖啡的需求。"
+            }
+          ],
+          "differences": [
+            {
+              "id": 200,
+              "text": ""
+            },
+            {
+              "id": 1,
+              "text": ""
+            }
+          ]
+        },
+        {
+          "id": "revise-coffee-to-nonfood",
+          "passed": false,
+          "errors": [
+            "Excluded kind missing: 奶茶"
+          ],
+          "quality_notes": [],
+          "queries": [
+            {
+              "filter": "{\"max_price_cents\":10000,\"allowed_kinds\":[],\"excluded_kinds\":[\"咖啡\",\"蛋糕\",\"香薰\"],\"delivery\":\"any\"}",
+              "match_mode": "exact",
+              "q": "文具",
+              "cursor": -1,
+              "next_cursor": null,
+              "returned_ids": [
+                9
+              ],
+              "eligible_total": 69,
+              "total_matches": 1
+            }
+          ],
+          "model_calls": 3,
+          "recommended_ids": [
+            9
+          ],
+          "parsed": {
+            "allowed_kinds": [],
+            "delivery": "any",
+            "excluded_kinds": [
+              "咖啡",
+              "蛋糕",
+              "香薰"
+            ],
+            "summary": "硬条件：排除全部食品与饮料（已枚举咖啡、蛋糕）、排除香薰；未指明配送方式。未设置allowed_kinds白名单，以满足非食品宽泛要求并避免遗漏其他允许品类。软偏好：偏好实用类非食品礼物，留给后续排序。",
+            "unverified_requirements": []
+          },
+          "original_constraints": {
+            "max_price_cents": 10000,
+            "allowed_kinds": [],
+            "excluded_kinds": [
+              "咖啡",
+              "蛋糕",
+              "香薰"
+            ],
+            "delivery": "any"
+          },
+          "raw_planner_exclusions": [
+            "咖啡",
+            "蛋糕",
+            "香薰"
+          ],
+          "match_quality": "exact",
+          "recommendations": [
+            {
+              "buying_tip": "请核对商品规格：6 件随机 · 包邮。请核对收货地址、发货时间和运费。退款、升级或补差政策未核验，请向商家确认。",
+              "message": "每一件小惊喜，写下你的好心情。",
+              "product_id": 9,
+              "reason": "对方若喜欢做手帐或日常书写，这盒随机文具包含胶带、便签、印章、钢笔等六件实用小物，非食品、避开咖啡蛋糕与香薰，作为小礼物实用又有拆盒惊喜。"
+            }
+          ],
+          "differences": [
+            {
+              "id": 9,
+              "text": ""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "literal-guard",
+      "scope": "Planning-only; no fresh recommendation claim.",
+      "expected": 1,
+      "completed": 1,
+      "passed": 1,
+      "source": {
+        "mini_version": "1.0.46",
+        "mini_revision": "6146b442203d38c86898c1f4489d9de932f3abbd",
+        "main_splash_sha256": "25e3de17e82265bbbad3795c99527501fcd43fc557fdcc075a5c644d5d0f778e",
+        "mode": "planner-only",
+        "production_functions": [
+          "floor_div",
+          "pad2",
+          "money",
+          "budget_cents",
+          "gift_ideas_input",
+          "gift_model_input",
+          "gift_query_request",
+          "valid_gift_plan",
+          "gift_ai_error",
+          "generate_gift_ideas",
+          "gift_query_identity",
+          "query_active",
+          "stop_gift_query",
+          "valid_query_constraints",
+          "gift_constraint_schema",
+          "gift_step_schema",
+          "gift_explicit_excluded_kinds",
+          "plan_gift_query",
+          "confirm_gift_constraints",
+          "start_alternative_search",
+          "gift_condition_differences",
+          "product_meets_constraints",
+          "applied_constraints_match",
+          "gift_query_model_products",
+          "gift_current_query_history",
+          "gift_purchase_checklist",
+          "gift_recommendation_reason",
+          "valid_gift_query_step",
+          "gift_query_step",
+          "execute_gift_search"
+        ],
+        "scope": "Real model and SQL; fictional authentication and file bridge replace host backend transport; no real-account GUI or business writes."
+      },
+      "raw_results_sha256": "029d6f390cc8e234b25b5f4a8b68e2f69c19034a97810819c81ef560944bbfa2",
+      "http_trace_sha256": "03d4afa34ab092330f5f7f42c1d1eccd076aa5ece4c1a00e0ad04a170053737d",
+      "cases": [
+        {
+          "id": "revise-coffee-to-nonfood",
+          "passed": true,
+          "errors": [],
+          "quality_notes": [],
+          "queries": [],
+          "model_calls": 1,
+          "recommended_ids": [],
+          "parsed": {
+            "allowed_kinds": [],
+            "delivery": "any",
+            "excluded_kinds": [
+              "咖啡",
+              "奶茶",
+              "蛋糕",
+              "香薰"
+            ],
+            "summary": "用户硬排除所有食品、饮料（咖啡、奶茶、蛋糕）及香薰，明确要求非食品礼物；allowed_kinds留空以保留其余品类多样性，不挑白名单遗漏其他可用商品。'实用'为用户明确硬要求但无法通过kind/delivery过滤验证，放入unverified_requirements。预算由应用锁定未改。",
+            "unverified_requirements": [
+              "礼物需实用（用户明确要求实用非食品礼物，质量偏好无法用kind过滤验证）"
+            ]
+          },
+          "original_constraints": {
+            "max_price_cents": 10000,
+            "allowed_kinds": [],
+            "excluded_kinds": [
+              "咖啡",
+              "奶茶",
+              "蛋糕",
+              "香薰"
+            ],
+            "delivery": "any"
+          },
+          "raw_planner_exclusions": [
+            "咖啡",
+            "奶茶",
+            "蛋糕",
+            "香薰"
+          ],
+          "match_quality": null,
+          "recommendations": [],
+          "differences": []
+        }
+      ]
     }
   ],
-  "complete": false,
+  "complete": true,
   "budget": {
-    "temporary_tokens_per_day": 200000,
-    "recorded_usage": {
-      "calls": 84,
-      "tokens": 199476
+    "operator_authorized_tokens_per_day": 250000,
+    "operator_authorized_calls_per_day": 120,
+    "final_recorded_usage": {
+      "calls": 105,
+      "tokens": 248132
     },
     "counts_preserved": true,
-    "pending_operator_approval": 250000,
-    "limits_restored": true
+    "limits_restored": true,
+    "restored_default_tokens_per_day": 100000,
+    "restored_default_calls_per_day": 100
   },
   "limitations": [
     "Natural-language interpretation is not guaranteed by this finite sample.",
     "GUI login, adoption writes, official RC6/store installation and public deployment are separate tasks.",
     "Baseline development fixtures can contain normalized model trace objects; current verified fixture deep-copies raw responses before application normalization."
   ],
-  "source_delta_pending_verification": "After full matrix: clarify only explicit hard requirements belong to unverified_requirements; practical does not imply physical. Four affected/repeated cases prepared for targeted live retest, not yet executed.",
   "synthetic_checks": {
-    "total": 224,
+    "total": 230,
     "demo": 23,
     "transport": 11,
-    "AI": 78,
+    "AI": 84,
     "purchase": 24,
     "calendar": 29,
-    "resilience": 59,
-    "independent_source_revision": "b4f1c14cc26a26ecb640ce60165aa9a8585cd93e"
+    "resilience": 59
   },
-  "initial_evaluator_false_positive": "The phrase 无法保证无糖 was initially matched as 保证无糖; negative prefixes now excluded. This evaluator correction does not alter the product safety requirements."
+  "initial_evaluator_false_positive": "The phrase 无法保证无糖 was initially matched as 保证无糖; negative prefixes now excluded. This evaluator correction does not alter the product safety requirements.",
+  "complete_scope": "Coverage expansion and recorded defect fixes complete, not a claim that the final source reran/passed all 16 fresh full model flows.",
+  "final_source_delta": "After 16-case matrix: clarify soft vs hard and practical vs physical. Four targeted flows fixed parsing but one selected non-selling placeholders; grounding prompt added. Two subsequent full flows selected concrete products, but nonfood planner omitted explicit milk-tea exclusion. Final source merges conservative literal Chinese negative lists, with six synthetic checks and one fresh real planning call plus actual SQL query validation. No final fresh recommendation inference after the literal guard.",
+  "guarded_sql_validation": {
+    "method": "GET",
+    "path": "/api/v1/catalog/search?filter=%7B%22max_price_cents%22%3A10000%2C%22allowed_kinds%22%3A%5B%5D%2C%22excluded_kinds%22%3A%5B%22%E5%92%96%E5%95%A1%22%2C%22%E5%A5%B6%E8%8C%B6%22%2C%22%E8%9B%8B%E7%B3%95%22%2C%22%E9%A6%99%E8%96%B0%22%5D%2C%22delivery%22%3A%22any%22%7D&q=&cursor=-1&limit=20",
+    "status": 200,
+    "response": {
+      "items": [
+        {
+          "id": 3,
+          "name": "电影通兑票",
+          "category": "movie",
+          "price_cents": 4900,
+          "physical": false,
+          "brand": "猫眼",
+          "kind": "电影票",
+          "spec": "2D 场次通兑 · 60 天有效",
+          "description": "全国大部分影院 2D 场次通兑，挑一部想看的片子就好。",
+          "tags": [
+            "电子券",
+            "2D"
+          ],
+          "stock": 100,
+          "available": true,
+          "image_thumb_url": "/api/v1/media/products/3/thumb",
+          "image_card_url": "/api/v1/media/products/3/card",
+          "image_detail_url": "/api/v1/media/products/3/detail"
+        },
+        {
+          "id": 4,
+          "name": "电影双人套票",
+          "category": "movie",
+          "price_cents": 9800,
+          "physical": false,
+          "brand": "猫眼",
+          "kind": "电影票",
+          "spec": "两张通兑票 + 爆米花套餐",
+          "description": "两张票加一份爆米花套餐 —— 送了这个，下次见面就有了理由。",
+          "tags": [
+            "电子券",
+            "双人",
+            "爆米花"
+          ],
+          "stock": 100,
+          "available": true,
+          "image_thumb_url": "/api/v1/media/products/4/thumb",
+          "image_card_url": "/api/v1/media/products/4/card",
+          "image_detail_url": "/api/v1/media/products/4/detail"
+        },
+        {
+          "id": 5,
+          "name": "帆布托特包",
+          "category": "trendy",
+          "price_cents": 7900,
+          "physical": true,
+          "brand": "野帆",
+          "kind": "包",
+          "spec": "米白 · 加厚帆布 · 包邮",
+          "description": "16 安加厚帆布，装得下电脑和一天的零碎。越用越软。",
+          "tags": [
+            "米白",
+            "大容量",
+            "帆布"
+          ],
+          "stock": 100,
+          "available": true,
+          "image_thumb_url": "/api/v1/media/products/5/thumb",
+          "image_card_url": "/api/v1/media/products/5/card",
+          "image_detail_url": "/api/v1/media/products/5/detail"
+        },
+        {
+          "id": 7,
+          "name": "拍立得相纸",
+          "category": "trendy",
+          "price_cents": 5900,
+          "physical": true,
+          "brand": "即影",
+          "kind": "相纸",
+          "spec": "mini 白边 · 40 张 · 包邮",
+          "description": "mini 规格白边相纸 40 张，适配常见的拍立得相机。",
+          "tags": [
+            "mini",
+            "40张"
+          ],
+          "stock": 100,
+          "available": true,
+          "image_thumb_url": "/api/v1/media/products/7/thumb",
+          "image_card_url": "/api/v1/media/products/7/card",
+          "image_detail_url": "/api/v1/media/products/7/detail"
+        },
+        {
+          "id": 8,
+          "name": "潮玩盲盒",
+          "category": "blind",
+          "price_cents": 6900,
+          "physical": true,
+          "brand": "泡泡岛",
+          "kind": "盲盒",
+          "spec": "随机一款 · 有隐藏款 · 包邮",
+          "description": "12 款常规加 1 款隐藏，拆之前谁也不知道是哪一只。",
+          "tags": [
+            "潮玩",
+            "隐藏款",
+            "摆件"
+          ],
+          "stock": 100,
+          "available": true,
+          "image_thumb_url": "/api/v1/media/products/8/thumb",
+          "image_card_url": "/api/v1/media/products/8/card",
+          "image_detail_url": "/api/v1/media/products/8/detail"
+        },
+        {
+          "id": 9,
+          "name": "文具盲盒",
+          "category": "blind",
+          "price_cents": 3900,
+          "physical": true,
+          "brand": "纸上",
+          "kind": "盲盒",
+          "spec": "6 件随机 · 包邮",
+          "description": "胶带、便签、印章、钢笔…… 随机 6 件，做手帐的人会喜欢。",
+          "tags": [
+            "文具",
+            "手帐"
+          ],
+          "stock": 100,
+          "available": true,
+          "image_thumb_url": "/api/v1/media/products/9/thumb",
+          "image_card_url": "/api/v1/media/products/9/card",
+          "image_detail_url": "/api/v1/media/products/9/detail"
+        },
+        {
+          "id": 11,
+          "name": "向日葵花束",
+          "category": "sweet",
+          "price_cents": 9900,
+          "physical": true,
+          "brand": "花点时间",
+          "kind": "鲜花",
+          "spec": "3 枝装 · 同城配送",
+          "description": "三枝向日葵配尤加利叶，同城当天配送。",
+          "tags": [
+            "向日葵",
+            "同城"
+          ],
+          "stock": 100,
+          "available": true,
+          "image_thumb_url": "/api/v1/media/products/11/thumb",
+          "image_card_url": "/api/v1/media/products/11/card",
+          "image_detail_url": "/api/v1/media/products/11/detail"
+        },
+        {
+          "id": 25,
+          "name": "多肉组合盆栽",
+          "category": "home",
+          "price_cents": 5900,
+          "physical": true,
+          "brand": "青田",
+          "kind": "绿植",
+          "spec": "6 株 · 陶盆 · 包邮",
+          "description": "六株多肉拼在一个陶盆里，两周浇一次水就行。",
+          "tags": [
+            "小盆",
+            "好养",
+            "桌面"
+          ],
+          "stock": 100,
+          "available": true,
+          "image_thumb_url": "/api/v1/media/products/25/thumb",
+          "image_card_url": "/api/v1/media/products/25/card",
+          "image_detail_url": "/api/v1/media/products/25/detail"
+        },
+        {
+          "id": 100,
+          "name": "质量测试日用品 100",
+          "category": "home",
+          "price_cents": 6000,
+          "physical": true,
+          "brand": "测试品牌",
+          "kind": "日用品",
+          "spec": "虚构测试商品",
+          "description": "仅用于质量评测，不销售。",
+          "tags": [],
+          "stock": 100,
+          "available": true,
+          "image_thumb_url": "/api/v1/media/products/100/thumb",
+          "image_card_url": "/api/v1/media/products/100/card",
+          "image_detail_url": "/api/v1/media/products/100/detail"
+        },
+        {
+          "id": 101,
+          "name": "质量测试日用品 101",
+          "category": "home",
+          "price_cents": 6000,
+          "physical": true,
+          "brand": "测试品牌",
+          "kind": "日用品",
+          "spec": "虚构测试商品",
+          "description": "仅用于质量评测，不销售。",
+          "tags": [],
+          "stock": 100,
+          "available": true,
+          "image_thumb_url": "/api/v1/media/products/101/thumb",
+          "image_card_url": "/api/v1/media/products/101/card",
+          "image_detail_url": "/api/v1/media/products/101/detail"
+        },
+        {
+          "id": 102,
+          "name": "质量测试日用品 102",
+          "category": "home",
+          "price_cents": 6000,
+          "physical": true,
+          "brand": "测试品牌",
+          "kind": "日用品",
+          "spec": "虚构测试商品",
+          "description": "仅用于质量评测，不销售。",
+          "tags": [],
+          "stock": 100,
+          "available": true,
+          "image_thumb_url": "/api/v1/media/products/102/thumb",
+          "image_card_url": "/api/v1/media/products/102/card",
+          "image_detail_url": "/api/v1/media/products/102/detail"
+        },
+        {
+          "id": 103,
+          "name": "质量测试日用品 103",
+          "category": "home",
+          "price_cents": 6000,
+          "physical": true,
+          "brand": "测试品牌",
+          "kind": "日用品",
+          "spec": "虚构测试商品",
+          "description": "仅用于质量评测，不销售。",
+          "tags": [],
+          "stock": 100,
+          "available": true,
+          "image_thumb_url": "/api/v1/media/products/103/thumb",
+          "image_card_url": "/api/v1/media/products/103/card",
+          "image_detail_url": "/api/v1/media/products/103/detail"
+        },
+        {
+          "id": 104,
+          "name": "质量测试日用品 104",
+          "category": "home",
+          "price_cents": 6000,
+          "physical": true,
+          "brand": "测试品牌",
+          "kind": "日用品",
+          "spec": "虚构测试商品",
+          "description": "仅用于质量评测，不销售。",
+          "tags": [],
+          "stock": 100,
+          "available": true,
+          "image_thumb_url": "/api/v1/media/products/104/thumb",
+          "image_card_url": "/api/v1/media/products/104/card",
+          "image_detail_url": "/api/v1/media/products/104/detail"
+        },
+        {
+          "id": 105,
+          "name": "质量测试日用品 105",
+          "category": "home",
+          "price_cents": 6000,
+          "physical": true,
+          "brand": "测试品牌",
+          "kind": "日用品",
+          "spec": "虚构测试商品",
+          "description": "仅用于质量评测，不销售。",
+          "tags": [],
+          "stock": 100,
+          "available": true,
+          "image_thumb_url": "/api/v1/media/products/105/thumb",
+          "image_card_url": "/api/v1/media/products/105/card",
+          "image_detail_url": "/api/v1/media/products/105/detail"
+        },
+        {
+          "id": 106,
+          "name": "质量测试日用品 106",
+          "category": "home",
+          "price_cents": 6000,
+          "physical": true,
+          "brand": "测试品牌",
+          "kind": "日用品",
+          "spec": "虚构测试商品",
+          "description": "仅用于质量评测，不销售。",
+          "tags": [],
+          "stock": 100,
+          "available": true,
+          "image_thumb_url": "/api/v1/media/products/106/thumb",
+          "image_card_url": "/api/v1/media/products/106/card",
+          "image_detail_url": "/api/v1/media/products/106/detail"
+        },
+        {
+          "id": 107,
+          "name": "质量测试日用品 107",
+          "category": "home",
+          "price_cents": 6000,
+          "physical": true,
+          "brand": "测试品牌",
+          "kind": "日用品",
+          "spec": "虚构测试商品",
+          "description": "仅用于质量评测，不销售。",
+          "tags": [],
+          "stock": 100,
+          "available": true,
+          "image_thumb_url": "/api/v1/media/products/107/thumb",
+          "image_card_url": "/api/v1/media/products/107/card",
+          "image_detail_url": "/api/v1/media/products/107/detail"
+        },
+        {
+          "id": 108,
+          "name": "质量测试日用品 108",
+          "category": "home",
+          "price_cents": 6000,
+          "physical": true,
+          "brand": "测试品牌",
+          "kind": "日用品",
+          "spec": "虚构测试商品",
+          "description": "仅用于质量评测，不销售。",
+          "tags": [],
+          "stock": 100,
+          "available": true,
+          "image_thumb_url": "/api/v1/media/products/108/thumb",
+          "image_card_url": "/api/v1/media/products/108/card",
+          "image_detail_url": "/api/v1/media/products/108/detail"
+        },
+        {
+          "id": 109,
+          "name": "质量测试日用品 109",
+          "category": "home",
+          "price_cents": 6000,
+          "physical": true,
+          "brand": "测试品牌",
+          "kind": "日用品",
+          "spec": "虚构测试商品",
+          "description": "仅用于质量评测，不销售。",
+          "tags": [],
+          "stock": 100,
+          "available": true,
+          "image_thumb_url": "/api/v1/media/products/109/thumb",
+          "image_card_url": "/api/v1/media/products/109/card",
+          "image_detail_url": "/api/v1/media/products/109/detail"
+        },
+        {
+          "id": 110,
+          "name": "质量测试日用品 110",
+          "category": "home",
+          "price_cents": 6000,
+          "physical": true,
+          "brand": "测试品牌",
+          "kind": "日用品",
+          "spec": "虚构测试商品",
+          "description": "仅用于质量评测，不销售。",
+          "tags": [],
+          "stock": 100,
+          "available": true,
+          "image_thumb_url": "/api/v1/media/products/110/thumb",
+          "image_card_url": "/api/v1/media/products/110/card",
+          "image_detail_url": "/api/v1/media/products/110/detail"
+        },
+        {
+          "id": 111,
+          "name": "质量测试日用品 111",
+          "category": "home",
+          "price_cents": 6000,
+          "physical": true,
+          "brand": "测试品牌",
+          "kind": "日用品",
+          "spec": "虚构测试商品",
+          "description": "仅用于质量评测，不销售。",
+          "tags": [],
+          "stock": 100,
+          "available": true,
+          "image_thumb_url": "/api/v1/media/products/111/thumb",
+          "image_card_url": "/api/v1/media/products/111/card",
+          "image_detail_url": "/api/v1/media/products/111/detail"
+        }
+      ],
+      "next_cursor": "111",
+      "eligible_total": 68,
+      "total_matches": 68,
+      "catalog_revision": "c5a3e2fb28dde7d97e81a23905ba27c63f55e81389421728b786a806e0b6511c",
+      "applied": {
+        "max_price_cents": 10000,
+        "allowed_kinds": [],
+        "excluded_kinds": [
+          "咖啡",
+          "奶茶",
+          "蛋糕",
+          "香薰"
+        ],
+        "delivery": "any"
+      }
+    },
+    "scope": "Fresh actual SQL query using latest guarded constraints; no new query-selection or recommendation inference."
+  },
+  "human_review_findings": [
+    "Money unit errors in initial real cases led to application-generated monetary statements.",
+    "Soft preferences and scene labels were incorrectly marked unverified hard requirements.",
+    "Practical was misread as physical, incorrectly narrowing delivery.",
+    "One targeted real run selected generic non-selling placeholder rows; grounding prompt and evaluator now reject them.",
+    "A later real nonfood planner omitted explicitly named milk tea; application-level literal exclusion merging prevents that omission."
+  ]
 }
