@@ -7,7 +7,7 @@ from pathlib import Path
 r=Path(__file__).resolve().parents[1];s=(r/'bundle/main.splash').read_text()
 def fn(name):
  a=s.index('fn '+name+'(');b=s.index('\nfn ',a+1);return s[a:b].replace('host.request(', 'model_adapter(')
-names=['floor_div','pad2','money','budget_cents','gift_ideas_input','gift_model_input','review_gift_ideas','cancel_gift_review','confirm_gift_review','valid_gift_result','valid_gift_plan','gift_ai_error','ask_gift_ideas','generate_gift_ideas','gift_query_identity','query_active','stop_gift_query','valid_query_constraints','gift_constraint_schema','gift_step_schema','plan_gift_query','confirm_gift_constraints','cancel_gift_constraints','start_alternative_search','gift_condition_differences','product_meets_constraints','applied_constraints_match','gift_query_model_products','gift_current_query_history','gift_purchase_checklist','valid_gift_query_step','gift_query_step','execute_gift_search','adopt_gift_idea','verify_and_adopt_query_idea']
+names=['floor_div','pad2','money','budget_cents','gift_ideas_input','gift_model_input','gift_query_request','review_gift_ideas','cancel_gift_review','confirm_gift_review','valid_gift_result','valid_gift_plan','gift_ai_error','ask_gift_ideas','generate_gift_ideas','gift_query_identity','query_active','stop_gift_query','valid_query_constraints','gift_constraint_schema','gift_step_schema','plan_gift_query','confirm_gift_constraints','cancel_gift_constraints','start_alternative_search','gift_condition_differences','product_meets_constraints','applied_constraints_match','gift_query_model_products','gift_current_query_history','gift_purchase_checklist','gift_recommendation_reason','valid_gift_query_step','gift_query_step','execute_gift_search','adopt_gift_idea','verify_and_adopt_query_idea']
 seed=json.loads(json.loads(s.split('fn demo_seed(){ return ',1)[1].split('.parse_json()',1)[0].strip()))
 globals=s[s.index('let ai_text ='):s.index('let purchase_busy =')]
 fixture='let seed='+json.dumps(json.dumps(seed,ensure_ascii=False),ensure_ascii=False)+'.parse_json()\n'+globals+'''
@@ -88,6 +88,13 @@ check(sent[0].input.search_options.tool.name=="catalog_search","only approved re
 check(ai_plan!=nil && ai_search_round==1 && query_calls==1,"query then recommend")
 check(ai_plan.recommendations[0].buying_tip.search("政策未核验")>=0,"purchase policy is never an AI assertion")
 let longspec=coffee.to_json().parse_json();longspec.spec="";for i in 250 {longspec.spec=longspec.spec+"长"};check(gift_purchase_checklist(longspec).split("").len()<200,"long specs cannot break adoption result limits")
+check(gift_recommendation_reason("价格3500元",coffee).search("¥35")>=0 && gift_recommendation_reason("价格3500元",coffee).search("3500元")<0,"wrong cents as yuan reason replaced")
+check(gift_recommendation_reason("价格三千五百元",coffee).search("¥35")>=0,"Chinese monetary claim replaced")
+check(gift_recommendation_reason("price RMB 3500",coffee).search("¥35")>=0,"prefixed currency claim replaced")
+check(gift_recommendation_reason("价格￥3500",coffee).search("¥35")>=0,"yuan symbol claim replaced")
+check(gift_recommendation_reason("适合喜欢咖啡的朋友",coffee)=="适合喜欢咖啡的朋友","nonmonetary personalized reason retained")
+check(sent[1].input.request.search_options==nil && sent[1].input.tool.name=="catalog_search","OpenAPI tool provided once per query without duplicated context")
+check(sent[0].input.budget_display=="¥35" && sent[2].input.products[0].price_display=="¥35","model receives explicit amount displays")
 check(ai_constraints.max_price_cents==3500 && ai_constraints.allowed_kinds[0]=="咖啡","app locks budget and kinds")
 check(sent[1].input.products.len()==0 && sent[2].input.products[0].product_id==coffee.id,"model receives actual returned products next round")
 adopt_gift_idea(ai_plan.recommendations[0]);check(draft_calls==1 && draft_recipient_ids[0]==contact_id,"adoption rechecks backend detail")
