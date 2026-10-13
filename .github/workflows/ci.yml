@@ -80,3 +80,10 @@ jobs:
           python3 scripts/check-ai-purchase.py
           python3 scripts/check-host-calendar.py
           python3 scripts/check-resilience.py
+      - name: Preserve native fixture startup diagnostics
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: native-fixture-logs-${{ github.sha }}
+          path: liyu-mini/build/*-data/card-host.log
+          if-no-files-found: warn

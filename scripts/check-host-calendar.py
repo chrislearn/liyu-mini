@@ -112,7 +112,7 @@ f=root/'build/host-calendar-check';f.mkdir(parents=True,exist_ok=True)
 m={'schema':1,'id':'liyu-calendar-fixture','name':'Calendar flow fixture','version':'0.0.1','capabilities':['storage']}
 (f/'manifest.json').write_text(json.dumps(m))
 h=root.parent/'OctoScript-App-Design-Flow/tools/octo';env=dict(os.environ);port='8150'
-subprocess.run([str(h),'run',str(f),'--port',port,'--detach','--app-data',str(root/'build/host-calendar-check-data')],env=env,check=True,capture_output=True)
+subprocess.run([str(h),'run',str(f),'--port',port,'--detach','--app-data',str(root/'build/host-calendar-check-data')],env=env,check=True)
 try:
  for _ in range(40):
   data=json.load(urllib.request.urlopen('http://127.0.0.1:'+port+'/snap'));result=next((n.get('t','') for n in data['s'] if n.get('t','').startswith('HOST_CALENDAR_CHECKS=')), '')
