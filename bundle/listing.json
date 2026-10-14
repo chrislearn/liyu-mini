@@ -28,7 +28,7 @@
     "support": "https://github.com/chrislearn/liyu-mini/issues",
     "privacy_policy_url": "https://github.com/chrislearn/liyu-mini/blob/main/PRIVACY.md"
   },
-  "release_notes": "使用最新上游标准 auth 后端协议：宿主管理 PKCE 登录及凭据，小程序仅持有账号句柄；新增可选 device_calendar 设备日历选择、已确认约定事件添加/更新及读回，保留 .ics 导出。修复账号切换时旧购买请求残留，保留目录 AI 推荐与人工核对。支付仍为测试流程。",
+  "release_notes": "修复官方 OctoSense rc.6 本地演示 AI 挑礼审阅页的 Splash 栈错误：候选商品循环使用容器返回值，恢复预览、生成建议和采纳礼盒流程。官方 macOS arm64 rc.6 两实例含重启共10次打开审阅全部通过；本地演示建议仍为固定示例，不调用真实模型。保留真实模式宿主 AI 查询、PKCE 登录及日历审阅机制。支付仍为测试流程。",
   "age_rating": "all",
   "license": "Apache-2.0"
 }
