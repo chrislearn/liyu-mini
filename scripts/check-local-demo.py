@@ -31,11 +31,16 @@ check(call("/gifts/502/answer", "POST", {answer: "林舟"}).data.body.correct, "
 call("/gifts/503/open", "POST", {})
 for _i in 3 { call("/gifts/503/answer", "POST", {answer: "错误"}) }
 check(call("/gifts/503", "GET", nil).data.body.sender == nil, "three wrong answers never reveal")
+check(call("/gifts/503/answer", "POST", {answer: "蓝色"}).data.body.correct, "correct answer after three failures still unwraps")
+check(call("/gifts/503", "GET", nil).data.body.attempts_left == 0, "retry count remains bounded at zero")
 demo_data = demo_seed()
 call("/gifts/503/open", "POST", {})
 check(call("/gifts/503/answer", "POST", {answer: "蓝色"}).data.body.correct, "correct question")
 call("/gifts/503/accept", "POST", {agree: true})
 check(call("/gifts/503", "GET", nil).data.body.state == "accepted", "accept")
+check(!call("/shipments/503", "GET", nil).data.body.recipient_confirmed, "shipment starts unconfirmed")
+call("/shipments/503/confirm-receipt", "POST", {})
+check(call("/shipments/503", "GET", nil).data.body.recipient_confirmed, "receipt confirmation survives readback")
 call("/contracts/503/status", "PUT", {status: "fulfilled"})
 check(call("/gifts/503", "GET", nil).data.body.contract_status == "fulfilled", "own contract mark")
 let wid = call("/wishlists/drafts", "POST", {title: "测试清单", items: []}).data.body.id

@@ -33,7 +33,7 @@ LIYU-MINI 是礼遇的 OctoScript / Splash 小程序，使用标准宿主后端�
 
 页面顶部始终标注「本地演示」。AI 建议是明确标注的固定示例，不调用真实模型；联系方式验证需退出演示后登录真实账号。演示操作仅保存在本次运行的内存中，退出或重新进入会重置，不会写入真实账号的业务数据或替换登录会话。
 
-包内只保留 8 张轻量商品插画，商品图合计约 137 KB；1.0.47 应用包总大小约 2.60 MB，低于 8 MB。可重复验证资源和演示流程：
+包内只保留 8 张轻量商品插画，商品图合计约 137 KB；1.0.48 应用包总大小约 2.60 MB，低于 8 MB。可重复验证资源和演示流程：
 
 ```sh
 python3 scripts/check-local-demo.py
@@ -41,7 +41,7 @@ python3 scripts/check-local-demo.py
 
 ![本地演示：虚构数据和内置商品图片](screenshots/local-demo.png)
 
-当前发布：[v1.0.47](https://github.com/chrislearn/liyu-mini/releases/tag/v1.0.47)。修复官方 rc.6 本地演示 AI 发送预览的栈错误，候选商品循环包入容器；两个官方宿主实例、含重启复测，10/10 成功进入审阅页，并验证生成演示建议和采纳礼盒草稿。[验收记录](docs/verification.md)。
+当前发布：[v1.0.48](https://github.com/chrislearn/liyu-mini/releases/tag/v1.0.48)。修复实物收货页面的变量/函数同名冲突、预算与日期输入焦点丢失、演示猜礼继续尝试和收货确认保存。保留 rc.6 AI 发送预览兼容修复，增加完整 bundle 的实际点击回归脚本。[验收记录](docs/verification.md)。
 
 ## 演示视频
 
@@ -90,7 +90,7 @@ python3 scripts/check-local-demo.py
 ./start-prod-services.sh
 ```
 
-脚本使用兼容的原生 OctoSense 宿主打开已安装的小程序。账号凭据由宿主管理，card-host 不再用于真实账号登录。首次需按[原生开发步骤](docs/native-development.md)创建隔离测试安装；模型功能需在该宿主配置模型。1.0.47还要求服务端0.1.6分页接口，先部署并验证服务端，再安装客户端；当前线上服务是否具备这些接口需运营者另行核验，本地改动不等于线上已升级。
+脚本使用兼容的原生 OctoSense 宿主打开已安装的小程序。账号凭据由宿主管理，card-host 不再用于真实账号登录。首次需按[原生开发步骤](docs/native-development.md)创建隔离测试安装；模型功能需在该宿主配置模型。1.0.48还要求服务端0.1.6分页接口，先部署并验证服务端，再安装客户端；当前线上服务是否具备这些接口需运营者另行核验，本地改动不等于线上已升级。
 
 ## 本地运行
 

@@ -24,6 +24,10 @@ assert all(p.suffix.lower() in allowed for p in files), 'Unexpected package cont
 manifest = json.loads((bundle / 'manifest.json').read_text(encoding='utf-8'))
 listing = json.loads((bundle / 'listing.json').read_text(encoding='utf-8'))
 source = (bundle / 'main.splash').read_text(encoding='utf-8')
+# Global function declarations must not overwrite editable form state.
+global_variables = set(re.findall(r'^let\s+(\w+)\s*=', source, re.M))
+global_functions = set(re.findall(r'^fn\s+(\w+)\s*\(', source, re.M))
+assert not global_variables & global_functions, 'Global variable/function name collision: ' + ', '.join(sorted(global_variables & global_functions))
 assert manifest['capabilities'] == ['images', 'model', 'net', 'storage', 'auth', 'runtime', 'device_calendar']
 assert 'host.request("liyu.' not in source and 'services.liyu' not in source
 origin = json.loads(re.search(r'^let service_origin = ("[^"]+")$', source, re.M)[1])

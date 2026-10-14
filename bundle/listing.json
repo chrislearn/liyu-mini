@@ -28,7 +28,7 @@
     "support": "https://github.com/chrislearn/liyu-mini/issues",
     "privacy_policy_url": "https://github.com/chrislearn/liyu-mini/blob/main/PRIVACY.md"
   },
-  "release_notes": "修复官方 OctoSense rc.6 本地演示 AI 挑礼审阅页的 Splash 栈错误：候选商品循环使用容器返回值，恢复预览、生成建议和采纳礼盒流程。官方 macOS arm64 rc.6 两实例含重启共10次打开审阅全部通过；本地演示建议仍为固定示例，不调用真实模型。保留真实模式宿主 AI 查询、PKCE 登录及日历审阅机制。支付仍为测试流程。",
+  "release_notes": "修复实物收礼页面收货姓名变量与熟人查询函数同名导致的渲染错误；预算、偏好及日期输入不再逐字重建页面，保留旧建议失效检查。修复演示猜礼三次失败后无法继续及收货确认未保存。保留 rc.6 AI 审阅页兼容修复，增加官方宿主本地演示点击回归脚本。演示建议为固定示例，不调用真实模型；支付仍为测试流程。",
   "age_rating": "all",
   "license": "Apache-2.0"
 }

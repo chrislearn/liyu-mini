@@ -1,0 +1,41 @@
+{
+  "host_mode": "official host; full bundle; local fictional demo",
+  "actions": 137,
+  "new_runtime_errors": 0,
+  "assertions": 43,
+  "scope": [
+    "AI preview/adoption/order",
+    "continued typing and stale adoption",
+    "retry after three misses",
+    "shipping/receipt readback",
+    "transfer",
+    "recipient helper after shipping",
+    "agreement dates/calendar demo isolation"
+  ],
+  "app_version": "1.0.48",
+  "bundle_blake3": "97778a5327ab631757d5d07d3d77b922a3c2400ee070086cf57df9ba9e00b2a4",
+  "host_release": "desktop-v0.1.0-rc.6",
+  "host_platform": "macOS arm64",
+  "host_zip_sha256": "3287cd214e3da765c96885ed4687fd8092df14931ed9ab9705b12b5757bf6380",
+  "host_binary_sha256": "2686e39980a841daa987de7c02f8c7253c1af96ed2c3bad7366568cc7af9c10a",
+  "native_control_flow_checks": 234,
+  "gui_adapter": "none; full installed app; ephemeral test publisher; official host unchanged",
+  "expanded_gui_successful_assertions": 82,
+  "expanded_gui_new_runtime_errors": 0,
+  "expanded_gui_scope": [
+    "eight product categories/details",
+    "wishlist create/publish/edit/close/delete/audience",
+    "contacts/tags/members",
+    "profile/address/default address",
+    "wallet/exchange/voucher/cash-out/withdrawal",
+    "date suggestions/update/clear",
+    "appearance/refresh/command/demo reset"
+  ],
+  "exclusions": [
+    "real-account login",
+    "external AI inference",
+    "native calendar permission/write",
+    "actual payment/shipping"
+  ],
+  "script_first_attempt": "Stopped when native snapshot caught a rebuilding frame; no runtime error. Added bounded banner wait; fresh instance then passed."
+}

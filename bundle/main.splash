@@ -155,9 +155,9 @@ fn demo_request(request){
             if g.side != "inbox" { return demo_fail("请在收到的礼盒中体验拆盒。") }
             if action == "open" { if g.state == "sealed" { g.state = if g.unlock_kind == "free" {"revealed"} else {"opened"} }; return demo_reply(200, {id: id, state: g.state}) }
             if action == "answer" {
-                if g.state != "opened" || g.attempts_left <= 0 { return demo_fail("请先打开礼盒；次数用尽后可重新进入本地演示。") }
+                if g.state != "opened" { return demo_fail("请先打开礼盒。") }
                 let correct = body.answer.trim() == g.answer || (g.unlock_kind == "guess_who" && body.answer.trim() == g.hidden_sender.display_name)
-                g.attempts_left = g.attempts_left - 1; if correct { g.state = "revealed" }
+                g.attempts_left = if g.attempts_left > 0 {g.attempts_left - 1} else {0}; if correct { g.state = "revealed" }
                 return demo_reply(200, {correct: correct, state: g.state, attempts_left: g.attempts_left})
             }
             if g.state != "revealed" && g.state != "exchanged" { return demo_fail("请先答对问题并拆开礼盒。") }
@@ -171,7 +171,13 @@ fn demo_request(request){
             if action == "transfer" { let child = demo_new_gift(g.product_id, body.recipient_id); demo_merge(child, body); child.ready = true; g.state = "transferred"; g.transfer_child_id = child.id; g.transfer_child_state = "sealed"; return demo_reply(200, {id: id}) }
         } }
     }
-    if path.search("/shipments/") == 0 { return demo_reply(200, {carrier: "演示物流", tracking_number: "DEMO0001", carrier_delivered: true, recipient_confirmed: action == "confirm-receipt", events: [{at: "今天", description: "演示包裹已送达，未产生真实发货。"}]}) }
+    if path.search("/shipments/") == 0 {
+        for g in demo_data.gifts { if g.id == id && g.physical && g.state == "accepted" {
+            if method == "POST" && action == "confirm-receipt" { g.recipient_confirmed = true }
+            return demo_reply(200, {carrier: "演示物流", tracking_number: "DEMO0001", carrier_delivered: true, recipient_confirmed: g.recipient_confirmed, events: [{at: "今天", description: "演示包裹已送达，未产生真实发货。"}]})
+        } }
+        return demo_fail("没有可查询的演示包裹。")
+    }
     if path == "/friend-tags" {
         if method == "GET" { return demo_reply(200, demo_data.tags) }
         let tag = {id: demo_id(), name: body.name, member_count: 0, member_ids: [], member_names: []}; demo_data.tags.push(tag); return demo_reply(200, tag)
@@ -443,7 +449,7 @@ let purchase_expected = -1
 let purchase_request = nil
 let purchase_recipient_ids = []
 
-let recipient_name = ""
+let shipping_recipient_name = ""
 let recipient_phone = ""
 let recipient_address = ""
 let edit_expiry_hours = ""
@@ -1996,8 +2002,8 @@ fn gift_action(action, body){
     })
 }
 fn gift_ship(){
-    if recipient_name.trim() == "" || recipient_address.trim() == "" || !regex("^[0-9]{11}$", "").test(recipient_phone.trim()) { notice = "请填写收货人、11 位手机号和完整地址。"; refresh(); return }
-    gift_action("accept", {agree: true, recipient_name: recipient_name.trim(), recipient_phone: recipient_phone.trim(), recipient_address: recipient_address.trim()})
+    if shipping_recipient_name.trim() == "" || recipient_address.trim() == "" || !regex("^[0-9]{11}$", "").test(recipient_phone.trim()) { notice = "请填写收货人、11 位手机号和完整地址。"; refresh(); return }
+    gift_action("accept", {agree: true, recipient_name: shipping_recipient_name.trim(), recipient_phone: recipient_phone.trim(), recipient_address: recipient_address.trim()})
 }
 fn gift_exchange(){
     if exchange_product_id < 0 || recovery_quote == nil { notice = "请选择要兑换的商品。"; refresh(); return }
@@ -2575,8 +2581,8 @@ View{width: Fill height: Fill flow: Down
                                 Card{padding: 16 spacing: 10
                                     Label{text: if gift_detail.physical {"发货给我"} else {"领取卡券"} draw_text.color: ink draw_text.text_style: theme.font_bold{font_size: 16}}
                                     if gift_detail.physical {
-                                        for a in addresses { Chip{text: a.recipient_name + " · " + a.phone on_click: || {recipient_name = a.recipient_name; recipient_phone = a.phone; recipient_address = a.address; refresh()}} }
-                                        name_entry := Entry{empty_text: "收货人" text: recipient_name on_change: |v| recipient_name = v}
+                                        for a in addresses { Chip{text: a.recipient_name + " · " + a.phone on_click: || {shipping_recipient_name = a.recipient_name; recipient_phone = a.phone; recipient_address = a.address; refresh()}} }
+                                        name_entry := Entry{empty_text: "收货人" text: shipping_recipient_name on_change: |v| shipping_recipient_name = v}
                                         phone_entry := Entry{empty_text: "手机号" text: recipient_phone on_change: |v| recipient_phone = v}
                                         address_entry := Entry{empty_text: "完整地址" text: recipient_address on_change: |v| recipient_address = v}
                                         Primary{width: Fill text: "提交收货信息" on_click: || gift_ship()}
@@ -2678,7 +2684,7 @@ View{width: Fill height: Fill flow: Down
                 if contract_edit_status != nil {
                     Card{padding: 16 spacing: 10
                         Label{text: "双方约定日期" draw_text.color: ink draw_text.text_style.font_size: 16}
-                        Entry{empty_text: "YYYY-MM-DD；留空清除" text: contract_date on_change: |v| {contract_date = v; refresh()}}
+                        Entry{empty_text: "YYYY-MM-DD；留空清除" text: contract_date on_change: |v| {contract_date = v} on_return: |_v| refresh()}
                         Label{width: Fill text: "一方提出，对方确认后生效。改期或清除也需要对方确认，等待期间保留原日期。" draw_text.color: faint draw_text.text_style.font_size: 12}
                         Primary{width: Fill text: if contract_date_loading {"读取日期中…"} else {"提议日期 / 改期"} on_click: || save_contract_date()}
                         Label{width: Fill text: "当前生效日期：" + (if contract_date_saved == "" {"尚未确认"} else {contract_date_saved}) draw_text.color: muted draw_text.text_style.font_size: 13}
@@ -2695,12 +2701,12 @@ View{width: Fill height: Fill flow: Down
                         if device_calendar_handle != "" { Secondary{width: Fill text: "添加 / 更新到 " + device_calendar_name on_click: || sync_device_calendar()} }
                         Label{width: Fill text: "只写入双方已确认日期；权限与写入需在宿主确认。" draw_text.color: muted draw_text.text_style.font_size: 12}
                         Secondary{width: Fill text: "导出到日历（.ics）" on_click: || open_calendar_export()}
-                        Entry{empty_text: "日期表达，例如下周六" text: contract_date_request on_change: |v| {contract_date_request = v; contract_date_proposal = nil; ai_context = ai_context + 1; ai_busy = false; refresh()}}
+                        Entry{empty_text: "日期表达，例如下周六" text: contract_date_request on_change: |v| {contract_date_request = v; contract_date_proposal = nil; ai_context = ai_context + 1; ai_busy = false} on_return: |_v| refresh()}
                         Secondary{width: Fill text: if ai_busy {"AI 正在理解日期…"} else {"AI 帮我整理日期"} on_click: || ask_contract_date()}
                         Label{width: Fill text: "点击后只将日期表达、约定文字和今天日期发送给模型。" draw_text.color: faint draw_text.text_style.font_size: 11}
                         if contract_date_proposal != nil {
                             Label{width: Fill text: contract_date_proposal.explanation draw_text.color: muted draw_text.text_style.font_size: 13}
-                            if contract_date_proposal.planned_on != "" { Secondary{width: Fill text: "采用日期 " + contract_date_proposal.planned_on on_click: || {contract_date = contract_date_proposal.planned_on; contract_date_proposal = nil; notice = "日期已填入，提交提议并经对方确认后才会生效。"; refresh()}} }
+                            if contract_date_proposal.planned_on != "" { Secondary{width: Fill text: "采用日期 " + contract_date_proposal.planned_on on_click: || {if contract_date_proposal == nil {notice = "日期表达已变化，请重新整理日期。"; refresh(); return}; contract_date = contract_date_proposal.planned_on; contract_date_proposal = nil; notice = "日期已填入，提交提议并经对方确认后才会生效。"; refresh()}} }
                         }
                     }
                 }
@@ -2823,8 +2829,9 @@ View{width: Fill height: Fill flow: Down
                         Primary{text: "神秘送礼" on_click: || shop_for_contact()}
                         Secondary{text: "详细资料" on_click: || {stage = "contact_profile"; refresh()}}
                     }
-                    Entry{empty_text: "单件预算（元，可留空）" text: ai_budget on_change: |v| {ai_budget = v; ai_query_history = []; ai_text = ""; ai_plan = nil; ai_context = ai_context + 1; ai_busy = false; refresh()}}
-                    Entry{empty_text: "送礼场景与偏好，例如生日、喜欢咖啡" text: ai_occasion on_change: |v| {ai_occasion = v; ai_query_history = []; ai_text = ""; ai_plan = nil; ai_context = ai_context + 1; ai_busy = false; refresh()}}
+                    Entry{empty_text: "单件预算（元，可留空）" text: ai_budget on_change: |v| {ai_budget = v; ai_query_history = []; ai_text = ""; ai_plan = nil; ai_context = ai_context + 1; ai_busy = false} on_return: |_v| refresh()}
+                    Entry{empty_text: "送礼场景与偏好，例如生日、喜欢咖啡" text: ai_occasion on_change: |v| {ai_occasion = v; ai_query_history = []; ai_text = ""; ai_plan = nil; ai_context = ai_context + 1; ai_busy = false} on_return: |_v| refresh()}
+                    Label{width: Fill text: "修改预算或偏好后，旧推荐失效；请重新预览。" draw_text.color: faint draw_text.text_style.font_size: 11}
                     Secondary{width: Fill text: if ai_busy {"AI 正在挑选…"} else {"预览 AI 挑礼请求"} on_click: || ask_gift_ideas()}
                     Label{width: Fill text: "先读取查询工具说明，再预览发送内容。默认发送预算、场景和工具说明；AI自动理解条件并查询，将返回的商品发给AI筛选；无完全匹配时会标明差异并推荐备选。关系和备注需另行选择。姓名、联系方式、熟人编号与日期不会自动发送。场景或备注中的个人信息请先自行删去。" draw_text.color: faint draw_text.text_style.font_size: 11}
                     if ai_text != "" { Label{width: Fill text: ai_text draw_text.color: muted draw_text.text_style.font_size: 13} }
