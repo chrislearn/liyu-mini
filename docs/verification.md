@@ -1,3 +1,13 @@
+## 官方 rc.6 AI 审阅页复现与兼容修复（2026-10-15）
+
+在官方 [desktop-v0.1.0-rc.6](https://github.com/OctoSense-org/OctoSense/releases/tag/desktop-v0.1.0-rc.6) macOS arm64 发行包中，用临时签名的隔离测试安装运行完整生产 bundle。发行 ZIP 的 SHA256 为 `3287cd214e3da765c96885ed4687fd8092df14931ed9ab9705b12b5757bf6380`，与官方 SHA256SUMS 一致；未修改发行宿主，也未移除原生批准机制。
+
+修复前，从「本地演示」→「AI 帮我挑礼」→林舟→「预览 AI 挑礼请求」，独立连续点击3次，3次均出现 `main.splash:2803:22 pop_stack_value on empty stack` 和 `on_render closure failed; discarding its output: [Error:StackError]`，画面保留旧的「熟人详情」，没有进入审阅页。失败发生在本地演示路径，不涉及外部模型请求。
+
+应用兼容修复仅将演示候选商品的 `for` 包进一个 `View`，让 `if demo_mode` 分支以容器值结束。修复后，在同一官方发行包下重新进行隔离安装，连续5次打开审阅并取消，再重启宿主重复5次，10次均成功显示「AI 发送预览」和生成按钮。另实测滚动查看全部8件候选商品、生成演示建议、采纳咖啡到礼盒草稿；两次宿主日志均无上述栈错误。23项本地演示检查和包摘要校验通过。本轮没有验收真实账号分支的外部AI调用，未发布新版本。
+
+本轮同步的官方 OctoSense main 为 `ffd5e4889a9a1f84fdc5213edefe64c36b4377a2`，App Hub main 为 `3863591`。OctoSense 所固定的 Makepad `d653bc4493619ab979ccff165cf48c0c63b77d19` 在独立 VM 探针中仍复现：对象体内 `if true` 分支以 `for` 结束时返回 `StackError`；循环包进对象容器后返回正常对象及3个子节点。最新源码依赖的 `tools/setup.py --check --cargo` 通过。上游 [OctoSense #492](https://github.com/OctoSense-org/OctoSense/issues/492) 和 [makepad #126](https://github.com/OctoSense-org/makepad/pull/126) 本轮查询时仍打开，后者尚未合并；此处是应用兼容处理，不代表宿主缺陷已修复。
+
 ## 1.0.46 真实 AI 质量扩展（2026-10-13）
 
 新增16个可复跑场景，记录实际宿主模型和本地Salvo0.1.6/PostgreSQL查询，独立检查过滤、预算、库存、配送、精确/备选标记、商品依据与金额单位。初始1.0.45的8项诊断保留金额单位和非食品白名单收窄的失败；1.0.46完整矩阵16项为12通过、3偏好/配送解析失败、1宿主额度拒绝。不能把额度拒绝当成真实推理成功。
